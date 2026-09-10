@@ -1,3 +1,5 @@
+import { study, useStudy, useStudyMutation } from "../study-api";
+import type { DecisionRef } from "../study-types";
 import { useTranslation } from "react-i18next";
 import { diagnosticMessage } from "../diagnostics";
 import { useEffect, useMemo, useState } from "react";
@@ -65,6 +67,9 @@ export function Replayer({
   const { t } = useTranslation();
   const result = useRpc<HandDetail>({ op: "hand", id });
   const h = result.data?.hand;
+  const trainingRefs = useStudy<DecisionRef[]>({ op: "hand_decisions", hand: id });
+  const training = useStudyMutation();
+  const [trainingNotice, setTrainingNotice] = useState("");
   const [step, setStep] = useState(0),
     [playing, setPlaying] = useState(false),
     [speed, setSpeed] = useState(1);
@@ -197,6 +202,22 @@ export function Replayer({
           </button>
         </div>
         {result.error && <ErrorBanner>{result.error}</ErrorBanner>}
+        {(training.error || trainingRefs.error) && <ErrorBanner>{training.error || trainingRefs.error}</ErrorBanner>}
+        <div className="study-row-actions">
+          <button className="button subtle" disabled={training.busy || !trainingRefs.data?.some(r => r.seq === step)}
+            onClick={() => void training.run(async () => {
+              const ref = trainingRefs.data?.find(r => r.seq === step);
+              if (!ref) return;
+              const added = await study<{added: number; duplicates: number}>({op: "enqueue", references: [ref]});
+              setTrainingNotice(t("study.added", added));
+              saved();
+            })}>{t("study.trainCurrentDecision")}</button>
+          <button className="text-button" disabled={!trainingRefs.data?.some(r => r.seq > step)}
+            onClick={() => { const ref = trainingRefs.data?.find(r => r.seq > step); if (ref) {setPlaying(false); setStep(ref.seq);} }}>
+            {t("study.nextHeroDecision")}
+          </button>
+          <span role="status">{trainingNotice}</span>
+        </div>
         {result.error ? null : !h || !frame ? (
           <Skeleton rows={8} />
         ) : (

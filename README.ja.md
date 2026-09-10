@@ -6,7 +6,7 @@
 
 RiverLens は、Natural8／GGPoker で自分がプレイした完了済みキャッシュゲームのハンド履歴を分析するデスクトップアプリです。React／TypeScript の画面と Rust の解析・統計処理を組み合わせ、SQLite にローカル保存します。
 
-> 公開プレビュー。v0.1.0 はソースコードのみのリリースで、署名済みインストーラーは付属しません。Windows／Intel の実機検証は未完了です。現在の main には外観テーマと追加の README 翻訳が含まれます。README は13言語、アプリの画面は英語・繁体字中国語・簡体字中国語の3言語です。
+> **[v0.2.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.2.0)** — Paper（白）が既定のテーマです。 [Downloads & validation](docs/release-v0.2.0.md).
 
 ## 機能
 

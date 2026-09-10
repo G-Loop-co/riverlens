@@ -1,3 +1,5 @@
+import { LeakFinder } from "./components/StudyLeaks";
+import { StrategyDecisions } from "./components/StudyStrategyDecisions";
 // @vitest-environment jsdom
 import {
   act,
@@ -5,6 +7,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
 } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { Trainer } from "./components/StudyTrainer";
@@ -140,4 +143,36 @@ it("requires a complete frequency answer, prevents duplicate submissions and rev
   });
   fireEvent.click(screen.getByRole("button", { name: "開啟完整回放" }));
   expect(open).toHaveBeenCalledWith(42, 7);
+});
+
+
+it("shows observation-only frequencies without inventing target or priority and preserves names", async () => {
+  await i18n.changeLanguage("en");
+  const row = {id:"observation", name:"牌局總覽", source:"observation", spot:{line:[]}, action:"raise", actual:60, low:null, high:null, gap:null, interval:[50,70], opportunities:120,hits:72,enough:true,priority:null,note:""};
+  vi.stubGlobal("fetch",vi.fn(async (_url,options) => ({ok:true,json:async()=>({result:JSON.parse(options.body).request.op==="leaks"?{rows:[row]}:[]})})));
+  const explore=vi.fn();
+  render(<LeakFinder filter={{}} spot={{line:[]}} pack="" revision={0} refresh={vi.fn()} explore={explore} strategy={vi.fn()}/>);
+  await screen.findByText("No target");
+  expect(screen.getByText("Observation only; no correctness judgement")).toBeTruthy();
+  expect(screen.getByText("牌局總覽")).toBeTruthy();
+  expect(screen.queryByText("Review priority")).toBeNull();
+  fireEvent.click(screen.getByRole("button",{name:"View decisions"}));
+  expect(explore).toHaveBeenCalledWith({line:[]});
+});
+
+it("keeps strategy trace matching and reference cohorts separate and pages by cursor",async()=>{
+  const requests:Request[]=[];
+  vi.stubGlobal("fetch",vi.fn(async (_url,options)=>{
+    const body=JSON.parse(options.body); requests.push(body);
+    return {ok:true,json:async()=>({result:{opportunities:120,rows:[],next_cursor:55}})};
+  }));
+  render(<StrategyDecisions pack="p" node="UTG:" hand="AA" filter={{}} revision={0} open={vi.fn()} notify={vi.fn()} refresh={vi.fn()}/>);
+  await screen.findByRole("button",{name:"載入更多"});
+  expect(requests[0]).toMatchObject({request:{query:{strategy:{pack:"p",node:"UTG:",matched_only:true}}}});
+  fireEvent.click(screen.getByRole("checkbox",{name:"只看配置匹配手牌"}));
+  await waitFor(()=>expect(requests.at(-1)).toMatchObject({request:{query:{strategy:{matched_only:false},before:null}}}));
+  fireEvent.click(await screen.findByRole("button",{name:"載入更多"}));
+  await waitFor(()=>expect(requests.at(-1)).toMatchObject({request:{query:{before:55}}}));
+  fireEvent.click(screen.getByRole("checkbox",{name:"限所選牌組 AA"}));
+  await waitFor(()=>expect(requests.at(-1)).toMatchObject({request:{query:{filter:{hand_class:"AA"},before:null}}}));
 });

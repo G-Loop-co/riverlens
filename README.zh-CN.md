@@ -6,7 +6,7 @@
 
 RiverLens 是 Natural8／GGPoker 个人现金桌牌谱分析桌面工具。介面使用 React／TypeScript，Rust core 负责解析、统计与本机 SQLite 储存。
 
-> **v0.1.0 公开预览版：仅发布原始码。** 请依下方指令自行建置；未附已签署安装包。Windows 与 Intel 原生实机验收尚未完成，详见[验证纪录](docs/validation.md)。
+> **[v0.2.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.2.0)** — 默认暖白（Paper）主题。新版桌面安装包与验收限制请见发布说明。 [Validation](docs/release-v0.2.0.md).
 
 ![RiverLens 繁体中文总览：合成资料](docs/screenshots/overview-zh-CN.jpg)
 

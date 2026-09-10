@@ -6,7 +6,7 @@
 
 RiverLens es una aplicación de escritorio para analizar tus propias manos de cash game ya terminadas en Natural8 / GGPoker. Usa React / TypeScript en la interfaz, Rust para el análisis y las estadísticas, y SQLite local para los datos.
 
-> Vista previa pública. v0.1.0 publica solo el código fuente, sin instaladores firmados. La validación en equipos Windows / Intel está pendiente. main añade temas y traducciones del README. Hay README en 13 idiomas; la interfaz sigue disponible en inglés, chino tradicional y chino simplificado.
+> **[v0.2.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.2.0)** — Paper (blanco) es el tema predeterminado. [Downloads & validation](docs/release-v0.2.0.md).
 
 ## Funciones
 

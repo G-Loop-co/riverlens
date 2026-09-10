@@ -1,3 +1,4 @@
+import { StrategyDecisions } from "./StudyStrategyDecisions";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { open as choose } from "@tauri-apps/plugin-dialog";
@@ -366,6 +367,7 @@ export function StrategyCompare({
           )}
         </>
       )}
+      {pack && node && <StrategyDecisions pack={pack} node={node} hand={hand} filter={filter} revision={revision} open={open} notify={notify} refresh={refresh} />}
       <p className="study-footnote">{t("study.modelCaveat")}</p>
     </div>
   );

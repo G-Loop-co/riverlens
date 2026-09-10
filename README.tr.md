@@ -6,7 +6,7 @@
 
 RiverLens, Natural8 / GGPoker üzerinde oynadığınız tamamlanmış nakit oyun ellerini inceleyen bir masaüstü uygulamasıdır. Arayüz React / TypeScript, ayrıştırma ve istatistik motoru Rust, yerel veri deposu SQLite kullanır.
 
-> Herkese açık önizleme. v0.1.0 yalnızca kaynak kod sürümüdür; imzalı kurulum dosyası içermez. Windows / Intel cihaz doğrulaması tamamlanmamıştır. main, temalar ve README çevirileri ekler. README dosyaları 13 dilde; uygulama arayüzü İngilizce, Geleneksel Çince ve Basitleştirilmiş Çince olmak üzere 3 dildedir.
+> **[v0.2.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.2.0)** — Varsayılan tema Paper (beyaz). [Downloads & validation](docs/release-v0.2.0.md).
 
 ## Özellikler
 

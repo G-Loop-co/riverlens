@@ -21,40 +21,6 @@ import {
   emptySpot,
 } from "./StudyWorkspace";
 
-const presets: [string, SpotDefinition][] = [
-  [
-    "study.blindDefence",
-    { street: "preflop", position: "BB", facing: "open", line: [] },
-  ],
-  ["study.facing3bet", { street: "preflop", facing: "three_bet", line: [] }],
-  [
-    "study.flopFacingRaise",
-    {
-      street: "flop",
-      facing: "raise",
-      line: [
-        { street: "flop", actor: "hero", action: "bet" },
-        { street: "flop", actor: "villain", action: "raise" },
-      ],
-    },
-  ],
-  [
-    "study.secondBarrel",
-    {
-      street: "turn",
-      facing: "bet",
-      line: [
-        { street: "flop", actor: "hero", action: "check" },
-        { street: "flop", actor: "villain", action: "bet" },
-        { street: "flop", actor: "hero", action: "call" },
-        { street: "turn", actor: "hero", action: "check" },
-        { street: "turn", actor: "villain", action: "bet" },
-      ],
-    },
-  ],
-  ["study.riverDecision", { street: "river", facing: "bet", line: [] }],
-];
-
 export function SpotEditor({
   spot,
   setSpot,
@@ -67,6 +33,11 @@ export function SpotEditor({
   return (
     <>
       <div className="study-fields">
+        <StudySelect label="study.scenario" value={spot.scenario}
+          options={[["open_vs_3bet", "study.facing3bet"], ["cbet_vs_raise", "study.flopFacingRaise"], ["facing_second_barrel", "study.secondBarrel"]]}
+          change={(scenario) => patch({ scenario })} />
+        <Field label={t("study.preflopPath")}><input value={spot.preflop_path ?? ""} maxLength={1000}
+          onChange={(e) => patch({ preflop_path: e.target.value || undefined })} /></Field>
         <StudySelect
           label="study.street"
           value={spot.street}
@@ -300,6 +271,7 @@ export function SpotExplorer({
   onLeaks: () => void;
 }) {
   const { t } = useTranslation();
+  const presets = useStudy<SavedSpot[]>({ op: "presets" });
   const [name, setName] = useState("");
   const [advanced, setAdvanced] = useState(false);
   const result = useStudy<SpotReport>(
@@ -354,7 +326,7 @@ export function SpotExplorer({
           </button>
         </div>
         <div className="study-presets">
-          {presets.map(([name, p]) => (
+          {(presets.data || []).map(({name, spot: p}) => (
             <button
               key={name}
               className="button subtle"
@@ -413,6 +385,8 @@ export function SpotExplorer({
         {advanced && <SpotEditor spot={spot} setSpot={setSpot} />}
         <p className="study-selection">
           {[
+            spot.scenario ? t(`study.scenario.${spot.scenario}`) : null,
+            spot.preflop_path,
             spot.position,
             spot.opponent ? `vs ${spot.opponent}` : null,
             spot.street ? t(`study.${spot.street}`) : null,

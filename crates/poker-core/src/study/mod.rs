@@ -15,6 +15,8 @@ use std::collections::BTreeMap;
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(default, deny_unknown_fields)]
 pub struct SpotDefinition {
+    pub scenario: Option<String>,
+    pub preflop_path: Option<String>,
     pub street: Option<String>,
     pub position: Option<String>,
     pub opponent: Option<String>,
@@ -38,6 +40,25 @@ pub struct StudyQuery {
     pub spot: SpotDefinition,
     pub before: Option<i64>,
     pub limit: Option<u32>,
+    pub strategy: Option<StrategyCohort>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct StrategyCohort {
+    pub pack: String,
+    pub node: String,
+    pub matched_only: bool,
+}
+
+pub fn presets() -> Vec<Value> {
+    vec![
+        json!({"name":"study.blindDefence","spot":{"street":"preflop","position":"BB","facing":"open","line":[]}}),
+        json!({"name":"study.facing3bet","spot":{"street":"preflop","scenario":"open_vs_3bet","line":[]}}),
+        json!({"name":"study.flopFacingRaise","spot":{"street":"flop","scenario":"cbet_vs_raise","line":[]}}),
+        json!({"name":"study.secondBarrel","spot":{"street":"turn","scenario":"facing_second_barrel","line":[]}}),
+        json!({"name":"study.riverDecision","spot":{"street":"river","line":[]}}),
+    ]
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -68,6 +89,10 @@ pub enum StudyRequest {
     DeleteItem {
         kind: String,
         id: String,
+    },
+    Presets,
+    HandDecisions {
+        hand: i64,
     },
     Packs,
     ImportPack {
@@ -174,6 +199,17 @@ impl StudyRequest {
                 let value = match other {
                     Self::Explore { query } => explore(&tx, &query),
                     Self::Items { kind } => items(&tx, &kind),
+                    Self::Presets => Ok(json!(presets())),
+                    Self::HandDecisions { hand } => {
+                        let mut s = tx.prepare("SELECT d.data FROM study_decisions d JOIN study_indexed si ON si.hand=d.hand WHERE d.hand=?1 AND si.version=?2 ORDER BY d.seq")?;
+                        let rows = s
+                            .query_map(params![hand, decision::INDEX_VERSION], |r| {
+                                r.get::<_, String>(0)
+                            })?
+                            .map(|r| Ok(serde_json::from_str::<Value>(&r?)?["reference"].clone()))
+                            .collect::<Result<Vec<_>>>()?;
+                        Ok(json!(rows))
+                    }
                     Self::Packs => strategy::list(&tx),
                     Self::Nodes { pack } => strategy::nodes(&tx, &pack),
                     Self::Matrix { pack, node, filter } => {
@@ -255,7 +291,7 @@ pub fn index_hand(c: &Connection, id: i64, h: &Hand) -> Result<()> {
     }
     c.execute(
         "INSERT OR REPLACE INTO study_indexed VALUES(?1,?2)",
-        params![id, decision::VERSION],
+        params![id, decision::INDEX_VERSION],
     )?;
     Ok(())
 }
@@ -266,7 +302,9 @@ pub fn backfill(c: &mut Connection, limit: u32) -> Result<usize> {
     let ids = {
         let mut s = tx.prepare("SELECT h.id FROM hands h LEFT JOIN study_indexed i ON i.hand=h.id WHERE i.version IS NULL OR i.version!=?1 ORDER BY h.id LIMIT ?2")?;
         let rows = s
-            .query_map(params![decision::VERSION, limit], |r| r.get::<_, i64>(0))?
+            .query_map(params![decision::INDEX_VERSION, limit], |r| {
+                r.get::<_, i64>(0)
+            })?
             .collect::<std::result::Result<Vec<_>, _>>()?;
         rows
     };
@@ -278,9 +316,9 @@ pub fn backfill(c: &mut Connection, limit: u32) -> Result<usize> {
 }
 
 pub fn coverage(c: &Connection) -> Result<Value> {
-    let (total, indexed):(u64,u64) = c.query_row("SELECT COUNT(*),COALESCE(SUM(CASE WHEN i.version=?1 THEN 1 ELSE 0 END),0) FROM hands h LEFT JOIN study_indexed i ON i.hand=h.id", [decision::VERSION], |r|Ok((r.get(0)?,r.get(1)?)))?;
+    let (total, indexed):(u64,u64) = c.query_row("SELECT COUNT(*),COALESCE(SUM(CASE WHEN i.version=?1 THEN 1 ELSE 0 END),0) FROM hands h LEFT JOIN study_indexed i ON i.hand=h.id", [decision::INDEX_VERSION], |r|Ok((r.get(0)?,r.get(1)?)))?;
     Ok(
-        json!({"total":total,"indexed":indexed,"complete":total==indexed,"version":decision::VERSION}),
+        json!({"total":total,"indexed":indexed,"complete":total==indexed,"version":decision::INDEX_VERSION}),
     )
 }
 
@@ -291,6 +329,14 @@ pub fn validate_spot(s: &SpotDefinition) -> Result<()> {
         }
         Ok(())
     };
+    check(
+        &s.scenario,
+        &["open_vs_3bet", "cbet_vs_raise", "facing_second_barrel"],
+    )?;
+    anyhow::ensure!(
+        s.preflop_path.as_ref().is_none_or(|p| p.len() <= 1000),
+        "Preflop path is too long"
+    );
     check(&s.street, &["preflop", "flop", "turn", "river"])?;
     check(
         &s.position,
@@ -389,8 +435,9 @@ pub fn predicate(q: &StudyQuery) -> Result<(String, Vec<Sql>)> {
     );
     let (mut clause, mut values) = store::predicate(&clean, true)?;
     clause.push_str(" AND d.hand=h.id AND si.hand=h.id AND si.version=?");
-    values.push(Sql::Text(decision::VERSION.into()));
+    values.push(Sql::Text(decision::INDEX_VERSION.into()));
     for (field, value) in [
+        ("preflop_path", &q.spot.preflop_path),
         ("street", &q.spot.street),
         ("position", &q.spot.position),
         ("opponent", &q.spot.opponent),
@@ -427,6 +474,10 @@ pub fn predicate(q: &StudyQuery) -> Result<(String, Vec<Sql>)> {
         clause.push_str(" AND d.street!='preflop' AND h.paired=?");
         values.push(Sql::Integer(i64::from(v)));
     }
+    if let Some(v) = &q.spot.scenario {
+        clause.push_str(" AND json_extract(d.data,'$.scenario')=?");
+        values.push(Sql::Text(v.clone()));
+    }
     if let Some(a) = q.spot.line.first() {
         clause.push_str(&format!(" AND d.line_{}=?", a.street));
         values.push(Sql::Text(decision::line_code(&q.spot.line, &a.street)));
@@ -438,7 +489,25 @@ pub const FROM: &str =
     "study_decisions d JOIN hands h ON h.id=d.hand JOIN study_indexed si ON si.hand=h.id";
 
 pub fn explore(c: &Connection, q: &StudyQuery) -> Result<Value> {
-    let (clause, mut vals) = predicate(q)?;
+    let (mut clause, mut vals) = predicate(q)?;
+    if let Some(cohort) = &q.strategy {
+        let pack = strategy::load(c, &cohort.pack)?;
+        let node = pack
+            .nodes
+            .iter()
+            .find(|n| n.id == cohort.node)
+            .context("Unknown strategy node")?;
+        clause.push_str(" AND d.street='preflop' AND d.position=? AND d.preflop_path=?");
+        vals.extend([Sql::Text(node.hero.clone()), Sql::Text(node.path.clone())]);
+        if cohort.matched_only {
+            if !strategy::model_reasons(&pack).is_empty() || node.frequencies.is_empty() {
+                clause.push_str(" AND 0");
+            } else {
+                clause.push_str(&format!(" AND json_array_length(json_extract(d.strategy_data,'$.reasons'))=0 AND json_extract(d.strategy_data,'$.hand') IN ({})", vec!["?";node.frequencies.len()].join(",")));
+                vals.extend(node.frequencies.keys().cloned().map(Sql::Text));
+            }
+        }
+    }
     // Group by hand once: opportunity counts may repeat, hand results may not.
     let (opportunities,hands,net_bb,actions)=c.query_row(
         &format!("SELECT COALESCE(SUM(n),0),COUNT(*),COALESCE(SUM(net_bb),0),COALESCE(SUM(f),0),COALESCE(SUM(x),0),COALESCE(SUM(c),0),COALESCE(SUM(b),0),COALESCE(SUM(r),0) FROM (SELECT h.id,h.net_bb,COUNT(*) n,SUM(d.action='fold') f,SUM(d.action='check') x,SUM(d.action='call') c,SUM(d.action='bet') b,SUM(d.action='raise') r FROM {FROM} WHERE {clause} GROUP BY h.id)"),
@@ -481,7 +550,7 @@ pub fn resolve(c: &Connection, r: &decision::DecisionRef) -> Result<(i64, decisi
         r.version == decision::VERSION,
         "Decision version changed; recreate this training card"
     );
-    let (id,data):(i64,String)=c.query_row("SELECT h.id,d.data FROM study_decisions d JOIN hands h ON h.id=d.hand WHERE h.profile=?1 AND h.hand_id=?2 AND d.seq=?3",params![r.profile,r.hand_id,r.seq],|row|Ok((row.get(0)?,row.get(1)?)))?;
+    let (id,data):(i64,String)=c.query_row("SELECT h.id,d.data FROM study_decisions d JOIN hands h ON h.id=d.hand JOIN study_indexed si ON si.hand=d.hand WHERE h.profile=?1 AND h.hand_id=?2 AND d.seq=?3 AND si.version=?4",params![r.profile,r.hand_id,r.seq,decision::INDEX_VERSION],|row|Ok((row.get(0)?,row.get(1)?)))?;
     Ok((id, serde_json::from_str(&data)?))
 }
 
@@ -596,6 +665,55 @@ pub fn leaks(c: &Connection, filter: &Filter, pack: Option<&str>) -> Result<Valu
             }
         });
         rows.push(json!({"id":row["id"],"name":b.name,"spot":b.spot,"source":"custom","note":b.note,"action":b.action,"low":b.low,"high":b.high,"actual":actual,"gap":gap,"interval":wilson(hits,n),"opportunities":n,"hits":hits,"enough":n>=b.min_samples,"priority":if n>=b.min_samples{gap.unwrap_or(0.).abs()}else{0.}}));
+    }
+    let mut observations: Vec<_> = presets()
+        .into_iter()
+        .map(|mut p| {
+            p["name_key"] = p["name"].clone();
+            p
+        })
+        .collect();
+    observations.push(
+        json!({"name":"study.allDecisions","name_key":"study.allDecisions","spot":{"line":[]}}),
+    );
+    for item in items(c, "spot")?.as_array().context("Invalid spots")? {
+        observations.push(item["data"].clone());
+    }
+    let mut seen = std::collections::BTreeSet::new();
+    for item in observations {
+        let spot: SpotDefinition = serde_json::from_value(item["spot"].clone())?;
+        let spot_value = serde_json::to_value(&spot)?;
+        if !seen.insert(spot_value.to_string()) {
+            continue;
+        }
+        let q = StudyQuery {
+            filter: filter.clone(),
+            spot,
+            ..Default::default()
+        };
+        let (clause, vals) = predicate(&q)?;
+        let mut statement = c.prepare(&format!(
+            "SELECT d.action,COUNT(*) FROM {FROM} WHERE {clause} GROUP BY d.action"
+        ))?;
+        let counts = statement
+            .query_map(params_from_iter(vals), |r| {
+                Ok((r.get::<_, String>(0)?, r.get::<_, u64>(1)?))
+            })?
+            .collect::<std::result::Result<BTreeMap<_, _>, _>>()?;
+        let n: u64 = counts.values().sum();
+        if n == 0 && !item["name_key"].is_null() && item["name_key"] != "study.allDecisions" {
+            continue;
+        }
+        for action in decision::ACTIONS {
+            if rows
+                .iter()
+                .any(|r| r["spot"] == spot_value && r["action"] == *action)
+            {
+                continue;
+            }
+            let hits = counts.get(*action).copied().unwrap_or(0);
+            rows.push(json!({"id":format!("observation:{}:{action}",store::fingerprint(&spot_value.to_string())),"name":item["name"],"name_key":item["name_key"],"spot":spot_value,"source":"observation","note":"","action":action,"low":null,"high":null,"actual":if n>0{Some(hits as f64/n as f64*100.)}else{None},"gap":null,"interval":wilson(hits,n),"opportunities":n,"hits":hits,"enough":n>=100,"priority":null}));
+        }
     }
     if let Some(pack) = pack {
         rows.extend(strategy::leaks(c, filter, pack)?);

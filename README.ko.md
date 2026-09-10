@@ -6,7 +6,7 @@
 
 RiverLens는 Natural8／GGPoker에서 직접 플레이한 종료된 캐시게임 핸드 기록을 분석하는 데스크톱 앱입니다. React／TypeScript 화면과 Rust 파싱·통계 엔진을 사용하며, 데이터는 로컬 SQLite에 저장합니다.
 
-> 공개 미리보기입니다. v0.1.0은 소스 코드 릴리스이며 서명된 설치 파일은 없습니다. Windows／Intel 실제 기기 검증은 완료되지 않았습니다. 현재 main에는 테마와 추가 README 번역이 포함됩니다. README는 13개 언어, 앱 UI는 영어·번체 중국어·간체 중국어 3개 언어를 지원합니다.
+> **[v0.2.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.2.0)** — 기본 테마는 Paper(흰색)입니다. [Downloads & validation](docs/release-v0.2.0.md).
 
 ## 기능
 

@@ -9,7 +9,7 @@ export const themes = [
 export type Theme = (typeof themes)[number]["id"];
 
 export function supportedTheme(value: string): Theme {
-  return themes.find((theme) => theme.id === value)?.id ?? "forest";
+  return themes.find((theme) => theme.id === value)?.id ?? "paper";
 }
 
 export function readTheme(): Theme {

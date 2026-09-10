@@ -160,7 +160,7 @@ fn strategy_pack_rejects_path_escape() {
 }
 
 #[test]
-fn exact_configuration_and_hand_mix_drive_gto_denominators() {
+fn unknown_models_never_enter_gto_denominators() {
     let (dir, mut c) = database();
     let path = pack_fixture(dir.path());
     let pack = strategy::import(&c, path.to_str().unwrap()).unwrap();
@@ -175,13 +175,13 @@ fn exact_configuration_and_hand_mix_drive_gto_denominators() {
     d.size_bb = Some(2.5);
     let p = strategy::load(&c, id).unwrap();
     let node = p.nodes.iter().find(|n| n.path.is_empty()).unwrap();
-    assert!(strategy::mismatches(&d, node).is_empty());
+    assert!(strategy::mismatches(&d, node, &p).contains(&"hand_model_unverified".into()));
     d.stacks_bb.insert("BB".into(), 99.);
-    assert_eq!(strategy::mismatches(&d, node), vec!["stack_depth"]);
+    assert!(strategy::mismatches(&d, node, &p).contains(&"stack_depth".into()));
     d.stacks_bb.insert("BB".into(), 100.);
     h.id = "MATCHED".into();
     store::insert_batch(&mut c, "test", "test", &[h]).unwrap();
-    // Inject the independently verified decision snapshot to isolate aggregate behavior.
+    // Even a snapshot with identical observable stakes cannot verify a model.
     c.execute(
         "UPDATE study_decisions SET data=?1,strategy_data=?2 WHERE hand=1 AND street='preflop'",
         [
@@ -197,12 +197,10 @@ fn exact_configuration_and_hand_mix_drive_gto_denominators() {
         .iter()
         .find(|v| v["hand"] == "AA")
         .unwrap();
-    assert_eq!(aa["observed"]["matched"], 1);
+    assert_eq!(aa["observed"]["matched"], 0);
     let rows = strategy::leaks(&c, &Filter::default(), id).unwrap();
-    let raise = rows.iter().find(|v| v["action"] == "R2.5").unwrap();
-    assert_eq!(raise["low"], 50.);
-    assert_eq!(raise["actual"], 100.);
-    assert_eq!(raise["priority"], 0.);
+    assert!(rows.is_empty());
+    assert_eq!(aa["observed"]["reference_expected"]["R2.5"], 0.5);
     d.size_bb = Some(3.);
     assert!(strategy::action_code(&d, node).is_none());
 }
@@ -338,7 +336,7 @@ fn backfill_is_bounded_resumable_and_versioned() {
 }
 
 #[test]
-fn imported_nl10_hand_matches_source_without_synthetic_projection() {
+fn imported_nl10_hand_remains_reference_without_model_verification() {
     let (dir, mut c) = database();
     let path = pack_fixture(dir.path());
     let pack = strategy::import(&c, path.to_str().unwrap()).unwrap();
@@ -349,7 +347,7 @@ fn imported_nl10_hand_matches_source_without_synthetic_projection() {
     let reference = decision::derive(&h)[0].reference.clone();
     store::insert_batch(&mut c, "test", "study-nl10.txt", std::slice::from_ref(&h)).unwrap();
     let result = strategy::compare_decision(&c, id, &reference, None).unwrap();
-    assert_eq!(result["status"], "matched", "{result}");
+    assert_eq!(result["status"], "reference", "{result}");
     assert_eq!(result["observed_action"], "R2.5");
     let mut short = h;
     short.id = "SHORT".into();
@@ -358,7 +356,7 @@ fn imported_nl10_hand_matches_source_without_synthetic_projection() {
     let matrix = strategy::matrix(&c, id, "UTG:", &Filter::default()).unwrap();
     let aa = &matrix["cells"][0];
     assert_eq!(aa["observed"]["opportunities"], 2);
-    assert_eq!(aa["observed"]["matched"], 1);
+    assert_eq!(aa["observed"]["matched"], 0);
     assert_eq!(matrix["reasons"]["stack_depth"], 1);
 }
 

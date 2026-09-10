@@ -190,21 +190,21 @@ export function LeakFinder({
           {result.data?.rows.map((row) => (
             <article
               key={row.id}
-              className={`panel study-leak ${row.enough && row.priority > 0 ? "needs-review" : ""}`}
+              className={`panel study-leak ${row.enough && (row.priority ?? 0) > 0 ? "needs-review" : ""}`}
             >
               <div className="study-row-actions">
                 <span className="subtle-badge">
                   {t(
                     row.source === "gto"
                       ? "study.gtoTarget"
-                      : "study.customTarget",
+                      : row.source === "observation" ? "study.noTarget" : "study.customTarget",
                   )}
                 </span>
                 <span className="muted">
-                  {t(row.enough ? "study.reviewPriority" : "study.lowSample")}
+                  {t(!row.enough ? "study.lowSample" : row.source === "observation" ? "study.observationOnly" : "study.reviewPriority")}
                 </span>
               </div>
-              <h3>{row.name}</h3>
+              <h3>{row.name_key ? t(row.name_key) : row.name}</h3>
               <p className="mono">
                 {row.source === "gto" ? row.action : t(`study.${row.action}`)}
               </p>
@@ -218,7 +218,7 @@ export function LeakFinder({
                 <div>
                   <span>{t("study.target")}</span>
                   <strong>
-                    {decimal(row.low, 1)}–{decimal(row.high, 1)}%
+                    {row.low === null || row.high === null ? "—" : `${decimal(row.low, 1)}–${decimal(row.high, 1)}%`}
                   </strong>
                 </div>
                 <div>

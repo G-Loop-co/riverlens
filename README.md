@@ -6,7 +6,7 @@
 
 RiverLens is a Tauri desktop application for reviewing your own completed Natural8 / GGPoker cash-game hand histories. React and TypeScript power the interface; a Rust core handles parsing, statistics and local SQLite storage.
 
-> **v0.1.0 public preview — source release.** Build locally using the instructions below. No signed installers are attached. Windows and Intel runtime acceptance are not complete. See [validation](docs/validation.md).
+> **[v0.2.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.2.0)** — Paper (white) is the default. Download the new desktop packages and read the validation limits. [Validation](docs/release-v0.2.0.md).
 
 ![RiverLens overview in English — synthetic data](docs/screenshots/overview-en.jpg)
 
