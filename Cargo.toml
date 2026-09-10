@@ -1,0 +1,8 @@
+[workspace]
+members = ["crates/poker-core", "src-tauri"]
+default-members = ["crates/poker-core"]
+resolver = "2"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
