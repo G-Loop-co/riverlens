@@ -13,6 +13,7 @@ import { api, chooseOutput, desktop, errorText } from "../api";
 import type { Health, Profile } from "../types";
 import { ErrorBanner, Field } from "./UI";
 import { LanguageSelect } from "./LanguageSelect";
+import { ThemeSelect } from "./ThemeSelect";
 
 export function Settings({
   profiles,
@@ -156,6 +157,7 @@ export function Settings({
   }
   return (
     <div className="settings-view">
+      <ThemeSelect />
       <section className="panel">
         <div className="settings-action language-setting">
           <div>

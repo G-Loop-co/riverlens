@@ -561,5 +561,13 @@
   "Unsupported header: expected GG NLHE cash in USD": "Unsupported history header. Expected a GG or Natural8 USD NLHE cash history.",
   "failed to parse timezone": "Time zone not recognized. Enter a valid name such as Asia/Hong_Kong or UTC.",
   "掃描手數": "Total scanned",
-  "續匯會重新掃描尚未完成的檔案，略過已匯入手牌；工作計數包含重新掃描的紀錄。": "Resuming scans unfinished files again and skips imported hands. Job counters include rescanned records."
+  "續匯會重新掃描尚未完成的檔案，略過已匯入手牌；工作計數包含重新掃描的紀錄。": "Resuming scans unfinished files again and skips imported hands. Job counters include rescanned records.",
+  "外觀主題": "Appearance",
+  "即時套用並儲存於本機，下次開啟時保留您的選擇。": "Applied instantly and saved on this device for your next visit.",
+  "森林綠": "Forest",
+  "午夜藍": "Midnight",
+  "暖白": "Paper",
+  "柔和綠調，經典深色工作台。": "Soft greens for a classic dark workspace.",
+  "冷調藍灰，清晰專注。": "Cool blue tones for a focused workspace.",
+  "溫暖明亮，適合日間閱讀。": "Warm and bright for daytime reading."
 }

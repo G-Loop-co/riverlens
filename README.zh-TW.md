@@ -2,13 +2,15 @@
 
 **您的牌譜，由您掌握。完全本機的賽後 Poker 複盤工作台。**
 
-[English](README.md) · [繁體中文](README.zh-TW.md) · [简体中文](README.zh-CN.md)
+[English](README.md) · [繁體中文](README.zh-TW.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-BR.md) · [Italiano](README.it.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md) · [Türkçe](README.tr.md)
 
 RiverLens 是 Natural8／GGPoker 個人現金桌牌譜分析桌面工具。介面使用 React／TypeScript，Rust core 負責解析、統計與本機 SQLite 儲存。
 
 > **v0.1.0 公開預覽版：僅發布原始碼。** 請依下方指令自行建置；未附已簽署安裝包。Windows 與 Intel 原生實機驗收尚未完成，詳見[驗證紀錄](docs/validation.md)。
 
-![RiverLens 繁體中文總覽：合成資料](docs/screenshots/overview-zh-TW.png)
+![RiverLens 繁體中文總覽：合成資料](docs/screenshots/overview-zh-TW.jpg)
+
+README 共 **13 種語言**；App 介面維持 **English／繁中／簡中**。目前 `main` 已加入外觀主題；`v0.1.0` tag 保留原始發布快照。
 
 ## 功能
 
@@ -21,10 +23,13 @@ RiverLens 是 Natural8／GGPoker 個人現金桌牌譜分析桌面工具。介�
 | 手牌回放 | 逐步行動、跳街、自動播放及已知底牌。 |
 | 複盤工作台 | 保存筆記、標籤、已複盤狀態及常用篩選。 |
 | 本機資料管理 | SQLite 儲存、CSV／牌譜匯出、備份及還原。 |
+| 外觀主題 | 森林綠、午夜藍、暖白；選擇儲存於本機。 |
 | 三語介面 | 即時切換繁中、簡中及 English，離線可用。 |
 | 適用 All-in equity | 支援單挑、單底池、已知底牌、單 runout 的適用情況；不是 decision EV 或 GTO 評分。 |
 
-![起手牌矩陣：合成資料](docs/screenshots/starting-hands-en.png)
+![起手牌矩陣：合成資料](docs/screenshots/starting-hands-en.jpg)
+
+截圖採 **1920px 桌面寬度、完整頁面、暖白主題**；另提供 [1920 × 1080 完整視窗](docs/screenshots/overview-desktop-en.jpg)。
 
 截圖全部使用 **240 手合成資料**，不包含私人牌譜。重複樣本僅示範介面，不代表真實玩家頻率或策略建議。矩陣呈現已觀察手牌，並非建議範圍。
 
@@ -72,7 +77,7 @@ npm run desktop:build -- --target x86_64-pc-windows-msvc --bundles nsis
 
 本工具供個人離線賽後複盤；不連接遊戲客戶端，沒有即時 HUD、RTA、群體資料挖掘、雲端同步或 GTO 最佳行動評分。與 Natural8／GGPoker 無隸屬關係。
 
-本次發布乾淨原始碼快照；排除私人牌譜、本機資料庫及歷史私人驗收附件。未提交的主題實驗與其他本機分支功能不屬於 v0.1.0。
+本次發布乾淨原始碼快照；排除私人牌譜、本機資料庫及歷史私人驗收附件。原始 v0.1.0 tag 不含外觀主題；目前 main 已整合主題實作，其他本機分支功能仍未包含。
 
 - [使用說明](docs/user-guide.md)
 - [架構與統計定義](docs/architecture.md)

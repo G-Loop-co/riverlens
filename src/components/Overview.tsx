@@ -267,10 +267,10 @@ export function Overview({
           <div className="chart-legends">
             {(
               [
-                ["net", t("實際盈虧"), "#79bb9c"],
-                ["adjusted", t("已套用 All-in 調整"), "#d2b57a"],
-                ["sd", "Showdown", "#9aaebb"],
-                ["nsd", "Non-showdown", "#cb8d83"],
+                ["net", t("實際盈虧"), "var(--green)"],
+                ["adjusted", t("已套用 All-in 調整"), "var(--warning)"],
+                ["sd", "Showdown", "var(--chart-showdown)"],
+                ["nsd", "Non-showdown", "var(--red)"],
               ] as const
             ).map(([key, label, color]) => (
               <button
@@ -294,20 +294,20 @@ export function Overview({
                   margin={{ left: -15, right: 16, top: 10, bottom: 6 }}
                 >
                   <CartesianGrid
-                    stroke="#2b3430"
+                    stroke="var(--line)"
                     vertical={false}
                     strokeDasharray="3 5"
                   />
                   <XAxis
                     dataKey="date"
-                    tick={{ fill: "#819087", fontSize: 10 }}
+                    tick={{ fill: "var(--muted)", fontSize: 10 }}
                     tickLine={false}
                     axisLine={false}
                     minTickGap={32}
                   />
                   <YAxis
                     tick={{
-                      fill: "#819087",
+                      fill: "var(--muted)",
                       fontSize: 10,
                       fontFamily: "Geist Mono",
                     }}
@@ -315,15 +315,15 @@ export function Overview({
                     axisLine={false}
                     tickFormatter={(v) => `$${v}`}
                   />
-                  <ReferenceLine y={0} stroke="#4b5951" />
+                  <ReferenceLine y={0} stroke="var(--line)" />
                   <Tooltip
                     contentStyle={{
-                      background: "#202923",
-                      border: "1px solid #425247",
+                      background: "var(--surface)",
+                      border: "1px solid var(--line)",
                       borderRadius: 8,
                       fontSize: 12,
                     }}
-                    labelStyle={{ color: "#c6d0ca" }}
+                    labelStyle={{ color: "var(--text)" }}
                     formatter={(value, name) => [
                       `$${money(Number(value))}`,
                       (
@@ -340,7 +340,7 @@ export function Overview({
                     <Line
                       dataKey="net"
                       type="linear"
-                      stroke="#79bb9c"
+                      stroke="var(--green)"
                       strokeWidth={2.4}
                       dot={false}
                       isAnimationActive={false}
@@ -350,7 +350,7 @@ export function Overview({
                     <Line
                       dataKey="adjusted"
                       type="linear"
-                      stroke="#d2b57a"
+                      stroke="var(--warning)"
                       strokeWidth={1.7}
                       strokeDasharray="5 4"
                       dot={false}
@@ -360,7 +360,7 @@ export function Overview({
                   {lines.sd && (
                     <Line
                       dataKey="sd"
-                      stroke="#9aaebb"
+                      stroke="var(--chart-showdown)"
                       strokeWidth={1.5}
                       dot={false}
                       isAnimationActive={false}
@@ -369,7 +369,7 @@ export function Overview({
                   {lines.nsd && (
                     <Line
                       dataKey="nsd"
-                      stroke="#cb8d83"
+                      stroke="var(--red)"
                       strokeWidth={1.5}
                       dot={false}
                       isAnimationActive={false}
