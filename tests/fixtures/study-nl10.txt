@@ -1,0 +1,28 @@
+Poker Hand #STUDYNL10001: Hold'em No Limit ($0.05/$0.10) - 2026/09/01 12:00:00
+Table 'SyntheticStudy' 6-max Seat #6 is the button
+Seat 1: SyntheticSB ($10 in chips)
+Seat 2: SyntheticBB ($10 in chips)
+Seat 3: Hero ($10 in chips)
+Seat 4: SyntheticHJ ($10 in chips)
+Seat 5: SyntheticCO ($10 in chips)
+Seat 6: SyntheticBTN ($10 in chips)
+SyntheticSB: posts small blind $0.05
+SyntheticBB: posts big blind $0.10
+*** HOLE CARDS ***
+Dealt to SyntheticSB
+Dealt to SyntheticBB
+Dealt to Hero [As Ad]
+Dealt to SyntheticHJ
+Dealt to SyntheticCO
+Dealt to SyntheticBTN
+Hero: raises $0.15 to $0.25
+SyntheticHJ: folds
+SyntheticCO: folds
+SyntheticBTN: folds
+SyntheticSB: folds
+SyntheticBB: folds
+Uncalled bet ($0.15) returned to Hero
+*** SHOWDOWN ***
+Hero collected $0.25 from pot
+*** SUMMARY ***
+Total pot $0.25 | Rake $0 | Jackpot $0

@@ -1,3 +1,14 @@
+# v0.2.0 integration validation — 2026-09-10
+
+- Frontend: 22 tests passed; production build passed.
+- Rust: 46 tests passed (1 unit, 18 boundaries, 15 core, 12 study).
+- Rustfmt and Clippy (`-D warnings`) passed.
+- Live browser against the real Rust service and 120 synthetic hands: v0.2.0, schema 3, 500 study decisions; Paper theme applied to Study and persisted across reload.
+- macOS Apple Silicon app bundle built successfully (`npm run desktop:build -- --bundles app`). Platform CI and native runtime acceptance remain separate; no Windows/Intel runtime acceptance is claimed.
+- Existing Vite warnings: large bundle and mixed dialog imports.
+
+## Earlier public-preview validation
+
 # Public preview validation
 
 Version: 0.1.0. Public source snapshot based on local commit `70e4f9d`.

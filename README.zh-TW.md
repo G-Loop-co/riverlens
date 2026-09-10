@@ -12,6 +12,8 @@ RiverLens 是 Natural8／GGPoker 個人現金桌牌譜分析桌面工具。介�
 
 README 共 **13 種語言**；App 介面維持 **English／繁中／簡中**。目前 `main` 已加入外觀主題；`v0.1.0` tag 保留原始發布快照。
 
+目前 `main`：**v0.2.0** 新增 Spot Explorer、自訂目標 Leak Finder、來源策略翻前對照及 Trainer。「**資料與設定 → 外觀主題**」提供森林綠、午夜藍、暖白並儲存選擇。策略包需自行提供，頻率對照不是 decision EV。詳見[學習工作台](docs/study-workflow.md)及[主題](docs/theme-selection.md)。
+
 ## 功能
 
 | 功能 | 用途 |

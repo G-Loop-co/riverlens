@@ -16,7 +16,9 @@ export default defineConfig({
         "**/src-tauri/**",
         "**/dist/**",
         "**/deliverables/**",
-      ],
+      ].map(
+        (pattern) => `${process.cwd().replace(/\\/g, "/")}/${pattern.slice(3)}`,
+      ),
     },
   },
   clearScreen: false,

@@ -55,10 +55,12 @@ export function Replayer({
   id,
   close,
   saved,
+  initialStep = 0,
 }: {
   id: number;
   close: () => void;
   saved: () => void;
+  initialStep?: number;
 }) {
   const { t } = useTranslation();
   const result = useRpc<HandDetail>({ op: "hand", id });
@@ -80,11 +82,11 @@ export function Replayer({
       setNote(a.note);
       setTags(a.tags.join(", "));
       setReviewed(a.reviewed);
-      setStep(0);
+      setStep(Math.min(Math.max(initialStep,0),result.data.hand.actions.length));
       setPlaying(false);
       setClean(true);
     }
-  }, [result.data]);
+  }, [result.data,initialStep]);
   useEffect(() => {
     if (!h || !playing) return;
     const t = setInterval(

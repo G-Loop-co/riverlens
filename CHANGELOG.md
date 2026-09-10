@@ -1,6 +1,13 @@
 # Changelog
 
-## Unreleased
+## v0.2.0
+
+- Add offline Spot Explorer, custom-target Leak Finder, source-backed preflop comparison and spaced-repetition Trainer.
+- Add Forest, Midnight and Paper themes with persistent selection across the full workspace.
+- Upgrade local storage to schema 3 with a safety backup before migration. Strategy packs are user-supplied; no decision EV or live assistance.
+
+
+## Documentation updates
 
 - Add Japanese, Korean, French, German, Spanish, Brazilian Portuguese, Italian, Dutch, Polish and Turkish READMEs (13 documentation languages total; app UI remains three languages).
 - Integrate the existing Forest / Midnight / Paper theme selector with persisted local preferences.

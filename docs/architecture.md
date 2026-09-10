@@ -94,3 +94,8 @@ V1 的必要条件：valid ledger、Hero 參與 HU、單底池、單 runout、�
 - 所有儲存偏好均可在 localStorage 受阻時降級為本次 session 狀態。語言字典各 563 項；未知診斷保留原文。
 
 返回頁面時先等待載入佔位內容被替換，再恢復記錄的主內容捲動位置；使用者開始捲動、點擊或鍵盤操作時停止自動還原。
+
+
+## 0.2.0 學習工作台
+
+Hero 決策索引、策略 adapter、Trainer、schema 3 遷移及資料界線，見 [學習工作台](study-workflow.md)。既有報表及 All-in equity 與學習頻率評核分開。

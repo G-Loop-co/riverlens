@@ -9,6 +9,7 @@ import {
   DownloadSimple,
   FunnelSimple,
   GridFour,
+  GraduationCap,
   HardDrives,
   ListChecks,
   Plus,
@@ -36,17 +37,21 @@ import { Settings } from "./components/Settings";
 import { Replayer } from "./components/Replayer";
 import { AdvancedFilters } from "./components/Filters";
 import { LanguageSelect } from "./components/LanguageSelect";
+import { StudyWorkspace } from "./components/StudyWorkspace";
 import { Dialog } from "./components/Dialog";
 import { normalizeFilter, readFilter, writePreference } from "./preferences";
 
-type Page = "overview" | "hands" | "ranges" | "review" | "imports" | "settings";
+type Page =
+  "overview" | "hands" | "ranges" | "review" | "study" | "imports" | "settings";
 const nav = [
   ["overview", "牌局總覽", ChartLineUp],
   ["hands", "手牌資料庫", Cards],
   ["ranges", "起手牌矩陣", GridFour],
   ["review", "複盤工作台", ListChecks],
+  ["study", "study.workspace", GraduationCap],
 ] as const;
 const titles: Record<Page, [string, string]> = {
+  study: ["study.workspace", "study.subtitle"],
   overview: ["牌局總覽", "從結果到決策，掌握每一手牌。"],
   hands: ["手牌資料庫", "篩選、標記，再逐步回看你嘅行動。"],
   ranges: ["起手牌矩陣", "你實際打過嘅 range；每格都可追溯。"],
@@ -63,6 +68,11 @@ export default function App() {
   const [importOpen, setImportOpen] = useState(false);
   const [advanced, setAdvanced] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
+  const [replayStep, setReplayStep] = useState(0);
+  function openHand(id: number) {
+    setReplayStep(0);
+    setSelected(id);
+  }
   const [toast, setToast] = useState("");
   const [globalError, setGlobalError] = useState("");
   const [saveName, setSaveName] = useState<string | null>(null);
@@ -99,7 +109,8 @@ export default function App() {
   }, [toast]);
   const running =
     jobs.data?.some((j) => j.state === "running") ||
-    health.data?.equity_running;
+    health.data?.equity_running ||
+    health.data?.study_running;
   useEffect(() => {
     if (!running) return;
     const id = setInterval(() => setRevision((v) => v + 1), 2500);
@@ -270,7 +281,7 @@ export default function App() {
           </div>
           <div className="version">
             <span>{t("RiverLens")}</span>
-            <span>{t("v0.1.0")}</span>
+            <span>v0.2.0</span>
           </div>
         </div>
       </aside>
@@ -345,7 +356,7 @@ export default function App() {
               </button>
             </ErrorBanner>
           )}
-          {!["imports", "settings"].includes(page) && (
+          {!["imports", "settings", "study"].includes(page) && (
             <>
               <div className="filterbar">
                 <div className="filter-select">
@@ -529,7 +540,7 @@ export default function App() {
               <HandsView
                 filter={filter}
                 revision={revision}
-                open={setSelected}
+                open={openHand}
                 notify={setToast}
               />
             </>
@@ -546,12 +557,25 @@ export default function App() {
           {page === "review" && (
             <ReviewView filter={filter} revision={revision} drill={drill} />
           )}
+          {page === "study" && (
+            <StudyWorkspace
+              profiles={profiles.data || []}
+              health={health.data || undefined}
+              revision={revision}
+              refresh={refresh}
+              open={(id, step) => {
+                setReplayStep(step);
+                setSelected(id);
+              }}
+              notify={setToast}
+            />
+          )}
           {page === "imports" && (
             <Imports
               jobs={jobs.data || []}
               revision={revision}
               refresh={refresh}
-              openHand={setSelected}
+              openHand={openHand}
               notify={setToast}
               onImport={() => setImportOpen(true)}
             />
@@ -589,6 +613,7 @@ export default function App() {
       {selected !== null && (
         <Replayer
           id={selected}
+          initialStep={replayStep}
           close={() => setSelected(null)}
           saved={() => {
             refresh();

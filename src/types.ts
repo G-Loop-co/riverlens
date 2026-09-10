@@ -219,6 +219,10 @@ export interface SavedFilter {
   filter: Filter;
 }
 export interface Health {
+  study?: import("./study-types").Coverage;
+  study_running?: boolean;
+  study_paused?: boolean;
+  study_error?: string | null;
   equity_error: string | null;
   version: string;
   parser: string;
@@ -231,6 +235,8 @@ export interface Health {
   offline: boolean;
 }
 export type Request =
+  | { op: "study"; request: import("./study-types").StudyRequest }
+  | { op: "study_control"; paused: boolean }
   | { op: "overview"; filter: Filter; group?: string }
   | {
       op: "hands";

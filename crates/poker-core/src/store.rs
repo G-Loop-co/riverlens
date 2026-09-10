@@ -87,12 +87,26 @@ pub fn init(path: &Path) -> Result<()> {
         |r| r.get(0),
     )?;
     anyhow::ensure!(
-        version == "1" || version == "2",
+        version == "1" || version == "2" || version == "3",
         "unsupported database schema {version}"
     );
+    if version != "3" {
+        let populated: bool =
+            c.query_row("SELECT EXISTS(SELECT 1 FROM hands)", [], |r| r.get(0))?;
+        if populated {
+            backup(
+                &c,
+                &path.with_file_name(format!(
+                    "before-study-{}.db",
+                    chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default()
+                )),
+            )?;
+        }
+    }
     if version == "1" {
         c.execute_batch("BEGIN IMMEDIATE; INSERT INTO hand_payload SELECT id,detail FROM hands; ALTER TABLE hands DROP COLUMN detail; UPDATE metadata SET value='2' WHERE key='schema_version'; COMMIT;")?;
     }
+    crate::study::init(&c)?;
     ensure_session_rollups(&c)?;
     c.execute(
         "INSERT OR IGNORE INTO profiles(id,data) VALUES(?1,?2)",
@@ -250,6 +264,7 @@ pub fn insert_batch(
         let id = tx.last_insert_rowid();
         tx.prepare_cached("INSERT INTO hand_payload VALUES(?1,?2)")?
             .execute(params![id, pack(&serde_json::to_vec(h)?)?])?;
+        crate::study::index_hand(&tx, id, h)?;
         for a in h.actions.iter().filter(|a| {
             a.actor == Some(h.hero_seat)
                 && matches!(a.kind.as_str(), "fold" | "check" | "call" | "bet" | "raise")
@@ -963,9 +978,12 @@ pub fn restore(c: &mut Connection, path: &Path) -> Result<()> {
         |r| r.get(0),
     )?;
     anyhow::ensure!(
-        schema == "2",
+        schema == "1" || schema == "2" || schema == "3",
         "unsupported backup schema; open older database with this version first to migrate it"
     );
+    drop(src);
+    init(staged.path())?;
+    let src = Connection::open_with_flags(staged.path(), OpenFlags::SQLITE_OPEN_READ_ONLY)?;
     {
         let b = rusqlite::backup::Backup::new(&src, c)?;
         finish_backup(&b)?;

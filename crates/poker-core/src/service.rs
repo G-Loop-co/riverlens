@@ -1,4 +1,4 @@
-use crate::{equity, model::*, parser, store};
+use crate::{equity, model::*, parser, store, study};
 use anyhow::{anyhow, Context, Result};
 use rusqlite::{params, OptionalExtension};
 use serde::{Deserialize, Serialize};
@@ -18,6 +18,12 @@ use walkdir::WalkDir;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case")]
 pub enum Request {
+    Study {
+        request: Box<study::StudyRequest>,
+    },
+    StudyControl {
+        paused: bool,
+    },
     Overview {
         filter: Filter,
         group: Option<String>,
@@ -96,6 +102,9 @@ pub struct Service {
     equity_running: AtomicBool,
     equity_generation: AtomicU64,
     equity_error: Mutex<Option<String>>,
+    study_running: AtomicBool,
+    study_pause: AtomicBool,
+    study_error: Mutex<Option<String>>,
     current: Mutex<Option<Job>>,
 }
 impl Service {
@@ -109,7 +118,7 @@ impl Service {
                 store::save_job(&c, &job)?;
             }
         }
-        Ok(Arc::new(Self {
+        let service = Arc::new(Self {
             path,
             writer: Mutex::new(()),
             active: AtomicBool::new(false),
@@ -118,12 +127,33 @@ impl Service {
             equity_running: AtomicBool::new(false),
             equity_generation: AtomicU64::new(0),
             equity_error: Mutex::new(None),
+            study_running: AtomicBool::new(false),
+            study_pause: AtomicBool::new(false),
+            study_error: Mutex::new(None),
             current: Mutex::new(None),
-        }))
+        });
+        service.start_study();
+        Ok(service)
     }
     pub fn handle(self: &Arc<Self>, request: Request) -> Result<Value> {
         let mut c = store::open(&self.path)?;
         match request {
+            Request::Study { request } => {
+                let _guard = if request.writes() {
+                    Some(self.writer.lock().unwrap())
+                } else {
+                    None
+                };
+                request.run(&mut c)
+            }
+            Request::StudyControl { paused } => {
+                self.study_pause.store(paused, Ordering::SeqCst);
+                if !paused {
+                    *self.study_error.lock().unwrap() = None;
+                    self.start_study();
+                }
+                Ok(json!({"paused":paused}))
+            }
             Request::Overview { filter, group } => {
                 let tx = c.transaction()?;
                 let report = store::report(&tx, &filter, group.as_deref().unwrap_or("date"))?;
@@ -255,6 +285,7 @@ impl Service {
                     "請先完成或取消匯入"
                 );
                 self.equity_pause.store(true, Ordering::Relaxed);
+                self.study_pause.store(true, Ordering::SeqCst);
                 let result = (|| -> Result<Value> {
                     let _l = self.writer.lock().unwrap();
                     self.equity_generation.fetch_add(1, Ordering::SeqCst);
@@ -276,6 +307,8 @@ impl Service {
                     Ok(json!({"restored":true,"safety_backup":safety.to_string_lossy()}))
                 })();
                 self.active.store(false, Ordering::SeqCst);
+                self.study_pause.store(false, Ordering::SeqCst);
+                self.start_study();
                 result
             }
             Request::Export {
@@ -298,9 +331,52 @@ impl Service {
                 Ok(json!({"complete":true}))
             }
             Request::Health => Ok(
-                json!({"version":"0.1.0","parser":PARSER_VERSION,"stats":STATS_VERSION,"database":self.path.to_string_lossy(),"import_active":self.active.load(Ordering::Relaxed),"equity_running":self.equity_running.load(Ordering::Relaxed),"equity_paused":self.equity_pause.load(Ordering::Relaxed),"equity_error":self.equity_error.lock().unwrap().clone(),"schema":2,"offline":true}),
+                json!({"version":"0.2.0","parser":PARSER_VERSION,"stats":STATS_VERSION,"database":self.path.to_string_lossy(),"import_active":self.active.load(Ordering::Relaxed),"equity_running":self.equity_running.load(Ordering::Relaxed),"equity_paused":self.equity_pause.load(Ordering::Relaxed),"equity_error":self.equity_error.lock().unwrap().clone(),"schema":3,"offline":true,"study":study::coverage(&c)?,"study_running":self.study_running.load(Ordering::Relaxed),"study_paused":self.study_pause.load(Ordering::Relaxed),"study_error":self.study_error.lock().unwrap().clone()}),
             ),
         }
+    }
+    pub fn start_study(self: &Arc<Self>) {
+        if self.study_pause.load(Ordering::SeqCst)
+            || self.study_running.swap(true, Ordering::SeqCst)
+        {
+            return;
+        }
+        let service = self.clone();
+        std::thread::spawn(move || {
+            let result = (|| -> Result<()> {
+                let mut c = store::open(&service.path)?;
+                loop {
+                    if service.study_pause.load(Ordering::SeqCst) {
+                        break;
+                    }
+                    let count = {
+                        let _lock = service.writer.lock().unwrap();
+                        if service.study_pause.load(Ordering::SeqCst) {
+                            break;
+                        }
+                        study::backfill(&mut c, 50)?
+                    };
+                    if count == 0 {
+                        break;
+                    }
+                    std::thread::sleep(std::time::Duration::from_millis(2));
+                }
+                Ok(())
+            })();
+            if let Err(error) = &result {
+                *service.study_error.lock().unwrap() = Some(format!("{error:#}"));
+                service.study_pause.store(true, Ordering::SeqCst);
+            }
+            service.study_running.store(false, Ordering::SeqCst);
+            // Restore/resume can request work while the previous worker exits.
+            if result.is_ok() && !service.study_pause.load(Ordering::SeqCst) {
+                if let Ok(c) = store::open(&service.path) {
+                    if study::coverage(&c).is_ok_and(|v| v["complete"] == false) {
+                        service.start_study();
+                    }
+                }
+            }
+        });
     }
     fn start(self: &Arc<Self>, job: Job) -> Result<()> {
         if self.active.swap(true, Ordering::SeqCst) {
@@ -513,6 +589,7 @@ impl Service {
             return Err(anyhow!("匯入中"));
         }
         self.equity_pause.store(true, Ordering::Relaxed);
+        self.study_pause.store(true, Ordering::SeqCst);
         let result = (|| -> Result<()> {
             let _l = self.writer.lock().unwrap();
             self.equity_generation.fetch_add(1, Ordering::SeqCst);
@@ -586,6 +663,7 @@ impl Service {
                     &serde_json::from_value(row["filter"].clone())?,
                 )?;
             }
+            study::copy_user_data(&c, &next)?;
             next.execute_batch("PRAGMA wal_checkpoint(TRUNCATE)")?;
             drop(next);
             store::restore(&mut c, &staging)?;
@@ -594,6 +672,8 @@ impl Service {
         })();
         self.active.store(false, Ordering::SeqCst);
         self.equity_pause.store(false, Ordering::Relaxed);
+        self.study_pause.store(false, Ordering::SeqCst);
+        self.start_study();
         self.start_equity();
         result
     }

@@ -12,6 +12,8 @@ RiverLens is a Tauri desktop application for reviewing your own completed Natura
 
 README translations: **13 languages**. App interface: **English, Traditional Chinese and Simplified Chinese**. Current `main` adds appearance themes; the `v0.1.0` release tag remains the original source snapshot.
 
+Current `main`: **v0.2.0** adds Spot Explorer, custom-target Leak Finder, source-backed preflop comparison and Trainer. **Settings → Appearance** offers Forest, Midnight and Paper with saved selection. User-supplied strategy packs are required; frequency comparisons are not decision EV. See [Study workflow](docs/study-workflow.md) and [Themes](docs/theme-selection.md).
+
 ## Features
 
 | Feature | What you can do |
