@@ -92,3 +92,9 @@ This release publishes a clean source snapshot. Private hand histories, local da
 ## Licensing
 
 The repository is public, but a project-wide reuse license has not yet been selected. Do not assume MIT or Apache licensing for RiverLens itself. Third-party components retain their respective licenses; see [THIRD_PARTY.md](THIRD_PARTY.md).
+
+## AI agent and coach preview
+
+AI Coach adds a local stdio MCP connector and optional BYOK OpenAI, Anthropic and Gemini coaching. Agent analysis creates evidence-linked drafts for user review; core statistics and the offline study workspace remain available without cloud access. Enabling a provider transmits the selected anonymized context to that provider.
+
+See [AI setup, tools and validation](docs/ai-agent-coach.md). Codex CLI and native draft/practice flows have synthetic-data acceptance. Provider live calls remain pending; no claim of complete cloud validation.

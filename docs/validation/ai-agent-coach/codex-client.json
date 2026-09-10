@@ -1,0 +1,191 @@
+{
+  "client": "Codex CLI",
+  "synthetic_only": true,
+  "approval": "--approve-for-me; no global configuration edited",
+  "calls": [
+    {
+      "id": "item_2",
+      "type": "mcp_tool_call",
+      "server": "riverlens",
+      "tool": "get_data_catalog",
+      "arguments": {},
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"args\":{},\"data\":{\"coverage\":{\"from\":1788163200,\"hands\":30,\"to\":1788163229,\"valid\":30},\"filter_fields\":{\"action\":null,\"bet_max\":null,\"bet_min\":null,\"cue\":null,\"currency\":null,\"date_from\":null,\"date_to\":null,\"effective_max\":null,\"effective_min\":null,\"ev_status\":null,\"flop_players\":null,\"game\":null,\"hand_class\":null,\"high_card\":null,\"paired\":null,\"player_count\":null,\"position\":null,\"pot_type\":null,\"profile\":null,\"result\":null,\"reviewed\":null,\"search\":null,\"session\":null,\"showdown\":null,\"source_date\":null,\"stack_max\":null,\"stack_min\":null,\"stakes\":null,\"stat\":null,\"stat_mode\":null,\"status\":null,\"street\":null,\"tag\":null,\"texture\":null,\"timezone\":null},\"money\":\"Hand and decision amounts are decimal currency strings; explicitly named *_units fields are integer micro-units (1 currency unit = 1000000 micro-units).\",\"stats_version\":\"hero-opportunities/1.0.0\",\"values\":{\"currency\":{\"truncated\":false,\"values\":[\"USD\"]},\"game\":{\"truncated\":false,\"values\":[\"Cash\",\"Rush\"]},\"position\":{\"truncated\":false,\"values\":[\"BB\",\"BTN\",\"CO\",\"HJ\",\"SB\",\"UTG\"]},\"pot_type\":{\"truncated\":false,\"values\":[\"SRP\"]},\"profile\":{\"truncated\":false,\"values\":[\"synthetic-benchmark\"]},\"stakes\":{\"truncated\":false,\"values\":[\"0.01/0.02\"]}}},\"evidence_id\":\"e-b1ebe6520380135ec7daae4a3cdfac0d300c2e335b0657704f751e2a4a12a215\",\"tool\":\"get_data_catalog\",\"version\":\"5948d7367bab8ee841c915743f629dd5:30\"}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null,
+      "status": "completed"
+    },
+    {
+      "id": "item_3",
+      "type": "mcp_tool_call",
+      "server": "riverlens",
+      "tool": "query_stats",
+      "arguments": {
+        "version": "5948d7367bab8ee841c915743f629dd5:30",
+        "filter": {
+          "profile": "synthetic-benchmark"
+        }
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"args\":{\"filter\":{\"profile\":\"synthetic-benchmark\"},\"version\":\"5948d7367bab8ee841c915743f629dd5:30\"},\"data\":{\"adjusted\":\"1.15\",\"bb100\":191.66666666666669,\"coverage\":{\"quarantined\":0,\"valid\":30},\"currency\":\"USD\",\"ev\":{\"complete\":0,\"excluded\":0,\"pending\":0,\"reasons\":{}},\"groups\":[{\"adjusted\":\"0.55\",\"bb100\":550.0,\"hands\":5,\"key\":\"BB\",\"net\":\"0.55\",\"net_bb\":27.5,\"nsd\":\"0.00\",\"sd\":\"0.55\"},{\"adjusted\":\"0.60\",\"bb100\":600.0,\"hands\":5,\"key\":\"BTN\",\"net\":\"0.60\",\"net_bb\":30.0,\"nsd\":\"0.00\",\"sd\":\"0.60\"},{\"adjusted\":\"0.60\",\"bb100\":600.0,\"hands\":5,\"key\":\"CO\",\"net\":\"0.60\",\"net_bb\":30.0,\"nsd\":\"0.00\",\"sd\":\"0.60\"},{\"adjusted\":\"-0.60\",\"bb100\":-600.0,\"hands\":5,\"key\":\"HJ\",\"net\":\"-0.60\",\"net_bb\":-30.0,\"nsd\":\"0.00\",\"sd\":\"-0.60\"},{\"adjusted\":\"-0.60\",\"bb100\":-600.0,\"hands\":5,\"key\":\"SB\",\"net\":\"-0.60\",\"net_bb\":-30.0,\"nsd\":\"0.00\",\"sd\":\"-0.60\"},{\"adjusted\":\"0.60\",\"bb100\":600.0,\"hands\":5,\"key\":\"UTG\",\"net\":\"0.60\",\"net_bb\":30.0,\"nsd\":\"0.00\",\"sd\":\"0.60\"}],\"groups_truncated\":false,\"hands\":30,\"net\":\"1.15\",\"net_bb\":57.5,\"nsd\":\"0.00\",\"sd\":\"1.15\",\"stats\":[{\"definition\":\"主動 Call／Raise 手數 ÷ 可作自願翻前決策手數；不含 walk、強制盲注及 ante。\",\"id\":\"vpip\",\"label\":\"VPIP\",\"numerator\":30,\"opportunities\":30,\"value\":100.0},{\"definition\":\"曾翻前加注手數 ÷ 曾有合法翻前加注機會手數。\",\"id\":\"pfr\",\"label\":\"PFR\",\"numerator\":25,\"opportunities\":30,\"value\":83.33333333333334},{\"definition\":\"無人 limp／raise 前 Open Raise 次數 ÷ 相同 first-in 機會；不含 BB walk。\",\"id\":\"rfi\",\"label\":\"RFI\",\"numerator\":25,\"opportunities\":25,\"value\":100.0},{\"definition\":\"首次翻前 re-raise 手數 ÷ 面對單一 raise 且能合法 re-raise 手數；包含 squeeze。\",\"id\":\"three_bet\",\"label\":\"3-bet\",\"numerator\":0,\"opportunities\":5,\"value\":0.0},{\"definition\":\"Hero 已加注後直接面對 3-bet 而 Fold 次數 ÷ 同類決策機會。\",\"id\":\"fold_three_bet\",\"label\":\"Fold to 3-bet\",\"numerator\":0,\"opportunities\":0,\"value\":null},{\"definition\":\"盲位直接面對 first-in open、尚無 caller 時 Fold 次數 ÷ 同類機會。\",\"id\":\"blind_fold\",\"label\":\"Blind Fold\",\"numerator\":0,\"opportunities\":5,\"value\":0.0},{\"definition\":\"盲位直接面對 first-in open、尚無 caller 時 Call 次數 ÷ 同類機會。\",\"id\":\"blind_call\",\"label\":\"Blind Call\",\"numerator\":5,\"opportunities\":5,\"value\":100.0},{\"definition\":\"盲位直接面對 first-in open、尚無 caller 時 Raise 次數 ÷ 同類機會。\",\"id\":\"blind_raise\",\"label\":\"Blind Raise\",\"numerator\":0,\"opportunities\":5,\"value\":0.0},{\"definition\":\"最後翻前 aggressor 在 flop 無人先下注時 Bet 次數 ÷ 同類可下注機會。\",\"id\":\"cbet\",\"label\":\"Flop C-bet\",\"numerator\":20,\"opportunities\":25,\"value\":80.0},{\"definition\":\"Hero 直接面對 flop C-bet 而 Fold 次數 ÷ 同類可決策機會；不含中間 Raise。\",\"id\":\"fold_cbet\",\"label\":\"Fold vs C-bet\",\"numerator\":0,\"opportunities\":0,\"value\":null},{\"definition\":\"Hero 到 showdown 手數 ÷ Hero saw flop 手數。\",\"id\":\"wtsd\",\"label\":\"WTSD\",\"numerator\":30,\"opportunities\":30,\"value\":100.0},{\"definition\":\"Hero showdown 收到 contested pot 派彩手數 ÷ Hero showdown 手數；split 也計贏。\",\"id\":\"wsd\",\"label\":\"W$SD\",\"numerator\":20,\"opportunities\":30,\"value\":66.66666666666666},{\"definition\":\"Hero saw flop 並收到 contested pot 派彩手數 ÷ Hero saw flop 手數。\",\"id\":\"wwsf\",\"label\":\"WWSF\",\"numerator\":20,\"opportunities\":30,\"value\":66.66666666666666}],\"stats_version\":\"hero-opportunities/1.0.0\"},\"evidence_id\":\"e-524b698504bb2cf825dc8a85cf868b355789c682136a097d209fedc839b62ecb\",\"tool\":\"query_stats\",\"version\":\"5948d7367bab8ee841c915743f629dd5:30\"}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null,
+      "status": "completed"
+    },
+    {
+      "id": "item_4",
+      "type": "mcp_tool_call",
+      "server": "riverlens",
+      "tool": "find_leak_candidates",
+      "arguments": {
+        "version": "5948d7367bab8ee841c915743f629dd5:30",
+        "filter": {
+          "profile": "synthetic-benchmark"
+        }
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"args\":{\"filter\":{\"profile\":\"synthetic-benchmark\"},\"version\":\"5948d7367bab8ee841c915743f629dd5:30\"},\"data\":{\"reason\":\"No declared target; losses do not establish a leak\",\"report\":{\"adjusted\":\"1.15\",\"bb100\":191.66666666666669,\"coverage\":{\"quarantined\":0,\"valid\":30},\"currency\":\"USD\",\"ev\":{\"complete\":0,\"excluded\":0,\"pending\":0,\"reasons\":{}},\"groups\":[{\"adjusted\":\"0.55\",\"bb100\":550.0,\"hands\":5,\"key\":\"BB\",\"net\":\"0.55\",\"net_bb\":27.5,\"nsd\":\"0.00\",\"sd\":\"0.55\"},{\"adjusted\":\"0.60\",\"bb100\":600.0,\"hands\":5,\"key\":\"BTN\",\"net\":\"0.60\",\"net_bb\":30.0,\"nsd\":\"0.00\",\"sd\":\"0.60\"},{\"adjusted\":\"0.60\",\"bb100\":600.0,\"hands\":5,\"key\":\"CO\",\"net\":\"0.60\",\"net_bb\":30.0,\"nsd\":\"0.00\",\"sd\":\"0.60\"},{\"adjusted\":\"-0.60\",\"bb100\":-600.0,\"hands\":5,\"key\":\"HJ\",\"net\":\"-0.60\",\"net_bb\":-30.0,\"nsd\":\"0.00\",\"sd\":\"-0.60\"},{\"adjusted\":\"-0.60\",\"bb100\":-600.0,\"hands\":5,\"key\":\"SB\",\"net\":\"-0.60\",\"net_bb\":-30.0,\"nsd\":\"0.00\",\"sd\":\"-0.60\"},{\"adjusted\":\"0.60\",\"bb100\":600.0,\"hands\":5,\"key\":\"UTG\",\"net\":\"0.60\",\"net_bb\":30.0,\"nsd\":\"0.00\",\"sd\":\"0.60\"}],\"groups_truncated\":false,\"hands\":30,\"net\":\"1.15\",\"net_bb\":57.5,\"nsd\":\"0.00\",\"sd\":\"1.15\",\"stats\":[{\"definition\":\"主動 Call／Raise 手數 ÷ 可作自願翻前決策手數；不含 walk、強制盲注及 ante。\",\"id\":\"vpip\",\"label\":\"VPIP\",\"numerator\":30,\"opportunities\":30,\"value\":100.0},{\"definition\":\"曾翻前加注手數 ÷ 曾有合法翻前加注機會手數。\",\"id\":\"pfr\",\"label\":\"PFR\",\"numerator\":25,\"opportunities\":30,\"value\":83.33333333333334},{\"definition\":\"無人 limp／raise 前 Open Raise 次數 ÷ 相同 first-in 機會；不含 BB walk。\",\"id\":\"rfi\",\"label\":\"RFI\",\"numerator\":25,\"opportunities\":25,\"value\":100.0},{\"definition\":\"首次翻前 re-raise 手數 ÷ 面對單一 raise 且能合法 re-raise 手數；包含 squeeze。\",\"id\":\"three_bet\",\"label\":\"3-bet\",\"numerator\":0,\"opportunities\":5,\"value\":0.0},{\"definition\":\"Hero 已加注後直接面對 3-bet 而 Fold 次數 ÷ 同類決策機會。\",\"id\":\"fold_three_bet\",\"label\":\"Fold to 3-bet\",\"numerator\":0,\"opportunities\":0,\"value\":null},{\"definition\":\"盲位直接面對 first-in open、尚無 caller 時 Fold 次數 ÷ 同類機會。\",\"id\":\"blind_fold\",\"label\":\"Blind Fold\",\"numerator\":0,\"opportunities\":5,\"value\":0.0},{\"definition\":\"盲位直接面對 first-in open、尚無 caller 時 Call 次數 ÷ 同類機會。\",\"id\":\"blind_call\",\"label\":\"Blind Call\",\"numerator\":5,\"opportunities\":5,\"value\":100.0},{\"definition\":\"盲位直接面對 first-in open、尚無 caller 時 Raise 次數 ÷ 同類機會。\",\"id\":\"blind_raise\",\"label\":\"Blind Raise\",\"numerator\":0,\"opportunities\":5,\"value\":0.0},{\"definition\":\"最後翻前 aggressor 在 flop 無人先下注時 Bet 次數 ÷ 同類可下注機會。\",\"id\":\"cbet\",\"label\":\"Flop C-bet\",\"numerator\":20,\"opportunities\":25,\"value\":80.0},{\"definition\":\"Hero 直接面對 flop C-bet 而 Fold 次數 ÷ 同類可決策機會；不含中間 Raise。\",\"id\":\"fold_cbet\",\"label\":\"Fold vs C-bet\",\"numerator\":0,\"opportunities\":0,\"value\":null},{\"definition\":\"Hero 到 showdown 手數 ÷ Hero saw flop 手數。\",\"id\":\"wtsd\",\"label\":\"WTSD\",\"numerator\":30,\"opportunities\":30,\"value\":100.0},{\"definition\":\"Hero showdown 收到 contested pot 派彩手數 ÷ Hero showdown 手數；split 也計贏。\",\"id\":\"wsd\",\"label\":\"W$SD\",\"numerator\":20,\"opportunities\":30,\"value\":66.66666666666666},{\"definition\":\"Hero saw flop 並收到 contested pot 派彩手數 ÷ Hero saw flop 手數。\",\"id\":\"wwsf\",\"label\":\"WWSF\",\"numerator\":20,\"opportunities\":30,\"value\":66.66666666666666}],\"stats_version\":\"hero-opportunities/1.0.0\"},\"status\":\"review_only\"},\"evidence_id\":\"e-94723281f5876fa64c941cc474f765c799b5e3b653d2502f978a9070e6a1086c\",\"tool\":\"find_leak_candidates\",\"version\":\"5948d7367bab8ee841c915743f629dd5:30\"}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null,
+      "status": "completed"
+    },
+    {
+      "id": "item_5",
+      "type": "mcp_tool_call",
+      "server": "riverlens",
+      "tool": "find_spots",
+      "arguments": {
+        "version": "5948d7367bab8ee841c915743f629dd5:30",
+        "filter": {
+          "profile": "synthetic-benchmark"
+        },
+        "limit": 1
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"args\":{\"filter\":{\"profile\":\"synthetic-benchmark\"},\"limit\":1,\"version\":\"5948d7367bab8ee841c915743f629dd5:30\"},\"data\":{\"next_cursor\":30,\"ordering\":\"id_desc\",\"path_semantics\":\"ordered subsequence\",\"rows\":[{\"hand_class\":\"AKo\",\"id\":30,\"played_at\":1788163229,\"position\":\"BTN\"}],\"truncated\":true},\"evidence_id\":\"e-08c953251266a69ab35d97f8bd38563e97ecb7cb626bf3944e3013539e751b3b\",\"tool\":\"find_spots\",\"version\":\"5948d7367bab8ee841c915743f629dd5:30\"}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null,
+      "status": "completed"
+    },
+    {
+      "id": "item_6",
+      "type": "mcp_tool_call",
+      "server": "riverlens",
+      "tool": "get_hand",
+      "arguments": {
+        "id": 30,
+        "version": "5948d7367bab8ee841c915743f629dd5:30"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"args\":{\"id\":30,\"version\":\"5948d7367bab8ee841c915743f629dd5:30\"},\"data\":{\"actions\":[{\"actor\":1,\"all_in\":false,\"amount\":\"0.01\",\"cards\":[],\"kind\":\"small_blind\",\"pot_after\":\"0.01\",\"runout\":0,\"seq\":0,\"street\":\"preflop\",\"to\":\"0.00\"},{\"actor\":2,\"all_in\":false,\"amount\":\"0.02\",\"cards\":[],\"kind\":\"big_blind\",\"pot_after\":\"0.03\",\"runout\":0,\"seq\":1,\"street\":\"preflop\",\"to\":\"0.00\"},{\"actor\":3,\"all_in\":false,\"amount\":\"0.00\",\"cards\":[],\"kind\":\"fold\",\"pot_after\":\"0.03\",\"runout\":0,\"seq\":2,\"street\":\"preflop\",\"to\":\"0.00\"},{\"actor\":4,\"all_in\":false,\"amount\":\"0.00\",\"cards\":[],\"kind\":\"fold\",\"pot_after\":\"0.03\",\"runout\":0,\"seq\":3,\"street\":\"preflop\",\"to\":\"0.00\"},{\"actor\":5,\"all_in\":false,\"amount\":\"0.00\",\"cards\":[],\"kind\":\"fold\",\"pot_after\":\"0.03\",\"runout\":0,\"seq\":4,\"street\":\"preflop\",\"to\":\"0.00\"},{\"actor\":6,\"all_in\":false,\"amount\":\"0.06\",\"cards\":[],\"kind\":\"raise\",\"pot_after\":\"0.09\",\"runout\":0,\"seq\":5,\"street\":\"preflop\",\"to\":\"0.06\"},{\"actor\":1,\"all_in\":false,\"amount\":\"0.00\",\"cards\":[],\"kind\":\"fold\",\"pot_after\":\"0.09\",\"runout\":0,\"seq\":6,\"street\":\"preflop\",\"to\":\"0.00\"},{\"actor\":2,\"all_in\":false,\"amount\":\"0.04\",\"cards\":[],\"kind\":\"call\",\"pot_after\":\"0.13\",\"runout\":0,\"seq\":7,\"street\":\"preflop\",\"to\":\"0.00\"},{\"actor\":null,\"all_in\":false,\"amount\":\"0.00\",\"cards\":[\"Ks\",\"7d\",\"2c\"],\"kind\":\"board\",\"pot_after\":\"0.13\",\"runout\":0,\"seq\":8,\"street\":\"flop\",\"to\":\"0.00\"},{\"actor\":2,\"all_in\":false,\"amount\":\"0.00\",\"cards\":[],\"kind\":\"check\",\"pot_after\":\"0.13\",\"runout\":0,\"seq\":9,\"street\":\"flop\",\"to\":\"0.00\"},{\"actor\":6,\"all_in\":false,\"amount\":\"0.06\",\"cards\":[],\"kind\":\"bet\",\"pot_after\":\"0.19\",\"runout\":0,\"seq\":10,\"street\":\"flop\",\"to\":\"0.00\"},{\"actor\":2,\"all_in\":false,\"amount\":\"0.06\",\"cards\":[],\"kind\":\"call\",\"pot_after\":\"0.25\",\"runout\":0,\"seq\":11,\"street\":\"flop\",\"to\":\"0.00\"},{\"actor\":null,\"all_in\":false,\"amount\":\"0.00\",\"cards\":[\"Ks\",\"7d\",\"2c\",\"3h\"],\"kind\":\"board\",\"pot_after\":\"0.25\",\"runout\":0,\"seq\":12,\"street\":\"turn\",\"to\":\"0.00\"},{\"actor\":2,\"all_in\":false,\"amount\":\"0.00\",\"cards\":[],\"kind\":\"check\",\"pot_after\":\"0.25\",\"runout\":0,\"seq\":13,\"street\":\"turn\",\"to\":\"0.00\"},{\"actor\":6,\"all_in\":false,\"amount\":\"0.00\",\"cards\":[],\"kind\":\"check\",\"pot_after\":\"0.25\",\"runout\":0,\"seq\":14,\"street\":\"turn\",\"to\":\"0.00\"},{\"actor\":null,\"all_in\":false,\"amount\":\"0.00\",\"cards\":[\"Ks\",\"7d\",\"2c\",\"3h\",\"9c\"],\"kind\":\"board\",\"pot_after\":\"0.25\",\"runout\":0,\"seq\":15,\"street\":\"river\",\"to\":\"0.00\"},{\"actor\":2,\"all_in\":false,\"amount\":\"0.00\",\"cards\":[],\"kind\":\"check\",\"pot_after\":\"0.25\",\"runout\":0,\"seq\":16,\"street\":\"river\",\"to\":\"0.00\"},{\"actor\":6,\"all_in\":false,\"amount\":\"0.00\",\"cards\":[],\"kind\":\"check\",\"pot_after\":\"0.25\",\"runout\":0,\"seq\":17,\"street\":\"river\",\"to\":\"0.00\"},{\"actor\":6,\"all_in\":false,\"amount\":\"0.00\",\"cards\":[\"As\",\"Kd\"],\"kind\":\"show\",\"pot_after\":\"0.25\",\"runout\":0,\"seq\":18,\"street\":\"river\",\"to\":\"0.00\"},{\"actor\":2,\"all_in\":false,\"amount\":\"0.00\",\"cards\":[\"Qs\",\"Qd\"],\"kind\":\"show\",\"pot_after\":\"0.25\",\"runout\":0,\"seq\":19,\"street\":\"river\",\"to\":\"0.00\"},{\"actor\":6,\"all_in\":false,\"amount\":\"0.24\",\"cards\":[],\"kind\":\"collect\",\"pot_after\":\"0.25\",\"runout\":0,\"seq\":20,\"street\":\"river\",\"to\":\"0.00\"}],\"adjusted_net\":null,\"bb\":\"0.02\",\"boards\":[[\"Ks\",\"7d\",\"2c\",\"3h\",\"9c\"]],\"brand\":\"Natural8\",\"button\":6,\"cashout\":\"0.00\",\"cashout_risk\":\"0.00\",\"collected\":\"0.24\",\"cues\":[\"cbet_turn_check\"],\"currency\":\"USD\",\"equity\":null,\"equity_input\":null,\"ev_reason\":null,\"ev_status\":\"not_applicable\",\"fees\":{\"Bingo\":\"0.00\",\"Fortune\":\"0.00\",\"Jackpot\":\"0.00\",\"Rake\":\"0.01\",\"Tax\":\"0.00\"},\"flop_players\":2,\"game\":\"Cash\",\"hand_class\":\"AKo\",\"hero_seat\":6,\"hero_stack_bb\":100.0,\"high_card\":\"K\",\"hu_effective_bb\":100.0,\"id\":\"SYN000000000029\",\"invested\":\"0.12\",\"issues\":[],\"max_seats\":6,\"net\":\"0.12\",\"paired\":false,\"parser_version\":\"gg-cash/1.0.0\",\"played_at\":1788163229,\"player_count\":6,\"players\":[{\"cards\":[],\"hero\":false,\"name\":\"Seat 1\",\"position\":\"SB\",\"seat\":1,\"stack\":\"2.00\"},{\"cards\":[\"Qs\",\"Qd\"],\"hero\":false,\"name\":\"Seat 2\",\"position\":\"BB\",\"seat\":2,\"stack\":\"2.00\"},{\"cards\":[],\"hero\":false,\"name\":\"Seat 3\",\"position\":\"UTG\",\"seat\":3,\"stack\":\"2.00\"},{\"cards\":[],\"hero\":false,\"name\":\"Seat 4\",\"position\":\"HJ\",\"seat\":4,\"stack\":\"2.00\"},{\"cards\":[],\"hero\":false,\"name\":\"Seat 5\",\"position\":\"CO\",\"seat\":5,\"stack\":\"2.00\"},{\"cards\":[\"As\",\"Kd\"],\"hero\":true,\"name\":\"Hero\",\"position\":\"BTN\",\"seat\":6,\"stack\":\"2.00\"}],\"position\":\"BTN\",\"pot_type\":\"SRP\",\"pots\":[{\"amount\":\"0.25\",\"eligible\":[2,6]}],\"returned\":\"0.00\",\"saw_flop\":true,\"sb\":\"0.01\",\"showdown\":true,\"stats\":{\"blind_call\":{\"numerator\":0,\"opportunities\":0},\"blind_fold\":{\"numerator\":0,\"opportunities\":0},\"blind_raise\":{\"numerator\":0,\"opportunities\":0},\"cbet\":{\"numerator\":1,\"opportunities\":1},\"fold_cbet\":{\"numerator\":0,\"opportunities\":0},\"fold_three_bet\":{\"numerator\":0,\"opportunities\":0},\"pfr\":{\"numerator\":1,\"opportunities\":1},\"rfi\":{\"numerator\":1,\"opportunities\":1},\"three_bet\":{\"numerator\":0,\"opportunities\":0},\"vpip\":{\"numerator\":1,\"opportunities\":1},\"wsd\":{\"numerator\":1,\"opportunities\":1},\"wtsd\":{\"numerator\":1,\"opportunities\":1},\"wwsf\":{\"numerator\":1,\"opportunities\":1}},\"stats_version\":\"hero-opportunities/1.0.0\",\"status\":\"valid\",\"texture\":\"rainbow\",\"timezone\":\"Asia/Hong_Kong\",\"total_pot\":\"0.25\"},\"evidence_id\":\"e-83438cd620ed57aff8e19cce5cf1b9562864982aabeac1626b8f70c5d796815e\",\"tool\":\"get_hand\",\"version\":\"5948d7367bab8ee841c915743f629dd5:30\"}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null,
+      "status": "completed"
+    },
+    {
+      "id": "item_7",
+      "type": "mcp_tool_call",
+      "server": "riverlens",
+      "tool": "get_decision_context",
+      "arguments": {
+        "id": 30,
+        "seq": 5,
+        "version": "5948d7367bab8ee841c915743f629dd5:30"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"args\":{\"id\":30,\"seq\":5,\"version\":\"5948d7367bab8ee841c915743f629dd5:30\"},\"data\":{\"actions\":[{\"actor\":1,\"all_in\":false,\"amount\":\"0.01\",\"cards\":[],\"kind\":\"small_blind\",\"pot_after\":\"0.01\",\"runout\":0,\"seq\":0,\"street\":\"preflop\",\"to\":\"0.00\"},{\"actor\":2,\"all_in\":false,\"amount\":\"0.02\",\"cards\":[],\"kind\":\"big_blind\",\"pot_after\":\"0.03\",\"runout\":0,\"seq\":1,\"street\":\"preflop\",\"to\":\"0.00\"},{\"actor\":3,\"all_in\":false,\"amount\":\"0.00\",\"cards\":[],\"kind\":\"fold\",\"pot_after\":\"0.03\",\"runout\":0,\"seq\":2,\"street\":\"preflop\",\"to\":\"0.00\"},{\"actor\":4,\"all_in\":false,\"amount\":\"0.00\",\"cards\":[],\"kind\":\"fold\",\"pot_after\":\"0.03\",\"runout\":0,\"seq\":3,\"street\":\"preflop\",\"to\":\"0.00\"},{\"actor\":5,\"all_in\":false,\"amount\":\"0.00\",\"cards\":[],\"kind\":\"fold\",\"pot_after\":\"0.03\",\"runout\":0,\"seq\":4,\"street\":\"preflop\",\"to\":\"0.00\"}],\"bb\":\"0.02\",\"hand\":30,\"notice\":\"Decision-before view. Outcomes, future cards and opponent cards omitted.\",\"players\":[{\"cards\":[],\"hero\":false,\"position\":\"SB\",\"seat\":1,\"stack\":\"2.00\"},{\"cards\":[],\"hero\":false,\"position\":\"BB\",\"seat\":2,\"stack\":\"2.00\"},{\"cards\":[],\"hero\":false,\"position\":\"UTG\",\"seat\":3,\"stack\":\"2.00\"},{\"cards\":[],\"hero\":false,\"position\":\"HJ\",\"seat\":4,\"stack\":\"2.00\"},{\"cards\":[],\"hero\":false,\"position\":\"CO\",\"seat\":5,\"stack\":\"2.00\"},{\"cards\":[\"As\",\"Kd\"],\"hero\":true,\"position\":\"BTN\",\"seat\":6,\"stack\":\"2.00\"}],\"position\":\"BTN\",\"sb\":\"0.01\",\"seq\":5,\"street\":\"preflop\"},\"evidence_id\":\"e-e933535215109d1808c6c214bcb4e28fe92a0ad8c00b5b0c3c2b19109350fe21\",\"tool\":\"get_decision_context\",\"version\":\"5948d7367bab8ee841c915743f629dd5:30\"}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null,
+      "status": "completed"
+    },
+    {
+      "id": "item_8",
+      "type": "mcp_tool_call",
+      "server": "riverlens",
+      "tool": "create_practice_draft",
+      "arguments": {
+        "version": "5948d7367bab8ee841c915743f629dd5:30",
+        "draft": {
+          "id": "codex-live-acceptance-20260910",
+          "title": "Codex MCP acceptance",
+          "text": "僅使用 synthetic-benchmark 合成資料（synthetic data），共 30 手有效樣本。本草稿僅供自我檢視（self review）及 MCP 整合驗收；未設定目標，不推論真實漏洞或 solver 正確性。唯一練習使用 hand 30、seq 5 的決策前資訊，不提供答案。保留草稿，未接受。",
+          "evidence": [
+            "e-b1ebe6520380135ec7daae4a3cdfac0d300c2e335b0657704f751e2a4a12a215",
+            "e-524b698504bb2cf825dc8a85cf868b355789c682136a097d209fedc839b62ecb",
+            "e-94723281f5876fa64c941cc474f765c799b5e3b653d2502f978a9070e6a1086c",
+            "e-08c953251266a69ab35d97f8bd38563e97ecb7cb626bf3944e3013539e751b3b",
+            "e-83438cd620ed57aff8e19cce5cf1b9562864982aabeac1626b8f70c5d796815e",
+            "e-e933535215109d1808c6c214bcb4e28fe92a0ad8c00b5b0c3c2b19109350fe21"
+          ],
+          "items": [
+            {
+              "hand": 30,
+              "seq": 5,
+              "prompt": "合成資料自我檢視：僅依此決策前畫面，說明 Hero 在 BTN 持 As Kd、前位皆棄牌時會選擇的行動、適用尺寸與理由。此題不提供標準答案，亦不代表 solver 評分。"
+            }
+          ]
+        }
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"args\":{\"draft\":{\"evidence\":[\"e-b1ebe6520380135ec7daae4a3cdfac0d300c2e335b0657704f751e2a4a12a215\",\"e-524b698504bb2cf825dc8a85cf868b355789c682136a097d209fedc839b62ecb\",\"e-94723281f5876fa64c941cc474f765c799b5e3b653d2502f978a9070e6a1086c\",\"e-08c953251266a69ab35d97f8bd38563e97ecb7cb626bf3944e3013539e751b3b\",\"e-83438cd620ed57aff8e19cce5cf1b9562864982aabeac1626b8f70c5d796815e\",\"e-e933535215109d1808c6c214bcb4e28fe92a0ad8c00b5b0c3c2b19109350fe21\"],\"id\":\"codex-live-acceptance-20260910\",\"items\":[{\"hand\":30,\"prompt\":\"合成資料自我檢視：僅依此決策前畫面，說明 Hero 在 BTN 持 As Kd、前位皆棄牌時會選擇的行動、適用尺寸與理由。此題不提供標準答案，亦不代表 solver 評分。\",\"seq\":5}],\"text\":\"僅使用 synthetic-benchmark 合成資料（synthetic data），共 30 手有效樣本。本草稿僅供自我檢視（self review）及 MCP 整合驗收；未設定目標，不推論真實漏洞或 solver 正確性。唯一練習使用 hand 30、seq 5 的決策前資訊，不提供答案。保留草稿，未接受。\",\"title\":\"Codex MCP acceptance\"},\"version\":\"5948d7367bab8ee841c915743f629dd5:30\"},\"data\":{\"applied\":false,\"id\":\"codex-live-acceptance-20260910\",\"status\":\"draft\"},\"evidence_id\":\"e-d6d145c00c38bdf0b0fe140cf01711413efd60533ca0a4f977cd48a1323caf85\",\"tool\":\"create_practice_draft\",\"version\":\"5948d7367bab8ee841c915743f629dd5:30\"}"
+          }
+        ],
+        "structured_content": null
+      },
+      "error": null,
+      "status": "completed"
+    }
+  ],
+  "native_acceptance": {
+    "draft": "codex-live-acceptance-20260910",
+    "accepted": true,
+    "answer": "Raise 3",
+    "actual_action": "raise",
+    "evaluation": "self_review",
+    "attempts_total": 2,
+    "bb_display": [
+      0.5,
+      1
+    ],
+    "connection_revoked": true
+  }
+}

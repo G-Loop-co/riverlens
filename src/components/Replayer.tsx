@@ -58,11 +58,13 @@ export function Replayer({
   close,
   saved,
   initialStep = 0,
+  askAi,
 }: {
   id: number;
   close: () => void;
   saved: () => void;
   initialStep?: number;
+  askAi?: (seq: number) => void;
 }) {
   const { t } = useTranslation();
   const result = useRpc<HandDetail>({ op: "hand", id });
@@ -191,6 +193,11 @@ export function Replayer({
                 t("載入牌局…")
               )}
             </h2>
+            {askAi && (
+              <button className="button" onClick={() => askAi(step)}>
+                {t("問 AI")}
+              </button>
+            )}
           </div>
           <button
             className="icon-button"

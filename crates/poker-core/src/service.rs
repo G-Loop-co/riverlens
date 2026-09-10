@@ -24,6 +24,35 @@ pub enum Request {
     StudyControl {
         paused: bool,
     },
+    AgentTool {
+        name: String,
+        arguments: Value,
+        #[serde(default)]
+        share_notes: bool,
+    },
+    AgentReview {
+        id: String,
+        revision: i64,
+        draft: crate::agent::Draft,
+        accept: bool,
+    },
+    AgentPractice {
+        id: String,
+        item: usize,
+        answer: Option<String>,
+    },
+    AgentEvidence {
+        id: String,
+    },
+    AgentImportStrategy {
+        path: String,
+    },
+    AgentStrategyConfig {
+        profile: String,
+        rake_id: String,
+        tree_id: String,
+    },
+
     Overview {
         filter: Filter,
         group: Option<String>,
@@ -154,6 +183,105 @@ impl Service {
                 }
                 Ok(json!({"paused":paused}))
             }
+            Request::AgentTool {
+                name,
+                arguments,
+                share_notes,
+            } => {
+                let _l = self.writer.lock().unwrap();
+                crate::agent::call(&mut c, &name, arguments, share_notes)
+            }
+            Request::AgentEvidence { id } => {
+                let data: String =
+                    c.query_row("SELECT data FROM ai_evidence WHERE id=?1", [id], |r| {
+                        r.get(0)
+                    })?;
+                Ok(serde_json::from_str(&data)?)
+            }
+            Request::AgentStrategyConfig {
+                profile,
+                rake_id,
+                tree_id,
+            } => {
+                anyhow::ensure!(
+                    !rake_id.is_empty()
+                        && !tree_id.is_empty()
+                        && rake_id.len() <= 100
+                        && tree_id.len() <= 100,
+                    "rake and tree identifiers required"
+                );
+                let _l = self.writer.lock().unwrap();
+                let exists: bool = c.query_row(
+                    "SELECT EXISTS(SELECT 1 FROM profiles WHERE id=?1)",
+                    [&profile],
+                    |r| r.get(0),
+                )?;
+                anyhow::ensure!(exists, "profile missing");
+                c.execute("INSERT INTO ai_strategy_config VALUES(?1,?2,?3) ON CONFLICT(profile) DO UPDATE SET rake_id=excluded.rake_id,tree_id=excluded.tree_id",params![profile,rake_id,tree_id])?;
+                Ok(json!({"saved":true}))
+            }
+            Request::AgentImportStrategy { path } => {
+                let _l = self.writer.lock().unwrap();
+                crate::strategy::import(&c, Path::new(&path))
+            }
+            Request::AgentReview {
+                id,
+                revision,
+                draft,
+                accept,
+            } => {
+                let _l = self.writer.lock().unwrap();
+                let tx = c.transaction()?;
+                anyhow::ensure!(id == draft.id, "draft id mismatch");
+                crate::agent::validate_draft(&tx, &draft, &crate::agent::version(&tx)?, false)?;
+                let n=tx.execute("UPDATE ai_drafts SET title=?1,body=?2,status=?3,revision=revision+1 WHERE id=?4 AND revision=?5",params![draft.title,serde_json::to_string(&draft)?,if accept {"accepted"}else{"draft"},id,revision])?;
+                anyhow::ensure!(n == 1, "draft changed: refresh before saving");
+                tx.commit()?;
+                Ok(json!({"saved":true}))
+            }
+            Request::AgentPractice { id, item, answer } => {
+                let _l = self.writer.lock().unwrap();
+                let (body, status): (String, String) = c.query_row(
+                    "SELECT body,status FROM ai_drafts WHERE id=?1",
+                    [&id],
+                    |r| Ok((r.get(0)?, r.get(1)?)),
+                )?;
+                anyhow::ensure!(status == "accepted", "accept the practice draft first");
+                let d: crate::agent::Draft = serde_json::from_str(&body)?;
+                let q = d.items.get(item).context("practice item missing")?;
+                let context = crate::agent::decision(&c, q.hand, q.seq)?;
+                if let Some(answer) = answer {
+                    anyhow::ensure!(
+                        !answer.trim().is_empty() && answer.len() <= 5000,
+                        "answer required, maximum 5000 characters"
+                    );
+                    c.execute(
+                        "INSERT INTO ai_attempts(draft,item,answer) VALUES(?1,?2,?3)",
+                        params![id, item, answer],
+                    )?;
+                    let h = store::get_hand(&c, q.hand)?;
+                    let actual = h.actions.iter().find(|a| a.seq == q.seq as usize);
+                    let ids = c
+                        .prepare("SELECT id FROM ai_strategies ORDER BY id")?
+                        .query_map([], |r| r.get::<_, String>(0))?
+                        .collect::<rusqlite::Result<Vec<_>>>()?;
+                    let comparisons = ids
+                        .iter()
+                        .filter_map(|pack| crate::strategy::compare(&c, q.hand, q.seq, pack).ok())
+                        .collect::<Vec<_>>();
+                    let exact = comparisons.iter().find(|v| v["status"] == "exact");
+                    let chosen = exact
+                        .and_then(|v| v["frequencies"].as_array())
+                        .and_then(|v| v.iter().find(|a| a["action"] == answer))
+                        .and_then(|v| v["frequency"].as_f64());
+                    Ok(
+                        json!({"context":context,"actual_action":actual,"evaluation":if exact.is_some(){"exact_preflop"}else{"self_review"},"strategy":exact,"answer_frequency":chosen,"comparisons":comparisons,"notice":"Actual action is not a solver answer. Enter an exact action label for frequency feedback."}),
+                    )
+                } else {
+                    Ok(json!({"context":context,"prompt":q.prompt}))
+                }
+            }
+
             Request::Overview { filter, group } => {
                 let tx = c.transaction()?;
                 let report = store::report(&tx, &filter, group.as_deref().unwrap_or("date"))?;
@@ -295,6 +423,8 @@ impl Service {
                     ));
                     store::backup(&c, &safety)?;
                     store::restore(&mut c, Path::new(&path))?;
+                    crate::agent::invalidate(&c)?;
+                    crate::agent::backfill(&c)?;
                     for mut job in store::jobs(&c)? {
                         if job.state == "running" {
                             job.state = "interrupted".into();
@@ -640,6 +770,10 @@ impl Service {
                         params![old.profile, old.id],
                         |r| r.get(0),
                     )?;
+                    anyhow::ensure!(
+                        new_id == id,
+                        "rebuild requires stable hand IDs for learning references"
+                    );
                     store::save_annotation(&mut next, new_id, &store::annotation(&c, id)?)?;
                     last = id;
                 }
@@ -664,6 +798,31 @@ impl Service {
                 )?;
             }
             study::copy_user_data(&c, &next)?;
+            for table in [
+                "ai_meta",
+                "ai_evidence",
+                "ai_drafts",
+                "ai_attempts",
+                "ai_strategies",
+                "ai_strategy_config",
+            ] {
+                let mut query = c.prepare(&format!("SELECT * FROM {table}"))?;
+                let count = query.column_count();
+                let mut rows = query.query([])?;
+                while let Some(row) = rows.next()? {
+                    let values = (0..count)
+                        .map(|i| row.get::<_, rusqlite::types::Value>(i))
+                        .collect::<rusqlite::Result<Vec<_>>>()?;
+                    next.execute(
+                        &format!(
+                            "INSERT OR REPLACE INTO {table} VALUES({})",
+                            vec!["?"; count].join(",")
+                        ),
+                        rusqlite::params_from_iter(values),
+                    )?;
+                }
+            }
+            crate::agent::invalidate(&next)?;
             next.execute_batch("PRAGMA wal_checkpoint(TRUNCATE)")?;
             drop(next);
             store::restore(&mut c, &staging)?;

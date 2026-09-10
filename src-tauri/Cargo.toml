@@ -11,3 +11,5 @@ tauri = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
 poker-core = { path = "../crates/poker-core" }
 serde_json = "1"
+serde = { version = "1", features = ["derive"] }
+riverlens-ai = { path = "../crates/riverlens-ai" }

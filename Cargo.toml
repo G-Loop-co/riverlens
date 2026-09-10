@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/poker-core", "src-tauri"]
+members = ["crates/poker-core", "src-tauri", "crates/riverlens-ai"]
 default-members = ["crates/poker-core"]
 resolver = "2"
 

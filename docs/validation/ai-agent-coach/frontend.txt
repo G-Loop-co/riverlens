@@ -1,0 +1,15 @@
+(node:79651) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:79650) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:79652) Warning: `--localstorage-file` was provided without a valid path
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ✓ src/theme.test.tsx (2 tests) 171ms
+ ✓ src/i18n.test.tsx (6 tests) 110ms
+ ✓ src/ai-coach.test.tsx (2 tests) 150ms
+ ✓ src/ui.test.tsx (7 tests) 191ms
+
+ Test Files  5 passed (5)
+      Tests  22 passed (22)
+   Start at  18:27:54
+   Duration  2.39s (transform 325ms, setup 0ms, collect 4.30s, tests 624ms, environment 1.56s, prepare 239ms)

@@ -1,7 +1,7 @@
 name: Desktop validation and unsigned bundles
 on:
   push:
-    branches: [main, 'feat/**']
+    branches: [main, "feat/**"]
   pull_request:
   workflow_dispatch:
 permissions:
@@ -31,8 +31,8 @@ jobs:
           components: rustfmt, clippy
       - run: npm ci
       - run: cargo fmt --all -- --check
-      - run: cargo clippy -p poker-core --all-targets -- -D warnings
-      - run: cargo test -p poker-core
+      - run: cargo clippy -p poker-core -p riverlens-ai -p riverlens --all-targets -- -D warnings
+      - run: cargo test -p poker-core -p riverlens-ai
       - run: npm test
       - run: npm run build
       - if: runner.os == 'macOS'
@@ -42,6 +42,13 @@ jobs:
         run: ditto -c -k --sequesterRsrc --keepParent target/${{ matrix.target }}/release/bundle/macos/RiverLens.app target/${{ matrix.target }}/release/bundle/RiverLens_${{ matrix.target }}.app.zip
       - if: runner.os == 'Windows'
         run: npm run desktop:build -- --target ${{ matrix.target }} --bundles nsis
+      - name: Packaged MCP smoke (native target)
+        if: matrix.target != 'x86_64-apple-darwin'
+        shell: bash
+        run: |
+          suffix=""
+          if [ "${{ runner.os }}" = "Windows" ]; then suffix=".exe"; fi
+          node scripts/mcp-smoke.mjs "target/${{ matrix.target }}/release/riverlens${suffix}"
       - uses: actions/upload-artifact@v4
         with:
           name: riverlens-${{ matrix.target }}-unsigned

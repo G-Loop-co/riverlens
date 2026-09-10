@@ -7,3 +7,6 @@ pub mod service;
 pub mod stats;
 pub mod store;
 pub mod study;
+
+pub mod agent;
+pub mod strategy;

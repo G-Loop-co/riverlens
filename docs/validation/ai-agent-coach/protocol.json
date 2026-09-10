@@ -1,0 +1,10 @@
+{
+  "checked_at": "2026-09-10 18:30:50 HKT",
+  "initialize": "passed",
+  "protocol": "2025-11-25",
+  "tool_count": 17,
+  "binary_sha256": "6a1b3177892f5d8db8a67fede6e29404c36277b00fbfe9144c57e21e068dbc9d",
+  "scope": "stdio protocol harness; not a real AI client acceptance",
+  "native_ui": "blocked by locked Mac",
+  "provider_live_calls": "not verified"
+}
