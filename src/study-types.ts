@@ -12,6 +12,8 @@ export interface LineAction {
   action: string;
 }
 export interface SpotDefinition {
+  scenario?: string;
+  preflop_path?: string;
   street?: string;
   position?: string;
   opponent?: string;
@@ -61,6 +63,7 @@ export interface StudyQuery {
   spot: SpotDefinition;
   before?: number | null;
   limit?: number;
+  strategy?: { pack: string; node: string; matched_only: boolean };
 }
 export interface Coverage {
   total: number;
@@ -100,21 +103,22 @@ export interface Benchmark extends SavedSpot {
   note: string;
 }
 export interface LeakRow {
+  name_key?: string | null;
   id: string;
   name: string;
   spot?: SpotDefinition;
-  source: "custom" | "gto";
+  source: "custom" | "gto" | "observation";
   note: string;
   action: string;
-  low: number;
-  high: number;
+  low: number | null;
+  high: number | null;
   actual: number | null;
   gap: number | null;
   interval: [number, number] | null;
   opportunities: number;
   hits: number;
   enough: boolean;
-  priority: number;
+  priority: number | null;
   node?: string;
   pack?: string;
 }
@@ -248,6 +252,8 @@ export type StudyRequest =
       data: SavedSpot | Benchmark;
     }
   | { op: "delete_item"; kind: "spot" | "benchmark"; id: string }
+  | { op: "presets" }
+  | { op: "hand_decisions"; hand: number }
   | { op: "packs" }
   | { op: "import_pack"; path: string }
   | { op: "nodes"; pack: string }

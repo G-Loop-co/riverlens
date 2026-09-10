@@ -276,6 +276,7 @@ pub fn parse_nexus(path: &Path) -> Result<StrategyPack> {
             reach,
         });
     }
+    propagate_issues(&mut output)?;
     let id = store::fingerprint(&format!("{}{}", manifest, serde_json::to_string(&raw)?));
     Ok(StrategyPack {
         id,
@@ -286,6 +287,48 @@ pub fn parse_nexus(path: &Path) -> Result<StrategyPack> {
         raw,
         nodes: output,
     })
+}
+
+// Re-run on stored packs too: raw values and immutable pack IDs stay unchanged.
+fn propagate_issues(nodes: &mut [StrategyNode]) -> Result<()> {
+    let mut order: Vec<_> = (0..nodes.len()).collect();
+    order.sort_by_key(|&i| nodes[i].path.split('-').filter(|s| !s.is_empty()).count());
+    for i in order {
+        let (prior, _) = ancestry(&nodes[i].path, &nodes[i].hero)?;
+        if let Some((path, _)) = prior {
+            let parent = nodes
+                .iter()
+                .find(|n| n.path == path && n.hero == nodes[i].hero)
+                .context("Missing parent strategy node")?;
+            let issues: Vec<_> = parent.issues.keys().cloned().collect();
+            for hand in issues {
+                nodes[i].frequencies.remove(&hand);
+                nodes[i]
+                    .issues
+                    .entry(hand)
+                    .or_insert_with(|| "ancestor_weight_inconsistent".into());
+            }
+        }
+    }
+    Ok(())
+}
+
+/// Neither the export's model identifier nor a hand history verifies the rake
+/// model. Until this adapter can compare independently verified model metadata,
+/// historical comparisons remain reference-only. Numerical theory drills remain
+/// available for cells whose entire arrival ancestry is internally consistent.
+pub fn model_reasons(p: &StrategyPack) -> Vec<String> {
+    let mut reasons = vec!["hand_model_unverified".into()];
+    if p.source["treeId"]
+        .as_str()
+        .is_none_or(|s| s.trim().is_empty())
+    {
+        reasons.push("source_tree_unverified".into());
+    }
+    if p.source["rake"].is_null() {
+        reasons.push("source_rake_unverified".into());
+    }
+    reasons
 }
 
 pub fn import(c: &Connection, path: &str) -> Result<Value> {
@@ -300,7 +343,9 @@ pub fn load(c: &Connection, id: &str) -> Result<StrategyPack> {
     let s: String = c.query_row("SELECT data FROM study_packs WHERE id=?1", [id], |r| {
         r.get(0)
     })?;
-    Ok(serde_json::from_str(&s)?)
+    let mut pack: StrategyPack = serde_json::from_str(&s)?;
+    propagate_issues(&mut pack.nodes)?;
+    Ok(pack)
 }
 fn summary(p: &StrategyPack) -> Value {
     json!({"id":p.id,"name":p.name,"source":p.source,"files":p.files,"nodes":p.nodes.len(),"ready_cells":p.nodes.iter().map(|n|n.frequencies.len()).sum::<usize>(),"reference_cells":p.nodes.iter().map(|n|n.issues.len()).sum::<usize>(),"imported_at":p.imported_at})
@@ -309,7 +354,11 @@ pub fn list(c: &Connection) -> Result<Value> {
     let mut s = c.prepare("SELECT data FROM study_packs ORDER BY id")?;
     let rows = s
         .query_map([], |r| r.get::<_, String>(0))?
-        .map(|r| Ok(summary(&serde_json::from_str::<StrategyPack>(&r?)?)))
+        .map(|r| {
+            let mut p: StrategyPack = serde_json::from_str(&r?)?;
+            propagate_issues(&mut p.nodes)?;
+            Ok(summary(&p))
+        })
         .collect::<Result<Vec<_>>>()?;
     Ok(json!(rows))
 }
@@ -318,8 +367,9 @@ pub fn nodes(c: &Connection, id: &str) -> Result<Value> {
     Ok(json!(p.nodes.iter().map(|n|json!({"id":n.id,"hero":n.hero,"path":n.path,"actions":n.actions,"ready_cells":n.frequencies.len(),"reference_cells":n.issues.len()})).collect::<Vec<_>>()))
 }
 
-pub fn mismatches(d: &Decision, node: &StrategyNode) -> Vec<String> {
+pub fn mismatches(d: &Decision, node: &StrategyNode, pack: &StrategyPack) -> Vec<String> {
     let mut reasons = configuration_mismatches(d);
+    reasons.extend(model_reasons(pack));
     if d.street != "preflop" {
         reasons.push("street".into());
     }
@@ -424,7 +474,7 @@ pub fn compare_decision(
             json!({"status":"unmatched","reasons":["action_path"],"decision":d,"source":p.source}),
         );
     };
-    let reasons = mismatches(&d, n);
+    let reasons = mismatches(&d, n, &p);
     let status = if reasons.is_empty() {
         "matched"
     } else {
@@ -442,6 +492,7 @@ struct Observed {
     actions: BTreeMap<String, u64>,
     matched_actions: BTreeMap<String, u64>,
     expected: BTreeMap<String, f64>,
+    reference_expected: BTreeMap<String, f64>,
 }
 
 pub fn matrix(c: &Connection, id: &str, node: &str, filter: &Filter) -> Result<Value> {
@@ -473,7 +524,14 @@ pub fn matrix(c: &Connection, id: &str, node: &str, filter: &Filter) -> Result<V
         entry.opportunities += count;
         let code = observed_code(&d.action, d.size, node).unwrap_or_else(|| "off_tree".into());
         *entry.actions.entry(code.clone()).or_default() += count;
+        if let Some(frequencies) = node.frequencies.get(&d.hand) {
+            for (action, frequency) in frequencies {
+                *entry.reference_expected.entry(action.clone()).or_default() +=
+                    frequency * count as f64;
+            }
+        }
         let mut mismatch = d.reasons.clone();
+        mismatch.extend(model_reasons(&pack));
         add_hand_reason(&mut mismatch, &d.hand, node);
         if mismatch.is_empty() {
             entry.matched += count;
@@ -521,6 +579,7 @@ pub fn leaks(c: &Connection, filter: &Filter, id: &str) -> Result<Vec<Value>> {
             continue;
         };
         let mut reasons = d.reasons.clone();
+        reasons.extend(model_reasons(&p));
         add_hand_reason(&mut reasons, &d.hand, n);
         if !reasons.is_empty() {
             continue;

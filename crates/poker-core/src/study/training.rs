@@ -56,7 +56,9 @@ pub fn enqueue(
                 .iter()
                 .find(|n| n.hero == d.position && n.path == d.preflop_path)
         });
-        let usable = n.filter(|n| strategy::mismatches(&d, n).is_empty());
+        let usable = n.filter(|n| {
+            strategy::mismatches(&d, n, source.as_ref().expect("node has pack")).is_empty()
+        });
         let mut question = from_decision(&d);
         let frequencies = usable
             .and_then(|n| n.frequencies.get(&d.hand_class))
@@ -149,7 +151,42 @@ fn card(c: &Connection, id: &str) -> Result<TrainingCard> {
     let data: String = c.query_row("SELECT data FROM study_cards WHERE id=?1", [id], |r| {
         r.get(0)
     })?;
-    Ok(serde_json::from_str(&data)?)
+    let mut card: TrainingCard = serde_json::from_str(&data)?;
+    if card.source == "gto" {
+        let pack = card
+            .pack
+            .as_deref()
+            .map(|id| strategy::load(c, id))
+            .transpose()?;
+        let node = pack.as_ref().and_then(|p| {
+            p.nodes.iter().find(|n| {
+                n.hero == card.question["position"].as_str().unwrap_or("")
+                    && n.path == card.question["preflop_path"].as_str().unwrap_or("")
+            })
+        });
+        let class = card.question["hand_class"].as_str().unwrap_or("");
+        let valid = node.and_then(|n| n.frequencies.get(class));
+        if let Some(reference) = &card.reference {
+            let resolved = super::resolve(c, reference).ok();
+            let matched = resolved
+                .as_ref()
+                .zip(node)
+                .zip(pack.as_ref())
+                .is_some_and(|(((_, d), n), p)| strategy::mismatches(d, n, p).is_empty());
+            if !matched {
+                card.source = "self".into();
+                card.frequencies = None;
+                if let Some((_, d)) = resolved {
+                    card.question = from_decision(&d);
+                }
+            }
+        } else if valid.is_none() {
+            // Keep progress and previous attempts, but never grade a stale theory key.
+            card.question["invalid_strategy"] = json!(true);
+            card.frequencies = None;
+        }
+    }
+    Ok(card)
 }
 
 pub fn state(c: &Connection) -> Result<Value> {
@@ -229,7 +266,8 @@ pub fn current(c: &Connection, id: &str) -> Result<Value> {
         .reference
         .as_ref()
         .and_then(|r| super::resolve(c, r).ok());
-    let stale = card.reference.is_some() && resolved.is_none();
+    let stale = (card.reference.is_some() && resolved.is_none())
+        || card.question["invalid_strategy"] == true;
     if let Some(feedback) = feedback.as_mut() {
         feedback["replay_hand"] = json!(resolved.as_ref().map(|(id, _)| id));
     }
@@ -256,6 +294,10 @@ pub fn answer(c: &Connection, id: &str, card_id: &str, input: &TrainingAnswer) -
         return current(c, id);
     }
     let card = card(c, card_id)?;
+    anyhow::ensure!(
+        card.question["invalid_strategy"] != true,
+        "Strategy ancestry is no longer verified"
+    );
     if let Some(r) = &card.reference {
         super::resolve(c, r)?;
     }
@@ -331,7 +373,8 @@ pub fn rate(c: &mut Connection, id: &str, card_id: &str, rating: &str) -> Result
         anyhow::ensure!(
             card.reference
                 .as_ref()
-                .is_some_and(|r| super::resolve(&tx, r).is_err()),
+                .is_some_and(|r| super::resolve(&tx, r).is_err())
+                || card.question["invalid_strategy"] == true,
             "Only unavailable decisions may be skipped"
         );
     } else {

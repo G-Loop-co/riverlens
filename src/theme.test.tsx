@@ -19,6 +19,12 @@ afterEach(() => {
   delete document.documentElement.dataset.theme;
 });
 
+it("defaults to Paper without replacing a saved selection", () => {
+  expect(readTheme()).toBe("paper");
+  localStorage.setItem(THEME_KEY, "forest");
+  expect(readTheme()).toBe("forest");
+});
+
 it("applies each choice immediately and restores it after remount/startup", () => {
   const view = render(<ThemeSelect />);
   for (const [label, id] of [
@@ -43,7 +49,7 @@ it("applies each choice immediately and restores it after remount/startup", () =
 
 it("falls back safely for unknown preferences and permits changes when storage is blocked", () => {
   localStorage.setItem(THEME_KEY, "obsolete-theme");
-  expect(readTheme()).toBe("forest");
+  expect(readTheme()).toBe("paper");
   vi.stubGlobal("localStorage", {
     getItem() {
       throw new Error("blocked");

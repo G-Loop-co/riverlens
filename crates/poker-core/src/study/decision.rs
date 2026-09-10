@@ -2,6 +2,7 @@ use crate::{model::Hand, money};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
+pub const INDEX_VERSION: &str = "hero-index/3";
 pub const VERSION: &str = "hero-decisions/2";
 pub const ACTIONS: &[&str] = &["fold", "check", "call", "bet", "raise"];
 
@@ -23,6 +24,8 @@ pub struct DecisionRef {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Decision {
     pub reference: DecisionRef,
+    #[serde(default)]
+    pub scenario: Option<String>,
     pub street: String,
     pub position: String,
     pub opponent: Option<String>,
@@ -82,6 +85,8 @@ pub fn derive(h: &Hand) -> Vec<Decision> {
     let mut street_raises = 0;
     let mut special = false;
     let mut aggressor = None;
+    let mut preflop_aggressor = None;
+    let mut hero_opened = false;
     let mut last_pct = None;
     let mut preflop = vec![];
     let mut line = vec![];
@@ -190,7 +195,18 @@ pub fn derive(h: &Hand) -> Vec<Decision> {
             } else {
                 "raise"
             };
+            let path = line_code(&line, "flop");
+            let scenario = if a.street == "preflop" && facing == "three_bet" && hero_opened {
+                Some("open_vs_3bet")
+            } else if a.street == "flop" && preflop_aggressor == Some(h.hero_seat)
+                && matches!(path.as_str(), "flop:hero:bet|flop:villain:raise" | "flop:villain:check|flop:hero:bet|flop:villain:raise") {
+                Some("cbet_vs_raise")
+            } else if a.street == "turn" && preflop_aggressor.is_some_and(|s| s != h.hero_seat)
+                && matches!(path.as_str(), "flop:hero:check|flop:villain:bet|flop:hero:call|turn:hero:check|turn:villain:bet" | "flop:villain:bet|flop:hero:call|turn:villain:bet") {
+                Some("facing_second_barrel")
+            } else { None };
             result.push(Decision {
+                scenario: scenario.map(str::to_owned),
                 reference: DecisionRef {
                     profile: h.profile.clone(),
                     hand_id: h.id.clone(),
@@ -282,6 +298,10 @@ pub fn derive(h: &Hand) -> Vec<Decision> {
                     last_pct = pct;
                     street_raises += 1;
                     if a.street == "preflop" {
+                        if raises == 0 && seat == h.hero_seat {
+                            hero_opened = true;
+                        }
+                        preflop_aggressor = Some(seat);
                         raises += 1;
                     }
                 } else if a.kind == "straddle" {

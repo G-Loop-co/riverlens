@@ -3,6 +3,7 @@ use anyhow::{bail, Context, Result};
 use chrono::{NaiveDate, TimeZone};
 use chrono_tz::Tz;
 use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
+use rusqlite::OptionalExtension;
 use rusqlite::{params, params_from_iter, types::Value as Sql, Connection, OpenFlags};
 use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
@@ -90,7 +91,14 @@ pub fn init(path: &Path) -> Result<()> {
         version == "1" || version == "2" || version == "3",
         "unsupported database schema {version}"
     );
-    if version != "3" {
+    let index_version: Option<String> = c
+        .query_row(
+            "SELECT value FROM metadata WHERE key='study_index_version'",
+            [],
+            |r| r.get(0),
+        )
+        .optional()?;
+    if version != "3" || index_version.as_deref() != Some(crate::study::decision::INDEX_VERSION) {
         let populated: bool =
             c.query_row("SELECT EXISTS(SELECT 1 FROM hands)", [], |r| r.get(0))?;
         if populated {
@@ -107,6 +115,7 @@ pub fn init(path: &Path) -> Result<()> {
         c.execute_batch("BEGIN IMMEDIATE; INSERT INTO hand_payload SELECT id,detail FROM hands; ALTER TABLE hands DROP COLUMN detail; UPDATE metadata SET value='2' WHERE key='schema_version'; COMMIT;")?;
     }
     crate::study::init(&c)?;
+    c.execute("INSERT INTO metadata(key,value) VALUES('study_index_version',?1) ON CONFLICT(key) DO UPDATE SET value=excluded.value", [crate::study::decision::INDEX_VERSION])?;
     ensure_session_rollups(&c)?;
     c.execute(
         "INSERT OR IGNORE INTO profiles(id,data) VALUES(?1,?2)",

@@ -2,6 +2,10 @@
 
 ## v0.2.0
 
+- Default new installations and invalid preferences to Paper (white); retain saved theme selections and use a light startup background.
+- Correct study-model trust, propagate ancestor weight issues on import and reload, and keep unverified historical comparisons reference-only.
+- Correct IP/OOP C-bet and open-versus-3-bet presets; show observation-only leak data without invented targets.
+- Add paginated strategy decision tracing and training from marked-hand replay; preserve annotations and restart progress.
 - Add offline Spot Explorer, custom-target Leak Finder, source-backed preflop comparison and spaced-repetition Trainer.
 - Add Forest, Midnight and Paper themes with persistent selection across the full workspace.
 - Upgrade local storage to schema 3 with a safety backup before migration. Strategy packs are user-supplied; no decision EV or live assistance.
