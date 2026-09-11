@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.3.1
+
+- Add DeepSeek and OpenCode Go providers, with model-specific API routing and correct tool continuation.
+- List all five AI providers, external MCP access and Go model IDs in the English and Traditional Chinese READMEs.
+- See [release notes](docs/release-v0.3.1.md) for setup and validation limits.
+
 ## v0.2.0
 
 - Default new installations and invalid preferences to Paper (white); retain saved theme selections and use a light startup background.

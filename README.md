@@ -6,13 +6,13 @@
 
 RiverLens is a Tauri desktop application for reviewing your own completed Natural8 / GGPoker cash-game hand histories. React and TypeScript power the interface; a Rust core handles parsing, statistics and local SQLite storage.
 
-> **[Download v0.3.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.3.0)** — AI coach, local MCP agent connection and offline study. Windows, Apple Silicon and Intel Mac packages. [Release notes](docs/release-v0.3.0.md).
+> **[Download v0.3.1](https://github.com/G-Loop-co/riverlens/releases/tag/v0.3.1)** — AI coach, local MCP agent connection and offline study. Windows, Apple Silicon and Intel Mac packages. [Release notes](docs/release-v0.3.1.md).
 
 ![RiverLens overview in English — synthetic data](docs/screenshots/overview-en.jpg)
 
 README translations: **13 languages**. App interface: **English, Traditional Chinese and Simplified Chinese**.
 
-**v0.3.0** adds AI-assisted review alongside Spot Explorer → Leak Finder → Preflop reference → Trainer. User-supplied strategy packs are required for strategy comparisons; frequencies are not decision EV. [Study workflow](docs/study-workflow.md) · [Themes](docs/theme-selection.md).
+**v0.3.1** adds AI-assisted review alongside Spot Explorer → Leak Finder → Preflop reference → Trainer. User-supplied strategy packs are required for strategy comparisons; frequencies are not decision EV. [Study workflow](docs/study-workflow.md) · [Themes](docs/theme-selection.md).
 
 ## Features
 
@@ -51,6 +51,33 @@ Your agent may need its own login/subscription. Update the connection configurat
 **Use the in-app coach — API key required:** save an OpenAI, Anthropic, Gemini, DeepSeek or OpenCode Go key in **AI Connections**, then choose a compatible model and sharing scope in **AI Coach**. Ask a question, or use **Ask AI** from the hand replayer.
 
 Selected context can be sent to the model provider, including through an external agent. Keys stay in the OS credential store. Live provider calls remain unverified; offline study works without a key. [Full setup and limitations](docs/ai-agent-coach.md).
+
+### Supported AI connections
+
+These are the five implemented in-app providers. Choose an account-accessible model with tool calling; integration support does not mean every model has been live-tested.
+
+| Provider | Models / API | Setup |
+| --- | --- | --- |
+| OpenAI | Tool-capable GPT models using Chat Completions | OpenAI API key |
+| Anthropic | Tool-capable Claude models using Messages | Anthropic API key |
+| Google Gemini | Tool-capable Gemini models using streamGenerateContent | Gemini API key |
+| DeepSeek | `deepseek-flash`, `deepseek-v4-pro`; accepted legacy aliases depend on the provider | DeepSeek API key |
+| OpenCode Go | GLM, Kimi, LongCat, DeepSeek, MiMo, Hy, MiniMax, Qwen, Grok, GPT and Muse; routed by model family | Go subscription and API key |
+
+**External agents:** clients supporting local **stdio MCP**, such as Codex, can use RiverLens tools through the displayed connection configuration. This is a protocol connection, not a built-in provider or a guarantee that every client has been tested. The client supplies its own model/login; RiverLens needs no provider key for this path.
+
+<details>
+<summary>OpenCode Go model IDs and automatic API routing</summary>
+
+| API | Model IDs |
+| --- | --- |
+| Chat Completions | `glm-5.3-flash`, `glm-5.3`, `glm-5.2`, `glm-5.1`, `kimi-k3`, `kimi-k2.7-code`, `kimi-k2.6`, `longcat-2.0`, `deepseek-v4.1-flash`, `deepseek-v4-pro`, `deepseek-v4-flash`, `deepseek-v4-flash-vision-exp`, `mimo-v2.5`, `mimo-v2.5-pro`, `hy4-preview`, `hy3` |
+| Messages | `minimax-m3`, `minimax-m2.7`, `minimax-m2.5`, `qwen3.8-max`, `qwen3.8-flash`, `qwen3.7-max`, `qwen3.7-plus`, `qwen3.6-plus` |
+| Responses | `grok-4.6`, `gpt-5.6-luna`, `muse-spark-1.3-contributor`, `muse-spark-1.2-contributor` |
+
+</details>
+
+Model catalogs change: check [DeepSeek](https://api-docs.deepseek.com/quick_start/pricing/) and [OpenCode Go](https://opencode.ai/docs/go/#endpoints) for current access and IDs. Enter the bare ID, without `opencode-go/`. Go is intended for coding-agent traffic; RiverLens poker coaching eligibility and live compatibility are unverified. Vision-capable models receive text only.
 
 ## Quick start
 
@@ -96,7 +123,7 @@ Data lives in the Tauri app-data directory (`app.riverlens.desktop`); the settin
 
 RiverLens is for offline, personal post-session review. It does not connect to the game client and provides no live HUD, real-time assistance, population mining, cloud sync or GTO best-action scoring. It is not affiliated with Natural8 or GGPoker.
 
-The v0.3.0 release includes AI/MCP integration and the offline study workflow. Private hand histories, local databases and strategy packs are excluded. See the [release notes](docs/release-v0.3.0.md) for validation limits.
+The v0.3.1 release includes AI/MCP integration and the offline study workflow. Private hand histories, local databases and strategy packs are excluded. See the [release notes](docs/release-v0.3.1.md) for validation limits.
 
 - [User guide (Traditional Chinese)](docs/user-guide.md)
 - [Architecture and statistical definitions](docs/architecture.md)
