@@ -28,6 +28,7 @@ import type {
 } from "./types";
 import { number, CUES, ACTIONS, STAT_LABELS } from "./format";
 import { ErrorBanner, Field } from "./components/UI";
+import { AiCoach } from "./components/AiCoach";
 import { Overview } from "./components/Overview";
 import { HandsView } from "./components/HandsView";
 import { RangeView } from "./components/RangeView";
@@ -42,8 +43,9 @@ import { Dialog } from "./components/Dialog";
 import { normalizeFilter, readFilter, writePreference } from "./preferences";
 
 type Page =
-  "overview" | "hands" | "ranges" | "review" | "study" | "imports" | "settings";
+  "coach" | "overview" | "hands" | "ranges" | "review" | "study" | "imports" | "settings";
 const nav = [
+  ["coach", "AI 教練", Cards],
   ["overview", "牌局總覽", ChartLineUp],
   ["hands", "手牌資料庫", Cards],
   ["ranges", "起手牌矩陣", GridFour],
@@ -52,6 +54,7 @@ const nav = [
 ] as const;
 const titles: Record<Page, [string, string]> = {
   study: ["study.workspace", "study.subtitle"],
+  coach: ["AI 教練", "用資料理解局面，把建議變成練習。"],
   overview: ["牌局總覽", "從結果到決策，掌握每一手牌。"],
   hands: ["手牌資料庫", "篩選、標記，再逐步回看你嘅行動。"],
   ranges: ["起手牌矩陣", "你實際打過嘅 range；每格都可追溯。"],
@@ -67,6 +70,7 @@ export default function App() {
   const [revision, setRevision] = useState(0);
   const [importOpen, setImportOpen] = useState(false);
   const [advanced, setAdvanced] = useState(false);
+  const [aiQuestion, setAiQuestion] = useState("");
   const [selected, setSelected] = useState<number | null>(null);
   const [replayStep, setReplayStep] = useState(0);
   function openHand(id: number) {
@@ -281,7 +285,7 @@ export default function App() {
           </div>
           <div className="version">
             <span>{t("RiverLens")}</span>
-            <span>v0.2.0</span>
+            <span>v0.3.0</span>
           </div>
         </div>
       </aside>
@@ -297,6 +301,9 @@ export default function App() {
             </strong>
           </div>
           <div className="topbar-actions">
+            <button className="button" onClick={() => navigate("coach")}>
+              {t("問 AI")}
+            </button>
             <LanguageSelect />
             <span className="connection">
               <i className={`status-dot ${health.error ? "offline" : ""}`} />
@@ -512,6 +519,16 @@ export default function App() {
               )}
             </>
           )}
+          {page === "coach" && (
+            <AiCoach
+              filter={filter}
+              question={aiQuestion}
+              openHand={(id, seq) => {
+                setReplayStep(seq ?? 0);
+                setSelected(id);
+              }}
+            />
+          )}
           {page === "overview" && (
             <Overview
               filter={filter}
@@ -614,7 +631,17 @@ export default function App() {
         <Replayer
           id={selected}
           initialStep={replayStep}
-          close={() => setSelected(null)}
+          askAi={(seq) => {
+            setAiQuestion(
+              t("複盤手牌") + " #" + selected + "，" + t("決策") + " " + seq,
+            );
+            setSelected(null);
+            navigate("coach");
+          }}
+          close={() => {
+            setSelected(null);
+            setReplayStep(0);
+          }}
           saved={() => {
             refresh();
             setToast(t("複盤筆記已儲存"));

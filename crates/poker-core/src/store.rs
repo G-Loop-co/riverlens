@@ -116,6 +116,8 @@ pub fn init(path: &Path) -> Result<()> {
     }
     crate::study::init(&c)?;
     c.execute("INSERT INTO metadata(key,value) VALUES('study_index_version',?1) ON CONFLICT(key) DO UPDATE SET value=excluded.value", [crate::study::decision::INDEX_VERSION])?;
+    crate::agent::init(&c)?;
+    crate::agent::backfill(&c)?;
     ensure_session_rollups(&c)?;
     c.execute(
         "INSERT OR IGNORE INTO profiles(id,data) VALUES(?1,?2)",
@@ -271,6 +273,7 @@ pub fn insert_batch(
         }
         insert.execute(params_from_iter(vals))?;
         let id = tx.last_insert_rowid();
+        crate::agent::index_hand(&tx, id, h)?;
         tx.prepare_cached("INSERT INTO hand_payload VALUES(?1,?2)")?
             .execute(params![id, pack(&serde_json::to_vec(h)?)?])?;
         crate::study::index_hand(&tx, id, h)?;

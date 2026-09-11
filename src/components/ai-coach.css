@@ -1,0 +1,81 @@
+.ai-workspace {
+  display: grid;
+  gap: 18px;
+  max-width: 1100px;
+}
+.ai-tabs,
+.ai-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+.ai-panel {
+  border: 1px solid var(--border, #354039);
+  border-radius: 14px;
+  padding: 24px;
+  background: var(--surface, transparent);
+  display: grid;
+  gap: 14px;
+}
+.ai-panel h2,
+.ai-panel h3,
+.ai-panel p {
+  margin: 0;
+}
+.ai-panel label {
+  display: grid;
+  gap: 7px;
+  flex: 1;
+  min-width: 180px;
+}
+.ai-panel input:not([type="checkbox"]),
+.ai-panel select,
+.ai-panel textarea {
+  width: 100%;
+  background: var(--bg, transparent);
+  color: inherit;
+  border: 1px solid var(--border, #526258);
+  padding: 10px;
+  border-radius: 8px;
+  font: inherit;
+}
+.ai-panel .ai-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ai-check input {
+  width: auto;
+}
+.ai-prose {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.7;
+}
+.ai-config {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 300px;
+  overflow: auto;
+}
+.ai-draft {
+  display: grid;
+  gap: 12px;
+  border-top: 1px solid var(--border, #354039);
+  padding-top: 20px;
+}
+.ai-panel table {
+  width: 100%;
+  text-align: left;
+  border-collapse: collapse;
+}
+.ai-panel th,
+.ai-panel td {
+  padding: 8px;
+  border-bottom: 1px solid var(--border, #354039);
+}
+.ai-panel button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

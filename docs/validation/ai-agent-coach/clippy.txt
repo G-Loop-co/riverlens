@@ -1,0 +1,3 @@
+    Checking riverlens-ai v0.1.0 (/Users/yc/Documents/ChatGPT/h2n/crates/riverlens-ai)
+    Checking riverlens v0.1.0 (/Users/yc/Documents/ChatGPT/h2n/src-tauri)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 4.57s

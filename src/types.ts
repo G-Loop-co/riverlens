@@ -237,6 +237,28 @@ export interface Health {
 export type Request =
   | { op: "study"; request: import("./study-types").StudyRequest }
   | { op: "study_control"; paused: boolean }
+  | {
+      op: "agent_strategy_config";
+      profile: string;
+      rake_id: string;
+      tree_id: string;
+    }
+  | {
+      op: "agent_tool";
+      name: string;
+      arguments: Record<string, unknown>;
+      share_notes?: boolean;
+    }
+  | {
+      op: "agent_review";
+      id: string;
+      revision: number;
+      draft: import("./components/AiCoach").AiDraft;
+      accept: boolean;
+    }
+  | { op: "agent_practice"; id: string; item: number; answer: string | null }
+  | { op: "agent_evidence"; id: string }
+  | { op: "agent_import_strategy"; path: string }
   | { op: "overview"; filter: Filter; group?: string }
   | {
       op: "hands";

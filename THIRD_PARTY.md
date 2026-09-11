@@ -24,3 +24,14 @@ RiverLens 使用鎖檔指定版本；完整 transitive dependencies 以 Cargo.lo
 GG Hand Analyzer（LayorX，MIT）僅作格式研究參考；核心 parser 以 exact units 與 streaming 設計獨立實作。原始碼鏈接、查證日期與決策見 docs/research-matrix.md。
 
 正式再分發前應附完整鎖定版本的第三方 LICENSE／NOTICE 集合；目前交付為個人本機開發包。
+
+## AI integration dependencies
+
+- rmcp (official Model Context Protocol Rust SDK): Apache-2.0.
+- interprocess (local Unix sockets / Windows named pipes): 0BSD OR Apache-2.0.
+- reqwest (native provider HTTP transport): MIT OR Apache-2.0.
+- keyring (OS credential store): MIT OR Apache-2.0.
+- tokio: MIT; futures-util: MIT OR Apache-2.0; rand: MIT OR Apache-2.0.
+- No proprietary strategy ranges are included. Users import their own licensed sources.
+
+Exact resolved versions and transitive dependencies are recorded in Cargo.lock.

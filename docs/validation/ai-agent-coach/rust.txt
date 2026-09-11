@@ -1,0 +1,106 @@
+   Compiling riverlens-ai v0.1.0 (/Users/yc/Documents/ChatGPT/h2n/crates/riverlens-ai)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 5.52s
+     Running unittests src/lib.rs (target/debug/deps/poker_core-88935c36817ba321)
+
+running 1 test
+test money::tests::exact_decimal_roundtrip ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/poker_core-2064917bb773295a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/agent.rs (target/debug/deps/agent-4ff08dbc4956bb12)
+
+running 10 tests
+test local_strategy_manifest_when_supplied ... ok
+test wilson_empty_and_uncertain_are_not_leaks ... ok
+test hand_redaction_and_decision_do_not_reveal_future ... ok
+test nonexistent_evidence_and_stale_evidence_rejected ... ok
+test paths_are_ordered_and_input_is_parameterized ... ok
+test exact_strategy_requires_verified_frequencies_and_matching_configuration ... ok
+test practice_requires_acceptance_and_records_actual_only_after_answer ... ok
+test statistics_match_existing_engine_and_require_versions ... ok
+test draft_idempotency_confirmation_and_backup ... ok
+test notes_search_requires_consent_and_survives_rebuild_restore ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.23s
+
+     Running tests/boundaries.rs (target/debug/deps/boundaries-bf8997a8abf620f3)
+
+running 18 tests
+test hero_folds_before_other_players_showdown ... ok
+test missed_blind_is_dead_not_raise_credit ... ok
+test cashout_receipt_is_added_without_duplicate_summary ... ok
+test cannot_raise_when_only_opponent_is_all_in ... ok
+test short_all_in_does_not_reopen_prior_limper ... ok
+test shared_flop_multiple_runouts_and_payouts ... ok
+test side_pots_inferred_from_contributions ... ok
+test unknown_holes_excluded_and_tie_equity_exact ... ok
+test squeeze_has_one_three_bet_opportunity ... ok
+test quarantine_cannot_enter_reports_even_with_explicit_status_filter ... ok
+test saved_filter_names_use_characters_for_all_languages ... ok
+test date_report_drill_uses_the_source_date_instead_of_hong_kong_midnight ... ok
+test conflicting_duplicates_and_sql_filters_are_safe ... ok
+test issue_links_stay_with_the_importing_profile_and_all_pages_are_reachable ... ok
+test equity_cache_is_persistent_and_idempotent ... ok
+test session_rollups_migrate_and_match_filtered_ledger ... ok
+test restore_invalidates_inflight_equity_and_recovers_after_invalid_backup ... ok
+test import_cancel_resume_restart_rebuild_and_export ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 10.25s
+
+     Running tests/core.rs (target/debug/deps/core-837c7d240c7f6668)
+
+running 16 tests
+test private_archive_acceptance_when_supplied ... ok
+test exact_turn_equity_and_cancel ... ok
+test preflop_fold_marker_is_not_showdown ... ok
+test fold_after_open_three_bet ... ok
+test donk_removes_cbet_opportunity ... ok
+test inconsistent_source_is_quarantined ... ok
+test big_blind_walk_has_no_voluntary_opportunity ... ok
+test sb_complete_and_bb_check ... ok
+test double_straddle_is_total_to ... ok
+test all_in_equity_ignores_actual_runout ... ok
+test cashout_outside_pot_ledger ... ok
+test return_is_not_profit_and_summary_not_double_counted ... ok
+test timezone_is_explicit ... ok
+test split_pot_counts_showdown_win ... ok
+test synthetic_fixture_conservation_all_seats ... ok
+test database_idempotence_filters_notes_and_backup ... ok
+
+test result: ok. 16 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.06s
+
+     Running unittests src/lib.rs (target/debug/deps/riverlens_ai-cd6a16f598735680)
+
+running 6 tests
+test coach::tests::refusals_and_truncation_do_not_become_complete_reports ... ok
+test coach::tests::openai_partial_tool_arguments_and_text ... ok
+test coach::tests::gemini_preserves_tool_signatures ... ok
+test coach::tests::anthropic_reassembles_json_and_usage ... ok
+test coach::tests::providers_share_tools_without_credentials_in_payload ... ok
+test bridge::tests::ipc_auth_tool_scope_and_revocation ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.08s
+
+     Running unittests src/bin/riverlens-mcp.rs (target/debug/deps/riverlens_mcp-098e1d366cdcae86)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests poker_core
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests riverlens_ai
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

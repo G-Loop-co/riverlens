@@ -79,7 +79,7 @@ V1 的必要条件：valid ledger、Hero 參與 HU、單底池、單 runout、�
 
 ## 安全與部署界線
 
-無遙測、網路帳戶、雲端牌譜、客戶端接入、HUD／RTA／MDA、公開發布或自動更新。前端 raw 文本由 React escape；動態 SQL 限定欄位白名單與參數，CSV 文本欄位阻止公式注入。ZIP 直接串流讀取，不接受 archive 路徑寫入。
+無遙測、RiverLens 網路帳戶、雲端牌譜同步、遊戲客戶端接入、HUD／RTA／MDA、公開發布或自動更新。選用 AI 教練在使用者同意後，從原生 Rust adapter 傳送所需資料至指定模型供應商；API key 存於 OS credential store。前端 raw 文本由 React escape；動態 SQL 限定欄位白名單與參數，CSV 文本欄位阻止公式注入。ZIP 直接串流讀取，不接受 archive 路徑寫入。
 
 開發 HTTP server 只綁 loopback，驗證 Origin、JSON content type、POST `/api`；正式桌面不啟動該 server。Tauri CSP 僅允許本地資源與 IPC，dialog 權限為 open/save。native command 參數由 Rust serde 驗證；錯誤傳回 UI。
 
@@ -99,3 +99,6 @@ V1 的必要条件：valid ledger、Hero 參與 HU、單底池、單 runout、�
 ## 0.2.0 學習工作台
 
 Hero 決策索引、策略 adapter、Trainer、schema 3 遷移及資料界線，見 [學習工作台](study-workflow.md)。既有報表及 All-in equity 與學習頻率評核分開。
+## AI agent 擴充（2026-09-10）
+
+共用限權 Agent Service、原生模型 adapters、本機 stdio MCP、證據／草稿與策略匹配見 [AI agent 與教練](ai-agent-coach.md)。正式桌面另提供經授權的本機 socket IPC，仍不啟動 HTTP listener。既有前端 CSP 保持不變；模型網路請求不經 WebView。
