@@ -6,13 +6,13 @@
 
 RiverLens 是 Natural8／GGPoker 個人現金桌牌譜分析桌面工具。介面使用 React／TypeScript，Rust core 負責解析、統計與本機 SQLite 儲存。
 
-> **[下載 v0.3.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.3.0)** — AI 教練、本機 MCP agent 連接及離線學習。提供 Windows、Apple Silicon、Intel Mac 套件。[發布說明](docs/release-v0.3.0.md)。
+> **[下載 v0.3.1](https://github.com/G-Loop-co/riverlens/releases/tag/v0.3.1)** — AI 教練、本機 MCP agent 連接及離線學習。提供 Windows、Apple Silicon、Intel Mac 套件。[發布說明](docs/release-v0.3.1.md)。
 
 ![RiverLens 繁體中文總覽：合成資料](docs/screenshots/overview-zh-TW.jpg)
 
 README 共 **13 種語言**；App 介面維持 **English／繁中／簡中**。
 
-**v0.3.0** 新增 AI 複盤，保留 Spot Explorer → Leak Finder → 翻前策略對照 → Trainer。策略包需自行提供；頻率對照不是 decision EV。[學習工作台](docs/study-workflow.md) · [主題](docs/theme-selection.md)。
+**v0.3.1** 新增 AI 複盤，保留 Spot Explorer → Leak Finder → 翻前策略對照 → Trainer。策略包需自行提供；頻率對照不是 decision EV。[學習工作台](docs/study-workflow.md) · [主題](docs/theme-selection.md)。
 
 ## 功能
 
@@ -50,9 +50,36 @@ README 共 **13 種語言**；App 介面維持 **English／繁中／簡中**。
 
 **使用 App 內 AI 教練：需要 API key**
 
-在「**AI 連接**」儲存 OpenAI、Anthropic 或 Gemini key，再於「**AI 教練**」選擇相容 model、分享範圍並提問；亦可從手牌回放按「**問 AI**」。
+在「**AI 連接**」儲存 OpenAI、Anthropic、Gemini、DeepSeek 或 OpenCode Go key，再於「**AI 教練**」選擇相容 model、分享範圍並提問；亦可從手牌回放按「**問 AI**」。
 
 選定內容可能傳送至模型供應商，包括經外部 agent 傳送。Key 存於系統憑證庫。雲端供應商實際呼叫尚未驗證；無 key 仍可使用離線學習。[完整設定與限制](docs/ai-agent-coach.md)。
+
+### 支援的 AI 連接
+
+App 已實作以下五個供應商。請選擇帳戶可用、支援工具呼叫的模型；已實作 API 不代表所有模型均已實測。
+
+| 供應商 | 模型／API | 設定 |
+| --- | --- | --- |
+| OpenAI | 支援工具的 GPT 模型；Chat Completions | OpenAI API key |
+| Anthropic | 支援工具的 Claude 模型；Messages | Anthropic API key |
+| Google Gemini | 支援工具的 Gemini 模型；streamGenerateContent | Gemini API key |
+| DeepSeek | `deepseek-flash`、`deepseek-v4-pro`；舊別名以供應商實際接受為準 | DeepSeek API key |
+| OpenCode Go | GLM、Kimi、LongCat、DeepSeek、MiMo、Hy、MiniMax、Qwen、Grok、GPT、Muse；依模型系列路由 | Go 訂閱及 API key |
+
+**外部 agent：**支援本機 **stdio MCP** 的客戶端（例如 Codex）可使用畫面提供的連接設定讀取 RiverLens 工具。這是協定連接，並非內建供應商，亦不代表每款客戶端均已實測。模型及登入由客戶端提供；此路徑不需要在 RiverLens 儲存供應商 key。
+
+<details>
+<summary>OpenCode Go 模型 ID 及自動 API 路由</summary>
+
+| API | 模型 ID |
+| --- | --- |
+| Chat Completions | `glm-5.3-flash`, `glm-5.3`, `glm-5.2`, `glm-5.1`, `kimi-k3`, `kimi-k2.7-code`, `kimi-k2.6`, `longcat-2.0`, `deepseek-v4.1-flash`, `deepseek-v4-pro`, `deepseek-v4-flash`, `deepseek-v4-flash-vision-exp`, `mimo-v2.5`, `mimo-v2.5-pro`, `hy4-preview`, `hy3` |
+| Messages | `minimax-m3`, `minimax-m2.7`, `minimax-m2.5`, `qwen3.8-max`, `qwen3.8-flash`, `qwen3.7-max`, `qwen3.7-plus`, `qwen3.6-plus` |
+| Responses | `grok-4.6`, `gpt-5.6-luna`, `muse-spark-1.3-contributor`, `muse-spark-1.2-contributor` |
+
+</details>
+
+模型目錄會變更；目前可用 ID 及權限以 [DeepSeek](https://api-docs.deepseek.com/quick_start/pricing/) 及 [OpenCode Go](https://opencode.ai/docs/go/#endpoints) 為準。輸入純模型 ID，不加 `opencode-go/`。Go 主要面向 coding agent；RiverLens Poker coaching 使用資格及實際相容性尚未驗證。具視覺能力的模型亦只會收到文字。
 
 ## 開始使用
 
@@ -98,7 +125,7 @@ npm run desktop:build -- --target x86_64-pc-windows-msvc --bundles nsis
 
 本工具供個人離線賽後複盤；不連接遊戲客戶端，沒有即時 HUD、RTA、群體資料挖掘、雲端同步或 GTO 最佳行動評分。與 Natural8／GGPoker 無隸屬關係。
 
-v0.3.0 包含 AI／MCP 整合及離線學習流程；不包含私人牌譜、本機資料庫或策略包。驗收限制見[發布說明](docs/release-v0.3.0.md)。
+v0.3.1 包含 AI／MCP 整合及離線學習流程；不包含私人牌譜、本機資料庫或策略包。驗收限制見[發布說明](docs/release-v0.3.1.md)。
 
 - [使用說明](docs/user-guide.md)
 - [架構與統計定義](docs/architecture.md)

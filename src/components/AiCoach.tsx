@@ -9,6 +9,14 @@ import { Card } from "./Replayer";
 import { ErrorBanner } from "./UI";
 import "./ai-coach.css";
 
+const PROVIDERS = [
+  "openai",
+  "anthropic",
+  "gemini",
+  "deepseek",
+  "opencode-go",
+] as const;
+
 type Data = Record<string, any>;
 type Evidence = {
   evidence_id: string;
@@ -66,6 +74,7 @@ export function AiCoach({
   const [packs, setPacks] = useState<Data[]>([]),
     [search, setSearch] = useState(""),
     [hits, setHits] = useState<Data[]>([]);
+  const sessionId = useRef(crypto.randomUUID());
   const id = useRef(""),
     text = useRef(""),
     historyRef = useRef<Data[]>([]);
@@ -148,6 +157,7 @@ export function AiCoach({
       await invoke("ai_chat", {
         chat: {
           id: id.current,
+          session_id: sessionId.current,
           provider,
           model: model.trim(),
           prompt,
@@ -241,7 +251,7 @@ export function AiCoach({
                     setModel("");
                   }}
                 >
-                  {["openai", "anthropic", "gemini"].map((p) => (
+                  {PROVIDERS.map((p) => (
                     <option key={p}>{p}</option>
                   ))}
                 </select>
@@ -681,7 +691,7 @@ export function AiCoach({
               value={provider}
               onChange={(e) => setProvider(e.target.value)}
             >
-              {["openai", "anthropic", "gemini"].map((x) => (
+              {PROVIDERS.map((x) => (
                 <option key={x}>{x}</option>
               ))}
             </select>

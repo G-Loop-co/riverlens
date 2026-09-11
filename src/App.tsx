@@ -285,7 +285,7 @@ export default function App() {
           </div>
           <div className="version">
             <span>{t("RiverLens")}</span>
-            <span>v0.3.0</span>
+            <span>v0.3.1</span>
           </div>
         </div>
       </aside>
