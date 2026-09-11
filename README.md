@@ -6,18 +6,19 @@
 
 RiverLens is a Tauri desktop application for reviewing your own completed Natural8 / GGPoker cash-game hand histories. React and TypeScript power the interface; a Rust core handles parsing, statistics and local SQLite storage.
 
-> **[v0.2.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.2.0)** — Paper (white) is the default. Download the new desktop packages and read the validation limits. [Validation](docs/release-v0.2.0.md).
+> **[Download v0.3.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.3.0)** — AI coach, local MCP agent connection and offline study. Windows, Apple Silicon and Intel Mac packages. [Release notes](docs/release-v0.3.0.md).
 
 ![RiverLens overview in English — synthetic data](docs/screenshots/overview-en.jpg)
 
-README translations: **13 languages**. App interface: **English, Traditional Chinese and Simplified Chinese**. Current `main` adds appearance themes; the `v0.1.0` release tag remains the original source snapshot.
+README translations: **13 languages**. App interface: **English, Traditional Chinese and Simplified Chinese**.
 
-Current `main`: **v0.2.0** adds Spot Explorer, custom-target Leak Finder, source-backed preflop comparison and Trainer. **Settings → Appearance** offers Forest, Midnight and Paper with saved selection. User-supplied strategy packs are required; frequency comparisons are not decision EV. See [Study workflow](docs/study-workflow.md) and [Themes](docs/theme-selection.md).
+**v0.3.0** adds AI-assisted review alongside Spot Explorer → Leak Finder → Preflop reference → Trainer. User-supplied strategy packs are required for strategy comparisons; frequencies are not decision EV. [Study workflow](docs/study-workflow.md) · [Themes](docs/theme-selection.md).
 
 ## Features
 
 | Feature | What you can do |
 | --- | --- |
+| AI coach and agent connection | Explore statistics and decision context through 17 local MCP tools; create evidence-linked review, practice and study-plan drafts for your approval. |
 | Import center | Import TXT, ZIP or folders; monitor progress, pause/resume, detect duplicates and inspect quarantined records. |
 | Results dashboard | Explore net results, bb/100, session and position breakdowns; drill into underlying hands. |
 | 13 core statistics | Review VPIP, PFR, RFI, 3-bet, blind defense and postflop/showdown frequencies with explicit opportunity denominators. |
@@ -34,6 +35,22 @@ Current `main`: **v0.2.0** adds Spot Explorer, custom-target Leak Finder, source
 Screenshots capture the complete page at **1920px desktop width**, using the **Paper (warm white)** theme. A [1920 × 1080 overview](docs/screenshots/overview-desktop-en.jpg) is also available.
 
 Screenshots use **240 generated hands**, not private player data. The deliberately repetitive fixture is for demonstrating the interface, not realistic frequencies or strategy advice. The matrix describes observed hands, not a recommended range.
+
+## AI: features and quick start
+
+Ask about your statistics, inspect a specific decision, find spots worth reviewing, and create practice or study-plan drafts linked to hand evidence. Drafts require your approval; AI and offline study libraries currently remain separate.
+
+**Use an external agent — no provider API key in RiverLens:**
+
+1. Import completed hands and keep RiverLens open.
+2. Open **AI Coach → AI Connections → Enable local connection**. Copy the displayed configuration into a client supporting **stdio MCP**, such as Codex.
+3. Ask: “Review my biggest leak candidates, show sample sizes and supporting hands, then create a practice draft.” Review and accept drafts in **Learning Library**.
+
+Your agent may need its own login/subscription. Update the connection configuration after restarting RiverLens; **Revoke connection** disables access.
+
+**Use the in-app coach — API key required:** save an OpenAI, Anthropic or Gemini key in **AI Connections**, then choose a compatible model and sharing scope in **AI Coach**. Ask a question, or use **Ask AI** from the hand replayer.
+
+Selected context can be sent to the model provider, including through an external agent. Keys stay in the OS credential store. Live provider calls remain unverified; offline study works without a key. [Full setup and limitations](docs/ai-agent-coach.md).
 
 ## Quick start
 
@@ -79,7 +96,7 @@ Data lives in the Tauri app-data directory (`app.riverlens.desktop`); the settin
 
 RiverLens is for offline, personal post-session review. It does not connect to the game client and provides no live HUD, real-time assistance, population mining, cloud sync or GTO best-action scoring. It is not affiliated with Natural8 or GGPoker.
 
-This release publishes a clean source snapshot. Private hand histories, local databases and historical private acceptance artifacts are excluded. The original v0.1.0 tag does not include appearance themes; current main includes the reviewed theme implementation. Work on other local branches remains excluded.
+The v0.3.0 release includes AI/MCP integration and the offline study workflow. Private hand histories, local databases and strategy packs are excluded. See the [release notes](docs/release-v0.3.0.md) for validation limits.
 
 - [User guide (Traditional Chinese)](docs/user-guide.md)
 - [Architecture and statistical definitions](docs/architecture.md)
@@ -92,9 +109,3 @@ This release publishes a clean source snapshot. Private hand histories, local da
 ## Licensing
 
 The repository is public, but a project-wide reuse license has not yet been selected. Do not assume MIT or Apache licensing for RiverLens itself. Third-party components retain their respective licenses; see [THIRD_PARTY.md](THIRD_PARTY.md).
-
-## AI agent and coach preview
-
-AI Coach adds a local stdio MCP connector and optional BYOK OpenAI, Anthropic and Gemini coaching. Agent analysis creates evidence-linked drafts for user review; core statistics and the offline study workspace remain available without cloud access. Enabling a provider transmits the selected anonymized context to that provider.
-
-See [AI setup, tools and validation](docs/ai-agent-coach.md). Codex CLI and native draft/practice flows have synthetic-data acceptance. Provider live calls remain pending; no claim of complete cloud validation.
