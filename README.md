@@ -48,7 +48,7 @@ Ask about your statistics, inspect a specific decision, find spots worth reviewi
 
 Your agent may need its own login/subscription. Update the connection configuration after restarting RiverLens; **Revoke connection** disables access.
 
-**Use the in-app coach — API key required:** save an OpenAI, Anthropic or Gemini key in **AI Connections**, then choose a compatible model and sharing scope in **AI Coach**. Ask a question, or use **Ask AI** from the hand replayer.
+**Use the in-app coach — API key required:** save an OpenAI, Anthropic, Gemini, DeepSeek or OpenCode Go key in **AI Connections**, then choose a compatible model and sharing scope in **AI Coach**. Ask a question, or use **Ask AI** from the hand replayer.
 
 Selected context can be sent to the model provider, including through an external agent. Keys stay in the OS credential store. Live provider calls remain unverified; offline study works without a key. [Full setup and limitations](docs/ai-agent-coach.md).
 

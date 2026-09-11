@@ -50,7 +50,7 @@ README 共 **13 種語言**；App 介面維持 **English／繁中／簡中**。
 
 **使用 App 內 AI 教練：需要 API key**
 
-在「**AI 連接**」儲存 OpenAI、Anthropic 或 Gemini key，再於「**AI 教練**」選擇相容 model、分享範圍並提問；亦可從手牌回放按「**問 AI**」。
+在「**AI 連接**」儲存 OpenAI、Anthropic、Gemini、DeepSeek 或 OpenCode Go key，再於「**AI 教練**」選擇相容 model、分享範圍並提問；亦可從手牌回放按「**問 AI**」。
 
 選定內容可能傳送至模型供應商，包括經外部 agent 傳送。Key 存於系統憑證庫。雲端供應商實際呼叫尚未驗證；無 key 仍可使用離線學習。[完整設定與限制](docs/ai-agent-coach.md)。
 

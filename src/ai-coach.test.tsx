@@ -114,3 +114,20 @@ it("passes ordered action filters and opens source hands", async () => {
     }),
   );
 });
+
+it("selects new providers in coach and connections and clears incompatible model", async () => {
+  engine();
+  render(<AiCoach filter={{}} openHand={() => {}} />);
+  await waitFor(() => expect(backend.api).toHaveBeenCalled());
+  const provider = screen.getByLabelText("模型供應商") as HTMLSelectElement;
+  const model = screen.getByLabelText("模型 ID") as HTMLInputElement;
+  for (const name of ["deepseek", "opencode-go"]) {
+    fireEvent.change(model, { target: { value: "previous-model" } });
+    fireEvent.change(provider, { target: { value: name } });
+    expect(provider.value).toBe(name);
+    expect(model.value).toBe("");
+  }
+  fireEvent.click(screen.getByRole("button", { name: "AI 連接" }));
+  expect(screen.getByRole("option", { name: "deepseek" })).toBeTruthy();
+  expect(screen.getByRole("option", { name: "opencode-go" })).toBeTruthy();
+});

@@ -4,7 +4,7 @@ Implementation date: 2026-09-10. Original feature commit: c6db30f. Release integ
 
 ## Delivered behavior
 
-The desktop includes AI Coach, Spot Explorer, Learning Library and AI Connections. OpenAI, Anthropic and Gemini adapters share the same native Rust tools used by the local MCP connector. The existing core still computes statistics; the model chooses queries and explains evidence.
+The desktop includes AI Coach, Spot Explorer, Learning Library and AI Connections. OpenAI, Anthropic, Gemini, DeepSeek and OpenCode Go adapters share the same native Rust tools used by the local MCP connector. The existing core still computes statistics; the model chooses queries and explains evidence.
 
 The app binary doubles as a stdio MCP connector. It does not initialize a second Service or database. It connects to the running desktop through interprocess local sockets (Unix-domain sockets on macOS, named pipes on Windows). Enablement lasts for the running app session. The current client configuration is displayed in AI Connections; update it after restarting the app. Disable revokes future calls. An in-progress core transaction may finish before revocation/cancellation returns.
 
@@ -20,7 +20,14 @@ API keys and the per-session connector token use the OS credential store (keyrin
 
 The external-client configuration uses the desktop executable with arguments --mcp --socket NAME. A standalone riverlens-mcp binary is also available from the riverlens-ai crate; use --socket NAME with that binary. Local transport does not imply local inference: external clients may send returned data to their model providers.
 
-Model requests use documented native APIs: OpenAI Chat Completions, Anthropic Messages, Gemini streamGenerateContent. Model IDs are user-configured rather than tied to a moving default. Each analysis is capped at 12 model rounds, 48 collected evidence references, 250 KB of serialized message context and 4 MB per provider response. No hidden automatic retry or provider fallback. Cancellation drops the active model stream; completed evidence and drafts remain.
+Model requests use documented native APIs: OpenAI Chat Completions, Anthropic Messages, Gemini streamGenerateContent, DeepSeek Chat Completions and OpenCode Go Chat Completions. Model IDs are user-configured rather than tied to a moving default. Each analysis is capped at 12 model rounds, 48 collected evidence references, 250 KB of serialized message context and 4 MB per provider response. No hidden automatic retry or provider fallback. Cancellation drops the active model stream; completed evidence and drafts remain.
+
+Provider setup: save the matching key in **AI Connections**, select that provider in **AI Coach**, enter the bare model ID (without `opencode-go/`), choose sharing scope, then ask a question. Model IDs remain editable; account access and tool support determine availability.
+
+- **DeepSeek:** `https://api.deepseek.com/v1/chat/completions`. Examples: `deepseek-flash`, `deepseek-v4-pro`; legacy aliases depend on provider availability. Streaming reasoning is retained for tool continuation, never displayed as coaching evidence. See [official model list](https://api-docs.deepseek.com/quick_start/pricing/).
+- **OpenCode Go:** `https://opencode.ai/zen/go/v1`. GLM, Kimi, DeepSeek, MiMo, LongCat and Hy use Chat Completions; MiniMax and Qwen use Messages; Grok, GPT and Muse use Responses. RiverLens routes these model families to their documented API format, identifies itself as RiverLens and sends a stable conversation session header. Use the current [Go model IDs and endpoints](https://opencode.ai/docs/go/#endpoints), or its `/models` API, for the full changing catalog.
+
+OpenCode Go is intended for coding-agent traffic. RiverLens poker coaching is not a provider-validated use case; account eligibility and live compatibility remain unverified. No provider API key was available for live testing. API integration does not include image input; vision-capable models receive text only.
 
 ## Tool surface
 
