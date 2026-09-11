@@ -217,8 +217,14 @@ fn saved_filter_names_use_characters_for_all_languages() {
 fn wait_done(s: &std::sync::Arc<Service>) {
     let start = Instant::now();
     while s.handle(Request::Health).unwrap()["import_active"] == true {
-        assert!(start.elapsed() < Duration::from_secs(30));
-        std::thread::sleep(Duration::from_millis(10));
+        // This checks lifecycle correctness, not throughput. Hosted Windows runners
+        // vary in debug SQLite/index speed; avoid hot-polling the coverage query.
+        assert!(
+            start.elapsed() < Duration::from_secs(120),
+            "import did not finish within 120s; jobs: {}",
+            s.handle(Request::Jobs).unwrap()
+        );
+        std::thread::sleep(Duration::from_millis(100));
     }
 }
 
