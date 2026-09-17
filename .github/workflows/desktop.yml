@@ -37,6 +37,7 @@ jobs:
       - run: cargo fmt --all -- --check
       - run: cargo clippy -p poker-core -p riverlens-ai -p riverlens --all-targets -- -D warnings
       - run: cargo test -p poker-core -p riverlens-ai
+      - run: node --test scripts/signing-env.test.mjs
       - run: npm test
       - run: npm run build
       - if: runner.os == 'macOS'
