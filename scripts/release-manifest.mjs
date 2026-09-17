@@ -1,13 +1,28 @@
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { readdirSync, readFileSync, writeFileSync, renameSync, rmdirSync } from 'node:fs';
+import { join, basename } from 'node:path';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 const directory = process.argv[2];
 const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
 if (process.env.GITHUB_REF_NAME !== `v${version}`) throw new Error('Release tag and package version differ');
 const expected = ['RiverLens_aarch64-apple-darwin.app.zip', 'RiverLens_x86_64-apple-darwin.app.zip', `RiverLens_${version}_x64-setup.exe`].sort();
-const names = readdirSync(directory).sort();
+function walk(dir) {
+  return readdirSync(dir, {withFileTypes:true}).flatMap(entry => entry.isDirectory() ? walk(join(dir,entry.name)) : [join(dir,entry.name)]);
+}
+const paths = walk(directory);
+const names = paths.map(path => basename(path)).sort();
 if (JSON.stringify(names) !== JSON.stringify(expected)) throw new Error(`Unexpected assets: ${names}`);
+// upload-artifact preserves the Windows nsis/ directory; normalize release assets.
+for (const path of paths) {
+  const destination = join(directory, basename(path));
+  if (path !== destination) renameSync(path, destination);
+}
+function removeEmptyDirectories(dir) {
+  for (const entry of readdirSync(dir, {withFileTypes:true})) {
+    if (entry.isDirectory()) { const child=join(dir,entry.name); removeEmptyDirectories(child); rmdirSync(child); }
+  }
+}
+removeEmptyDirectories(directory);
 const assets = names.map(name => {
   const bytes = readFileSync(join(directory, name));
   if (!bytes.length || (name.endsWith('.exe') ? bytes.subarray(0, 2).toString() !== 'MZ' : bytes.subarray(0, 2).toString() !== 'PK')) throw new Error(`Invalid artifact: ${name}`);

@@ -62,11 +62,12 @@ try {
       "\n",
   );
   const { tools } = await request("tools/list", {});
-  assert.equal(tools.length, 17);
-  assert.equal(new Set(tools.map((tool) => tool.name)).size, 17);
+  assert.equal(tools.length, 18);
+  assert.equal(new Set(tools.map((tool) => tool.name)).size, 18);
   for (const tool of tools)
     assert.equal(tool.inputSchema.additionalProperties, false);
   assert.ok(tools.some((tool) => tool.name === "get_decision_context"));
+  assert.ok(tools.some((tool) => tool.name === "organize_learning"));
   assert.ok(tools.some((tool) => tool.name === "create_practice_draft"));
   assert.ok(!tools.some((tool) => /restore|delete|accept|sql/.test(tool.name)));
   const denied = await request("tools/call", {
