@@ -1,5 +1,7 @@
 # RiverLens
 
+v0.3.2：AI 學習資料自動分類、tags、按主題分段；修復查看證據白畫面；macOS 打包前後驗證完整簽章。目前為 ad-hoc 簽章，未經 Apple notarization。[版本詳情](docs/release-v0.3.2.md)。
+
 **您的牌譜，由您掌握。以本機資料為本的賽後 Poker 複盤工作台。**
 
 [English](README.md) · [繁體中文](README.zh-TW.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-BR.md) · [Italiano](README.it.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md) · [Türkçe](README.tr.md)

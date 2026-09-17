@@ -25,6 +25,11 @@ export type AiDraft = {
   text: string;
   evidence: string[];
   items: { hand: number; seq: number; prompt: string }[];
+  organization?: {
+    category: string;
+    tags: string[];
+    sections: { title: string; start: number; end: number; tags: string[] }[];
+  };
 };
 async function tool(name: string, args: Data = {}): Promise<Evidence> {
   return api({ op: "agent_tool", name, arguments: args, share_notes: false });
@@ -68,6 +73,9 @@ export function AiCoach({
   const [packs, setPacks] = useState<Data[]>([]),
     [search, setSearch] = useState(""),
     [hits, setHits] = useState<Data[]>([]);
+  const [category, setCategory] = useState("");
+  const [tag, setTag] = useState("");
+  const [organizing, setOrganizing] = useState("");
   const sessionId = useRef(crypto.randomUUID());
   const id = useRef(""),
     text = useRef(""),
@@ -106,6 +114,7 @@ export function AiCoach({
         setOutput(text.current);
       }
       if (e.type === "evidence") setEvidence((v) => [...v, e.evidence]);
+      if (e.type === "warning") setError(e.message);
       if (e.type === "usage") setUsage((v) => [...v, e.usage]);
       if (e.type === "error") {
         setError(e.message);
@@ -176,6 +185,15 @@ export function AiCoach({
     } catch (e) {
       setBusy(false);
       setError(errorText(e));
+    }
+  }
+  async function organizeDraft(draftId: string) {
+    setOrganizing(draftId);
+    try {
+      await invoke("ai_organize", { id: draftId, provider, model });
+      await refresh();
+    } finally {
+      setOrganizing("");
     }
   }
   async function localReport() {
@@ -542,58 +560,169 @@ export function AiCoach({
             {learning.drafts.length === 0 && (
               <p>{t("尚未建立草稿。先分析一個局面。")}</p>
             )}
-            {learning.drafts.map((d: Data) => (
-              <article key={d.id} className="ai-draft">
-                <h3>{d.title}</h3>
-                <p>
-                  {d.status === "accepted" ? t("已接受") : t("草稿")} ·{" "}
-                  {d.body.items.length} {t("練習題")}
-                </p>
-                <div className="ai-prose">{d.body.text}</div>
-                <button
-                  className="button"
-                  onClick={() => setEdit({ ...d.body, revision: d.revision })}
+            <p>
+              {t(
+                "新 AI 回答會自動分類、加 tags 及按主題分段。分類結果可供參考，原文與證據保持完整。",
+              )}
+            </p>
+            <div className="ai-row">
+              <label>
+                {t("分類")}
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
                 >
-                  {t("編輯與確認")}
-                </button>
-                {d.body.evidence.map((id: string) => (
+                  <option value="">{t("全部")}</option>
+                  {[
+                    ...new Set<string>(
+                      learning.drafts.map(
+                        (d: Data) =>
+                          d.body.organization?.category || t("未分類"),
+                      ),
+                    ),
+                  ]
+                    .sort()
+                    .map((c) => (
+                      <option key={c}>{c}</option>
+                    ))}
+                </select>
+              </label>
+              <label>
+                Tag
+                <select value={tag} onChange={(e) => setTag(e.target.value)}>
+                  <option value="">{t("全部")}</option>
+                  {[
+                    ...new Set<string>(
+                      learning.drafts.flatMap(
+                        (d: Data) => d.body.organization?.tags || [],
+                      ),
+                    ),
+                  ]
+                    .sort()
+                    .map((v) => (
+                      <option key={v}>{v}</option>
+                    ))}
+                </select>
+              </label>
+            </div>
+            <p>
+              {t(
+                "重新分類使用 AI 教練所選供應商及模型；需先同意分享，會傳送該份原文。",
+              )}
+            </p>
+            {learning.drafts
+              .filter(
+                (d: Data) =>
+                  (!category ||
+                    (d.body.organization?.category || t("未分類")) ===
+                      category) &&
+                  (!tag || d.body.organization?.tags?.includes(tag)),
+              )
+              .map((d: Data) => (
+                <article key={d.id} className="ai-draft">
+                  <h3>{d.title}</h3>
+                  <p>
+                    {d.status === "accepted" ? t("已接受") : t("草稿")} ·{" "}
+                    {d.body.items.length} {t("練習題")}
+                  </p>
+                  <div className="ai-row">
+                    <strong>
+                      {d.body.organization?.category || t("未分類")}
+                    </strong>
+                    {d.body.organization?.tags.map((v: string) => (
+                      <button
+                        key={v}
+                        className="button"
+                        onClick={() => setTag(v)}
+                      >
+                        #{v}
+                      </button>
+                    ))}
+                  </div>
+                  {d.body.organization?.sections.length ? (
+                    d.body.organization.sections.map(
+                      (section: Data, i: number) => (
+                        <details key={i} className="ai-section" open={i === 0}>
+                          <summary>{section.title}</summary>
+                          <small>{section.tags.join(" · ")}</small>
+                          <div className="ai-prose">
+                            {d.body.text
+                              .split("\n")
+                              .slice(section.start, section.end)
+                              .join("\n")}
+                          </div>
+                        </details>
+                      ),
+                    )
+                  ) : (
+                    <div className="ai-prose">{d.body.text}</div>
+                  )}
                   <button
                     className="button"
-                    key={id}
-                    onClick={() =>
-                      void run(async () => {
-                        const data: Data = await api({
-                          op: "agent_evidence",
-                          id,
-                        });
-                        setEvidence([
-                          {
-                            evidence_id: id,
-                            version: "",
-                            tool: "saved_evidence",
-                            args: {},
-                            data,
-                          },
-                        ]);
-                        setTab("coach");
-                      })
+                    disabled={
+                      !desktop ||
+                      !consent ||
+                      !validModel ||
+                      busy ||
+                      !!organizing
                     }
+                    onClick={() => void run(() => organizeDraft(d.id))}
                   >
-                    {t("查看證據")} {id.slice(2, 10)}
+                    {organizing === d.id
+                      ? t("分類中…")
+                      : t("AI 自動分類與分段")}
                   </button>
-                ))}
-                {d.status === "accepted" &&
-                  d.body.items.map((_: unknown, i: number) => (
-                    <button
-                      className="button"
-                      key={i}
-                      onClick={() => void run(() => practiceItem(d.id, i))}
-                    >
-                      {t("練習")} {i + 1}
-                    </button>
-                  ))}
-              </article>
-            ))}
+                  <button
+                    className="button"
+                    onClick={() => setEdit({ ...d.body, revision: d.revision })}
+                  >
+                    {t("編輯與確認")}
+                  </button>
+                  <details className="ai-section">
+                    <summary>
+                      {t("來源證據")} · {d.body.evidence.length}
+                    </summary>
+                    <div className="ai-row">
+                      {d.body.evidence.map((evidenceId: string) => (
+                        <button
+                          className="button"
+                          key={evidenceId}
+                          onClick={() =>
+                            void run(async () => {
+                              const saved = await api<Evidence>({
+                                op: "agent_evidence",
+                                id: evidenceId,
+                              });
+                              if (
+                                !saved ||
+                                saved.evidence_id !== evidenceId ||
+                                !("data" in saved)
+                              )
+                                throw new Error(
+                                  t("證據格式不完整，請重新整理。"),
+                                );
+                              setEvidence([saved]);
+                              setTab("coach");
+                            })
+                          }
+                        >
+                          {t("查看證據")} {evidenceId.slice(2, 10)}
+                        </button>
+                      ))}
+                    </div>
+                  </details>
+                  {d.status === "accepted" &&
+                    d.body.items.map((_: unknown, i: number) => (
+                      <button
+                        className="button"
+                        key={i}
+                        onClick={() => void run(() => practiceItem(d.id, i))}
+                      >
+                        {t("練習")} {i + 1}
+                      </button>
+                    ))}
+                </article>
+              ))}
           </div>
           {edit && (
             <section className="ai-panel">
@@ -610,7 +739,13 @@ export function AiCoach({
                 <textarea
                   rows={8}
                   value={edit.text}
-                  onChange={(e) => setEdit({ ...edit, text: e.target.value })}
+                  onChange={(e) =>
+                    setEdit({
+                      ...edit,
+                      text: e.target.value,
+                      organization: undefined,
+                    })
+                  }
                 />
               </label>
               <div className="ai-row">
@@ -891,7 +1026,7 @@ export function AiCoach({
     </section>
   );
 }
-function EvidenceCard({
+export function EvidenceCard({
   e,
   openHand,
 }: {
@@ -900,20 +1035,34 @@ function EvidenceCard({
 }) {
   const { t } = useTranslation();
   const d = e.data;
+  const object = d && !Array.isArray(d) && typeof d === "object" ? d : {};
+  const stats = Array.isArray(object.stats) ? object.stats : [];
+  const hands =
+    e.tool === "find_spots" && Array.isArray(object.rows) ? object.rows : [];
+  const hand =
+    e.tool === "get_hand"
+      ? e.args?.id
+      : typeof object.hand === "number"
+        ? object.hand
+        : object.hand?.id;
+  const scalar = (value: unknown) =>
+    typeof value === "string" || typeof value === "number"
+      ? String(value)
+      : "—";
   return (
     <article className="ai-panel">
       <h3>
         {t("資料證據")} · {e.tool}
       </h3>
       <small>
-        {e.evidence_id.slice(0, 14)} · {e.version}
+        {e.evidence_id} · {e.version}
       </small>
-      {d.hands !== undefined && (
+      {typeof object.hands === "number" && (
         <p>
-          {t("手牌")}: {d.hands}
+          {t("手牌")}: {object.hands}
         </p>
       )}
-      {d.stats && (
+      {!!stats.length && (
         <table>
           <thead>
             <tr>
@@ -923,44 +1072,60 @@ function EvidenceCard({
             </tr>
           </thead>
           <tbody>
-            {d.stats.map((s: Data) => (
-              <tr key={s.id}>
-                <td>{s.label || s.id}</td>
-                <td>
-                  {s.numerator} / {s.opportunities}
-                </td>
-                <td>{s.value === null ? "—" : Number(s.value).toFixed(1)}</td>
-              </tr>
-            ))}
+            {stats
+              .filter((s: unknown) => s && typeof s === "object")
+              .map((s: Data, i: number) => (
+                <tr key={i}>
+                  <td>{scalar(s.label || s.id)}</td>
+                  <td>
+                    {scalar(s.numerator)} / {scalar(s.opportunities)}
+                  </td>
+                  <td>
+                    {typeof s.value === "number" ? s.value.toFixed(1) : "—"}
+                  </td>
+                </tr>
+              ))}
           </tbody>
         </table>
       )}
-      {d.rows && (
-        <div className="ai-row">
-          {d.rows.map((r: Data, i: number) => (
-            <button
-              className="button"
-              key={r.id ?? i}
-              onClick={() => r.id && openHand(r.id)}
-            >
-              {r.position} {r.hand_class} #{r.id}
+      <div className="ai-row">
+        {hands
+          .filter((r: Data) => r && Number.isSafeInteger(r.id) && r.id > 0)
+          .map((r: Data, i: number) => (
+            <button className="button" key={i} onClick={() => openHand(r.id)}>
+              {scalar(r.position)} {scalar(r.hand_class)} #{r.id}
             </button>
           ))}
-        </div>
-      )}
-      {d.hand && typeof d.hand === "number" && (
-        <button className="button" onClick={() => openHand(d.hand, d.seq)}>
-          {t("打開回放")} #{d.hand}
+      </div>
+      {Number.isSafeInteger(hand) && hand > 0 && (
+        <button
+          className="button"
+          onClick={() =>
+            openHand(
+              hand,
+              Number.isSafeInteger(object.seq) ? object.seq : undefined,
+            )
+          }
+        >
+          {t("打開回放")} #{hand}
         </button>
       )}
-      {d.coverage && (
+      {object.coverage && (
         <p>
-          {t("手牌")}: {d.coverage.hands} · {t("有效")}: {d.coverage.valid || 0}
+          {t("手牌")}: {scalar(object.coverage.hands)} · {t("有效")}:{" "}
+          {scalar(object.coverage.valid)}
         </p>
       )}
-      {d.reason && <p>{d.reason}</p>}
-      {d.status && <p>{d.status}</p>}
-      {d.truncated && <p>{t("仍有更多結果，請繼續分頁。")}</p>}
+      <details open>
+        <summary>{t("完整證據內容")}</summary>
+        <pre className="ai-config">
+          {JSON.stringify(d, null, 2) ?? t("沒有證據內容")}
+        </pre>
+      </details>
+      <details>
+        <summary>{t("查詢條件")}</summary>
+        <pre className="ai-config">{JSON.stringify(e.args, null, 2)}</pre>
+      </details>
     </article>
   );
 }

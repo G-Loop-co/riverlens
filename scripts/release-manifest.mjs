@@ -1,0 +1,20 @@
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+const directory = process.argv[2];
+const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
+if (process.env.GITHUB_REF_NAME !== `v${version}`) throw new Error('Release tag and package version differ');
+const expected = ['RiverLens_aarch64-apple-darwin.app.zip', 'RiverLens_x86_64-apple-darwin.app.zip', `RiverLens_${version}_x64-setup.exe`].sort();
+const names = readdirSync(directory).sort();
+if (JSON.stringify(names) !== JSON.stringify(expected)) throw new Error(`Unexpected assets: ${names}`);
+const assets = names.map(name => {
+  const bytes = readFileSync(join(directory, name));
+  if (!bytes.length || (name.endsWith('.exe') ? bytes.subarray(0, 2).toString() !== 'MZ' : bytes.subarray(0, 2).toString() !== 'PK')) throw new Error(`Invalid artifact: ${name}`);
+  return {name, bytes: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex')};
+});
+const commit = execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim();
+if (commit !== process.env.GITHUB_SHA) throw new Error('Build SHA mismatch');
+writeFileSync(join(directory, 'build-manifest.json'), JSON.stringify({version, commit, run:process.env.GITHUB_RUN_ID, macosSigning:process.env.MACOS_SIGNING, assets}, null, 2)+'\n');
+const manifest = readFileSync(join(directory, 'build-manifest.json'));
+writeFileSync(join(directory, 'SHA256SUMS.txt'), [...assets.map(a => `${a.sha256}  ${a.name}`), `${createHash('sha256').update(manifest).digest('hex')}  build-manifest.json`].join('\n')+'\n');

@@ -41,6 +41,11 @@ pub enum Request {
         item: usize,
         answer: Option<String>,
     },
+    AgentOrganize {
+        id: String,
+        revision: i64,
+        organization: crate::agent::Organization,
+    },
     AgentEvidence {
         id: String,
     },
@@ -192,11 +197,40 @@ impl Service {
                 crate::agent::call(&mut c, &name, arguments, share_notes)
             }
             Request::AgentEvidence { id } => {
-                let data: String =
-                    c.query_row("SELECT data FROM ai_evidence WHERE id=?1", [id], |r| {
-                        r.get(0)
-                    })?;
-                Ok(serde_json::from_str(&data)?)
+                let (version, tool, args, data): (String, String, String, String) = c
+                    .query_row(
+                        "SELECT version,tool,args,data FROM ai_evidence WHERE id=?1",
+                        [&id],
+                        |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?)),
+                    )
+                    .context("evidence not found")?;
+                Ok(
+                    json!({"evidence_id":id,"version":version,"tool":tool,"args":serde_json::from_str::<Value>(&args)?,"data":serde_json::from_str::<Value>(&data)?}),
+                )
+            }
+            Request::AgentOrganize {
+                id,
+                revision,
+                organization,
+            } => {
+                let _l = self.writer.lock().unwrap();
+                let tx = c.transaction()?;
+                let body: String = tx
+                    .query_row(
+                        "SELECT body FROM ai_drafts WHERE id=?1 AND revision=?2",
+                        params![id, revision],
+                        |r| r.get(0),
+                    )
+                    .context("draft changed: refresh before organizing")?;
+                let mut draft: crate::agent::Draft = serde_json::from_str(&body)?;
+                organization.validate(&draft.text)?;
+                draft.organization = Some(organization);
+                tx.execute(
+                    "UPDATE ai_drafts SET body=?1,revision=revision+1 WHERE id=?2 AND revision=?3",
+                    params![serde_json::to_string(&draft)?, id, revision],
+                )?;
+                tx.commit()?;
+                Ok(json!({"saved":true}))
             }
             Request::AgentStrategyConfig {
                 profile,

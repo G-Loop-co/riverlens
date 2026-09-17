@@ -408,3 +408,50 @@ fn ai_and_offline_study_records_survive_together() {
         .unwrap();
     verify(&service);
 }
+
+#[test]
+fn saved_evidence_preserves_envelope_and_organization_preserves_source() {
+    let (_d, s) = db();
+    let e = call(&s, "get_data_catalog", json!({})).unwrap();
+    assert_eq!(
+        s.handle(Request::AgentEvidence {
+            id: e["evidence_id"].as_str().unwrap().into()
+        })
+        .unwrap(),
+        e
+    );
+    assert!(s
+        .handle(Request::AgentEvidence {
+            id: "missing".into()
+        })
+        .is_err());
+    let draft = json!({"id":"organized","title":"Report","text":"Preflop\n\nRiver","evidence":[e["evidence_id"]],"items":[]});
+    call(
+        &s,
+        "create_report_draft",
+        json!({"draft":draft,"version":e["version"]}),
+    )
+    .unwrap();
+    let organization: agent::Organization = serde_json::from_value(json!({"category":"Strategy","tags":["preflop","river"],"sections":[{"title":"Preflop","start":0,"end":2,"tags":["preflop"]},{"title":"River","start":2,"end":3,"tags":["river"]}]})).unwrap();
+    let request = Request::AgentOrganize {
+        id: "organized".into(),
+        revision: 1,
+        organization: organization.clone(),
+    };
+    s.handle(request.clone()).unwrap();
+    assert!(s.handle(request).is_err());
+    let saved = call(&s, "get_learning_progress", json!({})).unwrap();
+    let row = &saved["data"]["drafts"][0];
+    assert_eq!(row["body"]["text"], draft["text"]);
+    assert_eq!(row["body"]["evidence"], draft["evidence"]);
+    assert_eq!(row["status"], "draft");
+    assert_eq!(row["revision"], 2);
+    let mut invalid = organization;
+    invalid.sections[1].start = 1;
+    assert!(invalid.validate("Preflop\n\nRiver").is_err());
+    invalid.sections[1].start = 2;
+    invalid.sections[1].end = 2;
+    assert!(invalid.validate("Preflop\n\nRiver").is_err());
+    invalid.sections.pop();
+    assert!(invalid.validate("Preflop\n\nRiver").is_err());
+}

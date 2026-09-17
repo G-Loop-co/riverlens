@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "RiverLens",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "identifier": "app.riverlens.desktop",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -35,6 +35,9 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "macOS": {
+      "signingIdentity": "-"
+    }
   }
 }

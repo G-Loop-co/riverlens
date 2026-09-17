@@ -7,7 +7,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
-import { AiCoach } from "./components/AiCoach";
+import { AiCoach, EvidenceCard } from "./components/AiCoach";
 import * as backend from "./api";
 import "./i18n";
 vi.mock("./api", async () => ({
@@ -149,4 +149,65 @@ it("selects new providers in coach and connections and clears incompatible model
     "gemini-2.5-flash",
     "gemini-2.5-pro",
   ]);
+});
+
+for (const [tool, data] of [
+  [
+    "query_stats",
+    { hands: { total: 10 }, stats: { vpip: 2 }, rows: { position: "BTN" } },
+  ],
+  ["get_hand", { id: "external-hand", stats: { vpip: true }, status: "valid" }],
+  ["get_metric_definitions", [{ id: "vpip", label: "VPIP" }]],
+  ["list_strategy_packs", null],
+  ["search_learning", { rows: [{ id: "report-id", text: "source report" }] }],
+] as const) {
+  it(`renders saved ${tool} evidence without crashing or inventing hand links`, () => {
+    render(
+      <EvidenceCard
+        e={{
+          evidence_id: "e-test",
+          version: "v1",
+          tool,
+          args: tool === "get_hand" ? { id: 42 } : {},
+          data: data as any,
+        }}
+        openHand={() => {}}
+      />,
+    );
+    expect(screen.getByText("完整證據內容")).toBeTruthy();
+    if (tool === "get_hand")
+      expect(screen.getByRole("button", { name: "打開回放 #42" })).toBeTruthy();
+    if (tool === "search_learning")
+      expect(screen.queryByRole("button")).toBeNull();
+  });
+}
+it("opens saved evidence using the original envelope", async () => {
+  engine();
+  const original = vi.mocked(backend.api).getMockImplementation()!;
+  vi.mocked(backend.api).mockImplementation(async (req: any) =>
+    req.op === "agent_evidence"
+      ? {
+          evidence_id: "e-1",
+          version: "v1",
+          tool: "get_metric_definitions",
+          args: {},
+          data: [{ id: "vpip" }],
+        }
+      : original(req),
+  );
+  render(<AiCoach filter={{}} openHand={() => {}} />);
+  fireEvent.click(screen.getByRole("button", { name: "建立本機統計草稿" }));
+  await waitFor(() =>
+    expect(backend.api).toHaveBeenCalledWith(
+      expect.objectContaining({ name: "create_report_draft" }),
+    ),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "學習資料" }));
+  fireEvent.click(
+    await screen.findByRole("button", { name: "查看證據 1", hidden: true }),
+  );
+  expect(
+    await screen.findByText("資料證據 · get_metric_definitions"),
+  ).toBeTruthy();
+  expect(screen.getByText('"vpip"', { exact: false })).toBeTruthy();
 });

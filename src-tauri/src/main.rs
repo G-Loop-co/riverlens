@@ -44,6 +44,17 @@ fn ai_key(provider: String, key: String) -> Result<(), String> {
     coach::save_key(&provider, &key).map_err(|e| e.to_string())
 }
 #[tauri::command]
+async fn ai_organize(
+    provider: String,
+    model: String,
+    id: String,
+    state: tauri::State<'_, Arc<Service>>,
+) -> Result<(), String> {
+    coach::organize(state.inner().clone(), &provider, &model, &id)
+        .await
+        .map_err(|e| e.to_string())
+}
+#[tauri::command]
 fn ai_cancel(id: String, state: tauri::State<'_, AiState>) -> Result<(), String> {
     let mut job = state.job.lock().unwrap();
     if job.as_ref().is_some_and(|j| j.0 == id) {
@@ -109,7 +120,13 @@ fn main() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            api, ai_status, ai_connect, ai_key, ai_chat, ai_cancel
+            api,
+            ai_status,
+            ai_connect,
+            ai_key,
+            ai_chat,
+            ai_cancel,
+            ai_organize
         ])
         .build(tauri::generate_context!())
         .expect("RiverLens could not start")

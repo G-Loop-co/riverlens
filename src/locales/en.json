@@ -866,5 +866,15 @@
   "移除": "Remove",
   "取消": "Cancel",
   "搜尋": "Search",
-  "資料來源": "Source"
+  "資料來源": "Source",
+  "新 AI 回答會自動分類、加 tags 及按主題分段。分類結果可供參考，原文與證據保持完整。": "New AI answers are automatically categorized, tagged and split by topic. Classification is a suggestion; original text and evidence stay intact.",
+  "未分類": "Uncategorized",
+  "重新分類使用 AI 教練所選供應商及模型；需先同意分享，會傳送該份原文。": "Reclassification uses the provider and model selected in AI Coach. Enable sharing consent first; this report's original text will be sent.",
+  "分類中…": "Organizing…",
+  "AI 自動分類與分段": "AI categorize and split",
+  "來源證據": "Source evidence",
+  "證據格式不完整，請重新整理。": "Incomplete evidence format. Please refresh.",
+  "完整證據內容": "Full evidence",
+  "沒有證據內容": "No evidence content",
+  "查詢條件": "Query arguments"
 }

@@ -79,3 +79,14 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
+
+.ai-section {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+}
+.ai-section summary {
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 10px;
+}

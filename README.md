@@ -1,5 +1,7 @@
 # RiverLens
 
+New in v0.3.2: AI learning categories, tags and topic sections; saved evidence crash fix; verified macOS bundle signatures. Downloads are ad-hoc signed, not notarized. [Release details](docs/release-v0.3.2.md).
+
 **Your hands. Your data. A local workspace for post-session poker review.**
 
 [English](README.md) · [繁體中文](README.zh-TW.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-BR.md) · [Italiano](README.it.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md) · [Türkçe](README.tr.md)

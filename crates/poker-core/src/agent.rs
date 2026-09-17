@@ -128,6 +128,57 @@ pub struct Draft {
     pub evidence: Vec<String>,
     #[serde(default)]
     pub items: Vec<PracticeItem>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub organization: Option<Organization>,
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Organization {
+    pub category: String,
+    pub tags: Vec<String>,
+    pub sections: Vec<LearningSection>,
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct LearningSection {
+    pub title: String,
+    pub start: usize,
+    pub end: usize,
+    pub tags: Vec<String>,
+}
+impl Organization {
+    pub fn validate(&self, text: &str) -> Result<()> {
+        fn tags_valid(tags: &[String]) -> bool {
+            tags.len() <= 12 && tags.iter().all(|t| !t.trim().is_empty() && t.len() <= 100)
+        }
+        ensure!(
+            !self.category.trim().is_empty()
+                && self.category.len() <= 100
+                && tags_valid(&self.tags),
+            "invalid classification"
+        );
+        ensure!(
+            !self.sections.is_empty() && self.sections.len() <= 40,
+            "invalid section count"
+        );
+        let mut cursor = 0;
+        let lines = text.split('\n').count();
+        for section in &self.sections {
+            ensure!(
+                !section.title.trim().is_empty()
+                    && section.title.len() <= 200
+                    && tags_valid(&section.tags),
+                "invalid section metadata"
+            );
+            ensure!(
+                section.start == cursor && section.end > section.start && section.end <= lines,
+                "sections must cover original text in order without gaps or overlaps"
+            );
+            cursor = section.end;
+        }
+        ensure!(cursor == lines, "sections must preserve all source lines");
+        Ok(())
+    }
 }
 fn schema(props: Value, required: Value) -> Value {
     json!({"type":"object","properties":props,"required":required,"additionalProperties":false})
@@ -470,6 +521,9 @@ pub fn validate_draft(c: &Connection, d: &Draft, ver: &str, practice: bool) -> R
         !d.evidence.is_empty() && d.evidence.len() <= 50 && d.items.len() <= 100,
         "invalid draft bounds"
     );
+    if let Some(o) = &d.organization {
+        o.validate(&d.text)?;
+    }
     for id in &d.evidence {
         let v: String = c
             .query_row("SELECT version FROM ai_evidence WHERE id=?1", [id], |r| {

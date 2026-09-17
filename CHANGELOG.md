@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.2 — 2026-09-17
+
+- AI learning reports: content-based categories, tags, lossless topic sections and reclassification of existing reports.
+- Fix saved hand evidence crashing the UI; retain original tool/version/arguments and replay links.
+- Seal macOS bundles and verify signatures after ZIP extraction; add tag-driven release drafts, source manifests and checksums.
+- macOS downloads remain ad-hoc signed unless Developer ID/notarization secrets are configured.
+
+
 ## v0.3.1
 
 - Add DeepSeek and OpenCode Go providers, with model-specific API routing and correct tool continuation.
