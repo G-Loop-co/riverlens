@@ -3,6 +3,7 @@
 ## Learning library
 
 - New AI answers are automatically categorized, tagged and split into topic sections by the selected provider/model.
+- External MCP agents can provide organization in new report drafts and use `organize_learning` to classify existing reports without separate in-app provider credentials.
 - Existing reports have an AI categorize/split action. Select a provider/model and enable sharing consent in AI Coach first. Reclassification sends that report's text to the selected provider and may incur provider usage charges.
 - Filter reports by category or tag. Topic sections retain exact original text, source evidence and acceptance status. Invalid or incomplete AI output is rejected; the original report is retained for retry.
 - Editing report text clears the old classification so section offsets cannot become stale.

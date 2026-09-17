@@ -446,6 +446,21 @@ fn saved_evidence_preserves_envelope_and_organization_preserves_source() {
     assert_eq!(row["body"]["evidence"], draft["evidence"]);
     assert_eq!(row["status"], "draft");
     assert_eq!(row["revision"], 2);
+    assert_eq!(
+        call(
+            &s,
+            "organize_learning",
+            json!({"report_id":"organized","revision":2,"organization":organization})
+        )
+        .unwrap()["data"]["saved"],
+        true
+    );
+    assert!(call(
+        &s,
+        "organize_learning",
+        json!({"report_id":"organized","revision":2,"organization":organization})
+    )
+    .is_err());
     let mut invalid = organization;
     invalid.sections[1].start = 1;
     assert!(invalid.validate("Preflop\n\nRiver").is_err());

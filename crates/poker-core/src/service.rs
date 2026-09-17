@@ -215,20 +215,7 @@ impl Service {
             } => {
                 let _l = self.writer.lock().unwrap();
                 let tx = c.transaction()?;
-                let body: String = tx
-                    .query_row(
-                        "SELECT body FROM ai_drafts WHERE id=?1 AND revision=?2",
-                        params![id, revision],
-                        |r| r.get(0),
-                    )
-                    .context("draft changed: refresh before organizing")?;
-                let mut draft: crate::agent::Draft = serde_json::from_str(&body)?;
-                organization.validate(&draft.text)?;
-                draft.organization = Some(organization);
-                tx.execute(
-                    "UPDATE ai_drafts SET body=?1,revision=revision+1 WHERE id=?2 AND revision=?3",
-                    params![serde_json::to_string(&draft)?, id, revision],
-                )?;
+                crate::agent::organize_saved(&tx, &id, revision, organization)?;
                 tx.commit()?;
                 Ok(json!({"saved":true}))
             }

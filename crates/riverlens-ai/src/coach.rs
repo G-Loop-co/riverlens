@@ -550,11 +550,13 @@ pub async fn run(
                 share_notes: chat.share_notes,
             })?;
             // Save the source first: a failed organization request must never lose an answer.
-            match organize(service.clone(), &chat.provider, &chat.model, &draft.id).await {
-                Ok(()) => {}
-                Err(_) => emit(
+            if organize(service.clone(), &chat.provider, &chat.model, &draft.id)
+                .await
+                .is_err()
+            {
+                emit(
                     json!({"type":"warning","message":"AI 分類未完成；原文已儲存，可在學習資料重試。"}),
-                ),
+                );
             }
             save_conversation(&chat, messages)?;
             emit(json!({"type":"draft","draft":result}));

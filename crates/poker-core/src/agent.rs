@@ -97,6 +97,9 @@ pub struct Args {
     pub draft: Option<Draft>,
     pub pack: Option<String>,
     pub target: Option<Target>,
+    pub report_id: Option<String>,
+    pub revision: Option<i64>,
+    pub organization: Option<Organization>,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -210,8 +213,16 @@ pub fn tools() -> Value {
         json!({"hand":{"type":"integer","minimum":1},"seq":{"type":"integer","minimum":0},"prompt":{"type":"string"}}),
         json!(["hand", "seq", "prompt"]),
     );
+    let section = schema(
+        json!({"title":{"type":"string"},"start":{"type":"integer","minimum":0},"end":{"type":"integer","minimum":1},"tags":{"type":"array","items":{"type":"string"},"maxItems":12}}),
+        json!(["title", "start", "end", "tags"]),
+    );
+    let organization = schema(
+        json!({"category":{"type":"string"},"tags":{"type":"array","items":{"type":"string"},"maxItems":12},"sections":{"type":"array","items":section,"minItems":1,"maxItems":40}}),
+        json!(["category", "tags", "sections"]),
+    );
     let draft = schema(
-        json!({"id":{"type":"string","description":"Stable idempotency key; reuse on retry"},"title":{"type":"string"},"text":{"type":"string"},"evidence":{"type":"array","items":{"type":"string"},"minItems":1},"items":{"type":"array","items":item}}),
+        json!({"id":{"type":"string","description":"Stable idempotency key; reuse on retry"},"title":{"type":"string"},"text":{"type":"string"},"evidence":{"type":"array","items":{"type":"string"},"minItems":1},"items":{"type":"array","items":item},"organization":organization}),
         json!(["id", "title", "text", "evidence"]),
     );
     let defs=vec![
@@ -228,8 +239,9 @@ pub fn tools() -> Value {
         ("list_strategy_packs","Read installed strategy sources, validation status and matching configuration.",json!({}),json!([])),
         ("compare_preflop","Compare a Hero preflop decision with a verified exact strategy or explicitly reference-only data. Never return action EV without a solver.",json!({"id":{"type":"integer"},"seq":{"type":"integer"},"pack":{"type":"string"},"version":{"type":"string"}}),json!(["id","seq","pack"])),
         ("get_learning_progress","Read saved drafts and practice attempts; self-review scores are not GTO scores.",json!({}),json!([])),
+        ("organize_learning","Organize a saved report by content using category, tags and topic sections. Read get_learning_progress first. Supply consecutive zero-based line ranges [start,end) covering every text.split(newline) line. Changes only metadata, preserving original text, evidence and acceptance.",json!({"report_id":{"type":"string"},"revision":{"type":"integer"},"organization":organization}),json!(["report_id","revision","organization"])),
         ("search_learning","Search local reports by text. User notes are only included if sharing is enabled.",json!({"query":{"type":"string"}}),json!(["query"])),
-        ("create_report_draft","Save an editable evidence-linked report draft. Does not apply annotations.",json!({"draft":draft,"version":{"type":"string"}}),json!(["draft","version"])),
+        ("create_report_draft","Save an editable evidence-linked report draft. Include organization with content-based category, tags and topic sections: zero-based line ranges, start inclusive and end exclusive, covering text.split(newline) in full without gaps. Does not apply annotations.",json!({"draft":draft,"version":{"type":"string"}}),json!(["draft","version"])),
         ("create_practice_draft","Save practice references, not answers. Questions are served by engine with future information hidden.",json!({"draft":draft,"version":{"type":"string"}}),json!(["draft","version"])),
         ("create_study_plan_draft","Save an editable evidence-linked study plan for user acceptance.",json!({"draft":draft,"version":{"type":"string"}}),json!(["draft","version"])),
     ];
@@ -373,6 +385,15 @@ pub fn call(c: &mut Connection, name: &str, input: Value, share_notes: bool) -> 
             a.pack.as_deref().unwrap(),
         )?,
         "get_learning_progress" => learning(&tx)?,
+        "organize_learning" => {
+            organize_saved(
+                &tx,
+                &a.report_id.context("report_id required")?,
+                a.revision.context("revision required")?,
+                a.organization.context("organization required")?,
+            )?;
+            json!({"saved":true})
+        }
         "search_learning" => {
             let q = a.query.as_deref().unwrap();
             ensure!(q.len() <= 500, "query too long");
@@ -539,6 +560,29 @@ pub fn validate_draft(c: &Connection, d: &Draft, ver: &str, practice: bool) -> R
     for item in &d.items {
         decision(c, item.hand, item.seq)?;
     }
+    Ok(())
+}
+pub fn organize_saved(
+    c: &Connection,
+    id: &str,
+    revision: i64,
+    organization: Organization,
+) -> Result<()> {
+    let body: String = c
+        .query_row(
+            "SELECT body FROM ai_drafts WHERE id=?1 AND revision=?2",
+            params![id, revision],
+            |r| r.get(0),
+        )
+        .context("draft changed: refresh before organizing")?;
+    let mut draft: Draft = serde_json::from_str(&body)?;
+    organization.validate(&draft.text)?;
+    draft.organization = Some(organization);
+    let n = c.execute(
+        "UPDATE ai_drafts SET body=?1,revision=revision+1 WHERE id=?2 AND revision=?3",
+        params![serde_json::to_string(&draft)?, id, revision],
+    )?;
+    ensure!(n == 1, "draft changed: refresh before organizing");
     Ok(())
 }
 pub fn learning(c: &Connection) -> Result<Value> {

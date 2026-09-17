@@ -128,9 +128,10 @@ export function AiCoach({
         ];
         setHistory(h);
         historyRef.current = h;
-        void run(refresh);
+        void refresh().catch((e) => setError(errorText(e)));
       }
-      if (e.type === "draft") void run(refresh);
+      if (e.type === "draft")
+        void refresh().catch((e) => setError(errorText(e)));
     }).then((fn) => {
       if (disposed) fn();
       else {

@@ -19,8 +19,7 @@ afterEach(() => {
   cleanup();
   vi.clearAllMocks();
 });
-function engine() {
-  let drafts: any[] = [];
+function engine(drafts: any[] = []) {
   vi.mocked(backend.api).mockImplementation(async (req: any): Promise<any> => {
     if (req.op === "profiles") return [];
     if (req.op === "agent_review") {
@@ -210,4 +209,44 @@ it("opens saved evidence using the original envelope", async () => {
     await screen.findByText("資料證據 · get_metric_definitions"),
   ).toBeTruthy();
   expect(screen.getByText('"vpip"', { exact: false })).toBeTruthy();
+});
+
+it("filters categorized reports and keeps the original section text", async () => {
+  const body = {
+    id: "a",
+    title: "Blind review",
+    text: "First line\nSecond line",
+    evidence: [],
+    items: [],
+    organization: {
+      category: "Blinds",
+      tags: ["BB"],
+      sections: [
+        { title: "Defend", start: 0, end: 1, tags: ["BB"] },
+        { title: "Review", start: 1, end: 2, tags: [] },
+      ],
+    },
+  };
+  engine([
+    { id: "a", title: body.title, body, status: "draft", revision: 1 },
+    {
+      id: "b",
+      title: "Other report",
+      body: { ...body, id: "b", organization: undefined },
+      status: "draft",
+      revision: 1,
+    },
+  ]);
+  render(<AiCoach filter={{}} openHand={() => {}} />);
+  fireEvent.click(screen.getByRole("button", { name: "學習資料" }));
+  await screen.findByText("Blind review");
+  expect(screen.getByText("First line")).toBeTruthy();
+  expect(screen.getByText("Second line")).toBeTruthy();
+  fireEvent.change(screen.getByLabelText("分類"), {
+    target: { value: "Blinds" },
+  });
+  expect(screen.queryByText("Other report")).toBeNull();
+  expect(screen.getByText("Blind review")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "#BB" }));
+  expect((screen.getByLabelText("Tag") as HTMLSelectElement).value).toBe("BB");
 });
