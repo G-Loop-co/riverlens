@@ -135,7 +135,15 @@ export function AiCoach({
       if (id.current) void invoke("ai_cancel", { id: id.current });
     };
   }, []);
+  function resetConversation() {
+    sessionId.current = crypto.randomUUID();
+    setHistory([]);
+    historyRef.current = [];
+    setOutput("");
+    setEvidence([]);
+  }
   function changeProvider(value: string) {
+    resetConversation();
     setProvider(value);
     setModel("");
   }
@@ -152,7 +160,6 @@ export function AiCoach({
     setError("");
     const previous = history.slice(-18);
     historyRef.current = [...previous, { role: "user", text: prompt }];
-    setHistory(historyRef.current);
     try {
       await invoke("ai_chat", {
         chat: {
@@ -246,6 +253,7 @@ export function AiCoach({
                 {t("模型供應商")}
                 <select
                   value={provider}
+                  disabled={busy}
                   onChange={(e) => changeProvider(e.target.value)}
                 >
                   {PROVIDERS.map((p) => (
@@ -257,7 +265,11 @@ export function AiCoach({
                 {t("模型 ID")}
                 <select
                   value={model}
-                  onChange={(e) => setModel(e.target.value)}
+                  disabled={busy}
+                  onChange={(e) => {
+                    resetConversation();
+                    setModel(e.target.value);
+                  }}
                 >
                   <option value="" disabled>
                     {t("選擇模型")}
@@ -305,7 +317,11 @@ export function AiCoach({
               <input
                 type="checkbox"
                 checked={notes}
-                onChange={(e) => setNotes(e.target.checked)}
+                disabled={busy}
+                onChange={(e) => {
+                  resetConversation();
+                  setNotes(e.target.checked);
+                }}
               />
               {t("另外分享筆記與標籤內容")}
             </label>
@@ -349,10 +365,7 @@ export function AiCoach({
                 className="button"
                 disabled={busy}
                 onClick={() => {
-                  setHistory([]);
-                  historyRef.current = [];
-                  setOutput("");
-                  setEvidence([]);
+                  resetConversation();
                 }}
               >
                 {t("新對話")}
@@ -694,6 +707,7 @@ export function AiCoach({
             {t("模型供應商")}
             <select
               value={provider}
+              disabled={busy}
               onChange={(e) => changeProvider(e.target.value)}
             >
               {PROVIDERS.map((x) => (
@@ -751,7 +765,11 @@ export function AiCoach({
             <input
               type="checkbox"
               checked={notes}
-              onChange={(e) => setNotes(e.target.checked)}
+              disabled={busy}
+              onChange={(e) => {
+                resetConversation();
+                setNotes(e.target.checked);
+              }}
             />
             {t("另外分享筆記與標籤內容")}
           </label>

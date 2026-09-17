@@ -7,7 +7,11 @@ use poker_core::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::{collections::BTreeMap, sync::Arc, time::Duration};
+use std::{
+    collections::BTreeMap,
+    sync::{Arc, Mutex, OnceLock},
+    time::Duration,
+};
 
 #[derive(Clone, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
@@ -171,6 +175,13 @@ impl Turn {
                             b["text"] = json!(old.to_string() + t);
                         }
                     }
+                    for field in ["thinking", "signature"] {
+                        if let Some(delta) = e["delta"][field].as_str() {
+                            let block = self.blocks.get_mut(i).context("thinking block missing")?;
+                            let previous = block[field].as_str().unwrap_or("");
+                            block[field] = json!(previous.to_owned() + delta);
+                        }
+                    }
                     if let Some(t) = e["delta"]["partial_json"].as_str() {
                         let c = self.calls.get_mut(&i).context("tool block missing")?;
                         c["arguments"] = json!(c["arguments"].as_str().unwrap().to_string() + t);
@@ -188,16 +199,15 @@ impl Turn {
                 }
                 if let Some(parts) = e["candidates"][0]["content"]["parts"].as_array() {
                     for part in parts {
-                        if part["thought"] == true {
-                            continue;
-                        }
-                        if let Some(t) = part["text"].as_str() {
-                            text.push_str(t);
+                        if part["thought"] != true {
+                            if let Some(t) = part["text"].as_str() {
+                                text.push_str(t);
+                            }
                         }
                         if let Some(c) = part.get("functionCall") {
                             let i = self.calls.len();
                             ensure!(i < 32, "too many tool calls");
-                            self.calls.insert(i,json!({"id":format!("call-{i}"),"name":c["name"],"arguments":c["args"].to_string()}));
+                            self.calls.insert(i,json!({"id":c["id"],"name":c["name"],"arguments":c["args"].to_string()}));
                         }
                         self.blocks.push(part.clone()); // Preserve provider thought signatures on tool calls.
                     }
@@ -214,6 +224,9 @@ impl Turn {
                 let mut message = json!({"role":"assistant","content":self.text,"tool_calls":self.calls.values().map(|c|json!({"id":c["id"],"type":"function","function":{"name":c["name"],"arguments":c["arguments"]}})).collect::<Vec<_>>()});
                 if p == "deepseek" || (p == "opencode-go" && !self.reasoning.is_empty()) {
                     message["reasoning_content"] = json!(self.reasoning);
+                }
+                if self.calls.is_empty() {
+                    message.as_object_mut().unwrap().remove("tool_calls");
                 }
                 message
             }
@@ -244,7 +257,7 @@ fn declarations(provider: &str) -> Value {
 pub fn payload(provider: &str, model: &str, messages: &[Value]) -> Value {
     match protocol(provider, model) {
         "responses" => {
-            let tools: Vec<_> = agent::tools().as_array().unwrap().iter().map(|t|json!({"type":"function","name":t["name"],"description":t["description"],"parameters":t["inputSchema"]})).collect();
+            let tools: Vec<_> = agent::tools().as_array().unwrap().iter().map(|t|json!({"type":"function","name":t["name"],"description":t["description"],"parameters":t["inputSchema"],"strict":false})).collect();
             json!({"model":model,"instructions":SYSTEM,"input":messages,"tools":tools,"stream":true,"store":false,"include":["reasoning.encrypted_content"],"max_output_tokens":4096})
         }
         "openai" => {
@@ -325,6 +338,50 @@ async fn stream_turn(
     ensure!(turn.finished, "provider stream ended before completion");
     Ok(turn)
 }
+// Provider wire history stays in process memory, never in reports or UI events.
+// Keep a bounded set of conversations; eviction requires starting a new conversation.
+type ConversationKey = (String, String, String, bool);
+static CONVERSATIONS: OnceLock<Mutex<BTreeMap<ConversationKey, Vec<Value>>>> = OnceLock::new();
+fn conversation_key(chat: &Chat) -> ConversationKey {
+    (
+        chat.session_id.as_deref().unwrap_or(&chat.id).to_owned(),
+        chat.provider.clone(),
+        chat.model.clone(),
+        chat.share_notes,
+    )
+}
+fn conversation_history(chat: &Chat) -> Result<Vec<Value>> {
+    CONVERSATIONS
+        .get_or_init(Default::default)
+        .lock()
+        .unwrap()
+        .get(&conversation_key(chat))
+        .cloned()
+        .context("Conversation expired or model changed; start a new conversation")
+}
+fn save_conversation(chat: &Chat, messages: Vec<Value>) -> Result<()> {
+    ensure!(
+        serde_json::to_vec(&messages)?.len() <= 250_000,
+        "context budget reached; start a new conversation"
+    );
+    let mut cache = CONVERSATIONS.get_or_init(Default::default).lock().unwrap();
+    let key = conversation_key(chat);
+    if cache.len() >= 8 && !cache.contains_key(&key) {
+        if let Some(oldest) = cache.keys().next().cloned() {
+            cache.remove(&oldest);
+        }
+    }
+    cache.insert(key, messages);
+    Ok(())
+}
+fn append_assistant(wire: &str, messages: &mut Vec<Value>, turn: &Turn) -> Result<()> {
+    if wire == "responses" {
+        messages.extend(turn.blocks.clone());
+    } else {
+        messages.push(turn.assistant(wire)?);
+    }
+    Ok(())
+}
 fn user_message(provider: &str, text: &str) -> Value {
     if provider == "gemini" {
         json!({"role":"user","parts":[{"text":text}]})
@@ -367,24 +424,8 @@ pub async fn run(
     if ["openai", "deepseek", "opencode-go"].contains(&wire) {
         messages.push(json!({"role":"system","content":SYSTEM}));
     }
-    for m in &chat.history {
-        let role = m["role"].as_str().unwrap_or("");
-        ensure!(
-            ["user", "assistant"].contains(&role),
-            "invalid history role"
-        );
-        let text = m["text"].as_str().context("history text missing")?;
-        messages.push(if wire == "gemini" {
-            json!({"role":if role=="assistant"{"model"}else{"user"},"parts":[{"text":text}]})
-        } else {
-            // UI history contains visible text only; previous analyses are context,
-            // while current tool rounds retain their full reasoning in Turn.
-            if wire == "deepseek" && role == "assistant" {
-                json!({"role":role,"content":text,"reasoning_content":""})
-            } else {
-                json!({"role":role,"content":text})
-            }
-        });
+    if !chat.history.is_empty() {
+        messages = conversation_history(&chat)?;
     }
     messages.push(user_message(
         wire,
@@ -415,6 +456,11 @@ pub async fn run(
         emit(json!({"type":"usage","usage":turn.usage,"round":round+1}));
         if turn.calls.is_empty() {
             ensure!(!turn.text.trim().is_empty(), "provider returned no answer");
+            append_assistant(wire, &mut messages, &turn)?;
+            ensure!(
+                serde_json::to_vec(&messages)?.len() <= 250_000,
+                "context budget reached; start a new conversation"
+            );
             let draft = agent::Draft {
                 id: format!("chat-{}", chat.id),
                 title: chat.prompt.chars().take(100).collect(),
@@ -427,14 +473,11 @@ pub async fn run(
                 arguments: json!({"draft":draft,"version":version}),
                 share_notes: chat.share_notes,
             })?;
+            save_conversation(&chat, messages)?;
             emit(json!({"type":"draft","draft":result}));
             return Ok(());
         }
-        if wire == "responses" {
-            messages.extend(turn.blocks.clone());
-        } else {
-            messages.push(turn.assistant(wire)?);
-        }
+        append_assistant(wire, &mut messages, &turn)?;
         let mut outputs = vec![];
         for c in turn.calls.values() {
             ensure!(
@@ -501,7 +544,13 @@ fn tool_output(wire: &str, c: &Value, name: &str, value: &Value) -> Value {
         "anthropic" => {
             json!({"type":"tool_result","tool_use_id":c["id"],"content":value.to_string()})
         }
-        _ => json!({"functionResponse":{"name":name,"response":value}}),
+        _ => {
+            let mut response = json!({"name":name,"response":value});
+            if let Some(id) = c["id"].as_str() {
+                response["id"] = json!(id);
+            }
+            json!({"functionResponse":response})
+        }
     }
 }
 fn append_outputs(wire: &str, messages: &mut Vec<Value>, outputs: Vec<Value>) {
@@ -515,6 +564,100 @@ fn append_outputs(wire: &str, messages: &mut Vec<Value>, outputs: Vec<Value>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn thinking_stream_is_replayed_without_exposing_it() {
+        let mut t = Turn::default();
+        t.event("anthropic", json!({"type":"content_block_start","index":0,"content_block":{"type":"thinking","thinking":"","signature":""}})).unwrap();
+        for (field, value) in [
+            ("thinking", "private "),
+            ("thinking", "reasoning"),
+            ("signature", "signed"),
+        ] {
+            let delta = json!({field:value});
+            assert_eq!(
+                t.event(
+                    "anthropic",
+                    json!({"type":"content_block_delta","index":0,"delta":delta})
+                )
+                .unwrap(),
+                ""
+            );
+        }
+        t.event("anthropic", json!({"type":"content_block_start","index":1,"content_block":{"type":"tool_use","id":"t1","name":"get_data_catalog","input":{}}})).unwrap();
+        let assistant = t.assistant("anthropic").unwrap();
+        assert_eq!(assistant["content"][0]["thinking"], "private reasoning");
+        assert_eq!(assistant["content"][0]["signature"], "signed");
+        assert_eq!(assistant["content"][1]["input"], json!({}));
+        assert!(t.text.is_empty());
+    }
+    #[test]
+    fn gemini_round_trip_preserves_ids_and_hidden_signed_parts() {
+        let mut t = Turn::default();
+        let parts = json!([
+            {"thought":true,"text":"private","thoughtSignature":"signed-thought"},
+            {"functionCall":{"id":"provider-call-1","name":"get_hand","args":{"id":1}},"thoughtSignature":"signed-call"},
+            {"functionCall":{"name":"get_data_catalog","args":{}}}
+        ]);
+        assert_eq!(
+            t.event(
+                "gemini",
+                json!({"candidates":[{"content":{"parts":parts},"finishReason":"STOP"}]})
+            )
+            .unwrap(),
+            ""
+        );
+        assert_eq!(t.assistant("gemini").unwrap()["parts"], parts);
+        let output = tool_output("gemini", &t.calls[&0], "get_hand", &json!({"hand":1}));
+        assert_eq!(output["functionResponse"]["id"], "provider-call-1");
+        assert!(
+            tool_output("gemini", &t.calls[&1], "get_data_catalog", &json!({}))["functionResponse"]
+                .get("id")
+                .is_none()
+        );
+    }
+    #[test]
+    fn followup_replays_full_wire_history_and_is_scoped_to_model() {
+        let mut chat: Chat = serde_json::from_value(json!({"id":"test","session_id":"history-regression","provider":"deepseek","model":"deepseek-flash","prompt":"question","filter":{}})).unwrap();
+        let mut messages = vec![json!({"role":"user","content":"first question"})];
+        let mut tool_turn = Turn::default();
+        tool_turn.event("deepseek", json!({"choices":[{"delta":{"reasoning_content":"tool reasoning","tool_calls":[{"index":0,"id":"t1","function":{"name":"get_data_catalog","arguments":"{}"}}]},"finish_reason":"tool_calls"}]})).unwrap();
+        append_assistant("deepseek", &mut messages, &tool_turn).unwrap();
+        messages.push(tool_output(
+            "deepseek",
+            &tool_turn.calls[&0],
+            "get_data_catalog",
+            &json!({"hands":3}),
+        ));
+        let mut final_turn = Turn::default();
+        final_turn.event("deepseek", json!({"choices":[{"delta":{"reasoning_content":"final reasoning","content":"answer"},"finish_reason":"stop"}]})).unwrap();
+        append_assistant("deepseek", &mut messages, &final_turn).unwrap();
+        assert!(messages[3].get("tool_calls").is_none());
+        save_conversation(&chat, messages.clone()).unwrap();
+        assert_eq!(conversation_history(&chat).unwrap(), messages);
+        let followup = payload(
+            "deepseek",
+            "deepseek-flash",
+            &conversation_history(&chat).unwrap(),
+        );
+        assert_eq!(
+            followup["messages"][1]["reasoning_content"],
+            "tool reasoning"
+        );
+        assert_eq!(
+            followup["messages"][3]["reasoning_content"],
+            "final reasoning"
+        );
+        chat.model = "deepseek-v4-pro".into();
+        assert!(conversation_history(&chat).is_err());
+        chat.model = "deepseek-flash".into();
+        chat.session_id = Some("new-conversation".into());
+        assert!(conversation_history(&chat).is_err());
+        assert!(payload("opencode-go", "gpt-5.6-luna", &[])["tools"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .all(|t| t["strict"] == false));
+    }
     #[test]
     fn new_providers_round_trip_tool_results() {
         for (provider, model, expected) in [
