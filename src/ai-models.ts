@@ -1,0 +1,40 @@
+// Curated tool-capable models. Availability also depends on the provider account.
+// Sources: provider model documentation and README.md OpenCode Go protocol table.
+export const AI_MODELS: Record<string, readonly string[]> = {
+  openai: ["gpt-4.1", "gpt-4.1-mini"],
+  anthropic: ["claude-sonnet-4-6", "claude-opus-4-6", "claude-haiku-4-5"],
+  gemini: ["gemini-2.5-flash", "gemini-2.5-pro"],
+  deepseek: ["deepseek-flash", "deepseek-v4-pro"],
+  "opencode-go": [
+    "glm-5.3-flash",
+    "glm-5.3",
+    "glm-5.2",
+    "glm-5.1",
+    "kimi-k3",
+    "kimi-k2.7-code",
+    "kimi-k2.6",
+    "longcat-2.0",
+    "deepseek-v4.1-flash",
+    "deepseek-v4-pro",
+    "deepseek-v4-flash",
+    "deepseek-v4-flash-vision-exp",
+    "mimo-v2.5",
+    "mimo-v2.5-pro",
+    "hy4-preview",
+    "hy3",
+    "minimax-m3",
+    "minimax-m2.7",
+    "minimax-m2.5",
+    "qwen3.8-max",
+    "qwen3.8-flash",
+    "qwen3.7-max",
+    "qwen3.7-plus",
+    "qwen3.6-plus",
+    "grok-4.6",
+    "gpt-5.6-luna",
+    "muse-spark-1.3-contributor",
+    "muse-spark-1.2-contributor",
+  ],
+};
+
+export const AI_PROVIDERS = Object.keys(AI_MODELS);

@@ -9,13 +9,7 @@ import { Card } from "./Replayer";
 import { ErrorBanner } from "./UI";
 import "./ai-coach.css";
 
-const PROVIDERS = [
-  "openai",
-  "anthropic",
-  "gemini",
-  "deepseek",
-  "opencode-go",
-] as const;
+import { AI_MODELS, AI_PROVIDERS as PROVIDERS } from "../ai-models";
 
 type Data = Record<string, any>;
 type Evidence = {
@@ -141,8 +135,14 @@ export function AiCoach({
       if (id.current) void invoke("ai_cancel", { id: id.current });
     };
   }, []);
+  function changeProvider(value: string) {
+    setProvider(value);
+    setModel("");
+  }
+  const modelOptions = AI_MODELS[provider] ?? [];
+  const validModel = modelOptions.includes(model);
   async function start() {
-    if (!consent || !model.trim() || !prompt.trim() || !listenerReady) return;
+    if (!consent || !validModel || !prompt.trim() || !listenerReady) return;
     id.current = crypto.randomUUID();
     text.current = "";
     setOutput("");
@@ -246,10 +246,7 @@ export function AiCoach({
                 {t("模型供應商")}
                 <select
                   value={provider}
-                  onChange={(e) => {
-                    setProvider(e.target.value);
-                    setModel("");
-                  }}
+                  onChange={(e) => changeProvider(e.target.value)}
                 >
                   {PROVIDERS.map((p) => (
                     <option key={p}>{p}</option>
@@ -258,11 +255,19 @@ export function AiCoach({
               </label>
               <label>
                 {t("模型 ID")}
-                <input
+                <select
                   value={model}
                   onChange={(e) => setModel(e.target.value)}
-                  placeholder={t("輸入帳戶可用且支援工具的模型 ID")}
-                />
+                >
+                  <option value="" disabled>
+                    {t("選擇模型")}
+                  </option>
+                  {modelOptions.map((id) => (
+                    <option key={id} value={id}>
+                      {id}
+                    </option>
+                  ))}
+                </select>
               </label>
             </div>
             <label className="ai-label">
@@ -311,7 +316,7 @@ export function AiCoach({
                   !desktop ||
                   busy ||
                   !consent ||
-                  !model.trim() ||
+                  !validModel ||
                   !prompt.trim() ||
                   !listenerReady
                 }
@@ -689,7 +694,7 @@ export function AiCoach({
             {t("模型供應商")}
             <select
               value={provider}
-              onChange={(e) => setProvider(e.target.value)}
+              onChange={(e) => changeProvider(e.target.value)}
             >
               {PROVIDERS.map((x) => (
                 <option key={x}>{x}</option>

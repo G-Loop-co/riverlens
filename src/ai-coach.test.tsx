@@ -120,14 +120,33 @@ it("selects new providers in coach and connections and clears incompatible model
   render(<AiCoach filter={{}} openHand={() => {}} />);
   await waitFor(() => expect(backend.api).toHaveBeenCalled());
   const provider = screen.getByLabelText("模型供應商") as HTMLSelectElement;
-  const model = screen.getByLabelText("模型 ID") as HTMLInputElement;
+  const model = screen.getByLabelText("模型 ID") as HTMLSelectElement;
+  expect(model.tagName).toBe("SELECT");
+  expect(screen.queryByRole("textbox", { name: "模型 ID" })).toBeNull();
+  fireEvent.change(model, { target: { value: "gpt-4.1" } });
   for (const name of ["deepseek", "opencode-go"]) {
-    fireEvent.change(model, { target: { value: "previous-model" } });
     fireEvent.change(provider, { target: { value: name } });
     expect(provider.value).toBe(name);
     expect(model.value).toBe("");
+    expect(
+      Array.from(model.options).some((option) => option.value === "gpt-4.1"),
+    ).toBe(false);
+    const choice = model.options[1].value;
+    fireEvent.change(model, { target: { value: choice } });
+    expect(model.value).toBe(choice);
   }
   fireEvent.click(screen.getByRole("button", { name: "AI 連接" }));
   expect(screen.getByRole("option", { name: "deepseek" })).toBeTruthy();
   expect(screen.getByRole("option", { name: "opencode-go" })).toBeTruthy();
+  fireEvent.change(screen.getByLabelText("模型供應商"), {
+    target: { value: "gemini" },
+  });
+  fireEvent.click(screen.getByRole("button", { name: "AI 教練" }));
+  const updated = screen.getByLabelText("模型 ID") as HTMLSelectElement;
+  expect(updated.value).toBe("");
+  expect(Array.from(updated.options).map((option) => option.value)).toEqual([
+    "",
+    "gemini-2.5-flash",
+    "gemini-2.5-pro",
+  ]);
 });
