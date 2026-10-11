@@ -9,12 +9,20 @@ import {
 } from "@testing-library/react";
 import { MdaWorkspace } from "./components/MdaWorkspace";
 import { AiCoach, EvidenceCard } from "./components/AiCoach";
+import { Replayer } from "./components/Replayer";
+import type { ReactNode } from "react";
 import * as backend from "./api";
 import "./i18n";
 vi.mock("./api", async () => ({
   ...(await vi.importActual("./api")),
   api: vi.fn(),
   desktop: false,
+}));
+// jsdom has no native showModal; this suite exercises dataset access boundaries.
+vi.mock("./components/Dialog", () => ({
+  Dialog: ({ children }: { children: ReactNode }) => (
+    <div role="dialog">{children}</div>
+  ),
 }));
 afterEach(() => {
   cleanup();
@@ -113,6 +121,83 @@ it("anonymous evidence opens an opaque population key rather than personal hand 
   fireEvent.click(screen.getByRole("button", { name: "匿名回放" }));
   expect(open).toHaveBeenCalledWith("000000000000000a", 9);
   expect(personal).not.toHaveBeenCalled();
+});
+
+it("population replay cannot read or edit personal study and annotations", async () => {
+  const population = {
+    dataset_id: "mda-test",
+    version: "mda:test:1",
+    hand_key: "000000000000000a",
+  };
+  const requests: unknown[] = [];
+  vi.stubGlobal("fetch", async (_url: unknown, init: RequestInit) => {
+    requests.push(JSON.parse(init.body as string));
+    return {
+      ok: true,
+      json: async () => ({
+        result: {
+          id: 0,
+          annotation: { note: "", tags: [], reviewed: false },
+          hand: {
+            id: "anonymous",
+            hand_class: "",
+            position: "",
+            brand: "GG",
+            game: "Cash",
+            currency: "USD",
+            local_time: "2026-09-01 12:00:00",
+            timezone: "UTC",
+            sb: "0.01",
+            bb: "0.02",
+            button: 1,
+            status: "valid",
+            issues: [],
+            boards: [[]],
+            actions: [],
+            players: [
+              {
+                seat: 1,
+                name: "Player1",
+                position: "SB",
+                hero: false,
+                stack: "2",
+                cards: [],
+              },
+              {
+                seat: 2,
+                name: "Player2",
+                position: "BB",
+                hero: false,
+                stack: "2",
+                cards: [],
+              },
+            ],
+          },
+        },
+      }),
+    };
+  });
+  render(
+    <Replayer
+      id={0}
+      population={population}
+      close={() => {}}
+      saved={() => {}}
+    />,
+  );
+  expect(await screen.findByText("MDA · 無 Hero")).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "原始牌譜" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "帳本與 EV" })).toBeNull();
+  expect(screen.queryByRole("textbox")).toBeNull();
+  expect(
+    screen.queryByRole("button", { name: "將目前 Hero 決策加入訓練" }),
+  ).toBeNull();
+  expect(
+    screen.queryByRole("button", { name: "下一個 Hero 決策前" }),
+  ).toBeNull();
+  expect(requests).toEqual([
+    { op: "mda", request: { op: "hand", ...population } },
+  ]);
 });
 
 it("keeps saved MDA drafts and anonymous evidence available after cloud sharing is disabled", async () => {

@@ -243,7 +243,7 @@ export function HandsView({
                 <th>{t("位置")}</th>
                 <th>{t("底池")}</th>
                 <th>{t("盲注")}</th>
-                <th>{t("盈虧 USD")}</th>
+                <th>{t("盈虧")}</th>
                 <th>{t("Net bb")}</th>
                 <th>
                   <span className="sr-only">{t("開啟手牌")}</span>
@@ -296,6 +296,7 @@ export function HandsView({
                   </td>
                   <td className="mono muted">{row.stakes}</td>
                   <td>
+                    <small>{row.currency || "USD"}</small>
                     <Signed value={Number(row.net)} />
                   </td>
                   <td>

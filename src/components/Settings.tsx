@@ -1,3 +1,4 @@
+import { HandFormats, importRooms } from "./HandFormats";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import {
@@ -229,8 +230,12 @@ export function Settings({
                 value={draft.brand}
                 onChange={(e) => setDraft({ ...draft, brand: e.target.value })}
               >
-                <option value="Natural8">Natural8</option>
-                <option value="GGPoker">GGPoker</option>
+                {importRooms.map(({ room, converted }) => (
+                  <option key={room} value={room}>
+                    {room}
+                    {converted ? ` · ${t("僅 PokerStars 轉換檔")}` : ""}
+                  </option>
+                ))}
               </select>
             </Field>
             <Field label={t("牌譜內 Hero 名稱")}>
@@ -361,9 +366,10 @@ export function Settings({
         </dl>
         <p className="panel-footnote">
           {t(
-            "支援範圍：NLHE USD Cash／Rush 格式。Natural8 普通 Cash 已用真實樣本驗證；GGPoker 品牌與 Rush 真實樣本驗收仍待完成。無 live HUD、RTA、雲端同步或 Solver 評分。",
+            "支援多牌室 NLHE Cash 及指定 MTT 格式；樣本狀態及匯出方法見下表。無 live HUD、RTA、雲端同步或 Solver 評分。",
           )}
         </p>
+        <HandFormats />
       </section>
     </div>
   );

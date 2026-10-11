@@ -1,5 +1,6 @@
 pub mod equity;
 pub mod fixtures;
+pub mod hand_formats;
 pub mod mda;
 pub mod model;
 pub mod money;

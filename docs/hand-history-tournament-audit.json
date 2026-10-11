@@ -1,0 +1,134 @@
+{
+  "checkedOn": "2026-10-11",
+  "source": "https://github.com/jejellyroll-fr/fpdb-3",
+  "sourceCommit": "84213a3e6fa97ff0f0994ae593e08cb4262ef05a",
+  "scope": "Exploratory first-hand grammar checks; public archived samples, not current client certification or performance qualification. iPoker checks use a per-game envelope with original session metadata. No AGPL source code or fixture text included.",
+  "valid": 10,
+  "rejected": 4,
+  "cases": [
+    {
+      "file": "NLHE-9max-MTT-USD-201112.3.merged.sessions.txt",
+      "result": {
+        "currency": "CHIPS",
+        "game": "Tournament",
+        "issues": [],
+        "net": "-1753.00",
+        "status": "valid"
+      }
+    },
+    {
+      "file": "NLHE-USD-MTT-2-201007.Mixed.Holdem.txt",
+      "result": {
+        "error": "unsupported Stars/GG tournament header"
+      }
+    },
+    {
+      "file": "NLHE-8max-MTT-USD-1050-202104.extra.space.txt",
+      "result": {
+        "currency": "CHIPS",
+        "game": "Tournament",
+        "issues": [],
+        "net": "14495.00",
+        "status": "valid"
+      }
+    },
+    {
+      "file": "NLHE-8max-MTT-USD-52.50-202104.KO.txt",
+      "result": {
+        "currency": "CHIPS",
+        "game": "Tournament",
+        "issues": [],
+        "net": "-1435.00",
+        "status": "valid"
+      }
+    },
+    {
+      "file": "NLHE-Ticket-MTT-201010.raise.written.as.bet.preflop.txt",
+      "result": {
+        "error": "payout 3368.00 exceeds action ledger 3367.50 (winamax)"
+      }
+    },
+    {
+      "file": "NLHE-Ticket-MTT-201010.side.pot.txt",
+      "result": {
+        "error": "payout 15521.00 exceeds action ledger 15520.50 (winamax)"
+      }
+    },
+    {
+      "file": "NLHE-9max-MTT-USD-5-201304.chance.txt",
+      "result": {
+        "currency": "CHIPS",
+        "game": "Tournament",
+        "issues": [],
+        "net": "0.00",
+        "status": "valid"
+      }
+    },
+    {
+      "file": "NLHE-9max-MTT-USD-70-2013.ko.guar.txt",
+      "result": {
+        "currency": "CHIPS",
+        "game": "Tournament",
+        "issues": [],
+        "net": "-20.00",
+        "status": "valid"
+      }
+    },
+    {
+      "file": "NLHE-USD-MTT-3.15-201205.call.allin.txt",
+      "result": {
+        "currency": "CHIPS",
+        "game": "Tournament",
+        "issues": [],
+        "net": "-150.00",
+        "status": "valid"
+      }
+    },
+    {
+      "file": "NLHE-FREE-MTT-201311.all.in.blind.no.uncalled.txt",
+      "result": {
+        "error": "tournament chip payouts do not reconcile"
+      }
+    },
+    {
+      "file": "NLHE-8max-NA-0-0-202207.GTD.txt",
+      "result": {
+        "currency": "CHIPS",
+        "game": "Tournament",
+        "issues": [],
+        "net": "33300.00",
+        "status": "valid"
+      }
+    },
+    {
+      "file": "audit-NLHE-USD-SNG-100-5-201610.new.tourno.format.xml",
+      "result": {
+        "currency": "CHIPS",
+        "game": "Tournament",
+        "issues": [],
+        "net": "-20.00",
+        "status": "valid"
+      }
+    },
+    {
+      "file": "audit-NLHE-USD-MTT-5r-201112.Sample.xml",
+      "result": {
+        "currency": "CHIPS",
+        "game": "Tournament",
+        "issues": [],
+        "net": "-20.00",
+        "status": "valid"
+      }
+    },
+    {
+      "file": "NLHE-Free-MTT-201206-Ticket.only.sample.txt",
+      "result": {
+        "currency": "CHIPS",
+        "game": "Tournament",
+        "issues": [],
+        "net": "0.00",
+        "status": "valid"
+      }
+    }
+  ]
+}

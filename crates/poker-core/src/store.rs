@@ -51,7 +51,7 @@ pub fn init(path: &Path) -> Result<()> {
       CREATE TABLE IF NOT EXISTS hands(
         id INTEGER PRIMARY KEY, profile TEXT NOT NULL, hand_id TEXT NOT NULL, fingerprint TEXT NOT NULL,
         source_file TEXT NOT NULL, played_at INTEGER NOT NULL, local_date TEXT NOT NULL,
-        currency TEXT NOT NULL, game TEXT NOT NULL, stakes TEXT NOT NULL, position TEXT NOT NULL,
+        currency TEXT NOT NULL, game TEXT NOT NULL, tournament_id TEXT, stakes TEXT NOT NULL, position TEXT NOT NULL,
         player_count INTEGER NOT NULL, pot_type TEXT NOT NULL, hand_class TEXT NOT NULL,
         hero_stack_bb REAL NOT NULL, effective_bb REAL, flop_players INTEGER NOT NULL,
         texture TEXT NOT NULL, paired INTEGER NOT NULL, high_card TEXT NOT NULL,
@@ -98,7 +98,15 @@ pub fn init(path: &Path) -> Result<()> {
             |r| r.get(0),
         )
         .optional()?;
-    if version != "3" || index_version.as_deref() != Some(crate::study::decision::INDEX_VERSION) {
+    let tournament_column: bool = c.query_row(
+        "SELECT EXISTS(SELECT 1 FROM pragma_table_info('hands') WHERE name='tournament_id')",
+        [],
+        |r| r.get(0),
+    )?;
+    if version != "3"
+        || index_version.as_deref() != Some(crate::study::decision::INDEX_VERSION)
+        || !tournament_column
+    {
         let populated: bool =
             c.query_row("SELECT EXISTS(SELECT 1 FROM hands)", [], |r| r.get(0))?;
         if populated {
@@ -114,6 +122,10 @@ pub fn init(path: &Path) -> Result<()> {
     if version == "1" {
         c.execute_batch("BEGIN IMMEDIATE; INSERT INTO hand_payload SELECT id,detail FROM hands; ALTER TABLE hands DROP COLUMN detail; UPDATE metadata SET value='2' WHERE key='schema_version'; COMMIT;")?;
     }
+    if !tournament_column {
+        c.execute_batch("ALTER TABLE hands ADD COLUMN tournament_id TEXT;")?;
+    }
+    c.execute_batch("CREATE INDEX IF NOT EXISTS hand_tournament ON hands(tournament_id,profile,played_at DESC,id DESC);")?;
     crate::study::init(&c)?;
     c.execute("INSERT INTO metadata(key,value) VALUES('study_index_version',?1) ON CONFLICT(key) DO UPDATE SET value=excluded.value", [crate::study::decision::INDEX_VERSION])?;
     crate::agent::init(&c)?;
@@ -205,9 +217,9 @@ pub fn insert_batch(
 ) -> Result<BatchResult> {
     let tx = c.transaction()?;
     let mut result = BatchResult::default();
-    let base="profile,hand_id,fingerprint,source_file,played_at,local_date,currency,game,stakes,position,player_count,pot_type,hand_class,hero_stack_bb,effective_bb,flop_players,texture,paired,high_card,net,net_bb,showdown,status,ev_status,ev_reason,adjusted_net,equity,session";
+    let base="profile,hand_id,fingerprint,source_file,played_at,local_date,currency,game,stakes,position,player_count,pot_type,hand_class,hero_stack_bb,effective_bb,flop_players,texture,paired,high_card,net,net_bb,showdown,status,ev_status,ev_reason,adjusted_net,equity,session,tournament_id";
     let columns = format!("{base},{}", stat_names().join(","));
-    let placeholders = std::iter::repeat_n("?", 28 + STAT_DEFINITIONS.len() * 2)
+    let placeholders = std::iter::repeat_n("?", 29 + STAT_DEFINITIONS.len() * 2)
         .collect::<Vec<_>>()
         .join(",");
     let mut insert = tx.prepare_cached(&format!(
@@ -265,6 +277,10 @@ pub fn insert_batch(
             Sql::Null,
             Sql::Null,
             Sql::from(session.clone()),
+            h.tournament
+                .as_ref()
+                .and_then(|t| t.id.clone())
+                .map_or(Sql::Null, Sql::Text),
         ];
         for (key, _, _) in STAT_DEFINITIONS {
             let s = h.stats.get(*key).cloned().unwrap_or_default();
@@ -434,6 +450,7 @@ pub fn predicate(f: &Filter, include_status: bool) -> Result<(String, Vec<Sql>)>
     eq("profile", f.profile.as_deref());
     eq("position", f.position.as_deref());
     eq("game", f.game.as_deref());
+    eq("tournament_id", f.tournament_id.as_deref());
     eq("stakes", f.stakes.as_deref());
     eq("currency", f.currency.as_deref());
     eq("pot_type", f.pot_type.as_deref());
@@ -571,11 +588,9 @@ pub fn report(c: &Connection, f: &Filter, group: &str) -> Result<Value> {
                 || (k == "status" && v == "valid")
         });
     let date_filter = f.date_from.is_some() || f.date_to.is_some();
-    let date_compatible = !date_filter
-        || profiles(c)?
-            .iter()
-            .filter(|p| f.profile.as_ref().is_none_or(|id| id == &p.id))
-            .all(|p| p.timezone == f.timezone.as_deref().unwrap_or("Asia/Hong_Kong"));
+    // Source timezone tags can differ within one import profile. Date filters
+    // therefore use played_at in the requested timezone, not local-date rollups.
+    let date_compatible = !date_filter;
     if basic
         && date_compatible
         && matches!(
@@ -650,6 +665,10 @@ pub fn report(c: &Connection, f: &Filter, group: &str) -> Result<Value> {
     for r in st.query_map(params_from_iter(vals.iter()), |r| r.get::<_, String>(0))? {
         currencies.push(r?);
     }
+    anyhow::ensure!(
+        currencies.len() <= 1,
+        "Multiple currencies selected; choose one currency before viewing monetary results"
+    );
     let mut reasons = BTreeMap::new();
     let mut st=c.prepare(&format!("SELECT ev_reason,COUNT(*) FROM {from} WHERE {pred} AND ev_status='excluded' GROUP BY ev_reason"))?;
     for r in st.query_map(params_from_iter(vals.iter()), |r| {
@@ -659,7 +678,7 @@ pub fn report(c: &Connection, f: &Filter, group: &str) -> Result<Value> {
         reasons.insert(k, v);
     }
     Ok(
-        json!({"hands":count,"net":if currencies.len()<=1{Some(money::format(net))}else{None},"currency":currencies.first().cloned().unwrap_or_else(||"USD".into()),"net_bb":net_bb,"bb100":if count>0{net_bb/count as f64*100.}else{0.},"sd":money::format(sd),"nsd":money::format(nsd),"adjusted":money::format(adj),"stats":stats,"groups":groups,"groups_truncated":groups_truncated,"coverage":coverage,"ev":{"complete":complete,"pending":pending,"excluded":excluded,"reasons":reasons},"stats_version":STATS_VERSION}),
+        json!({"hands":count,"net":if currencies.len()<=1{Some(money::format(net))}else{None},"currency":currencies.first().cloned().or_else(||f.currency.clone()).unwrap_or_else(||"USD".into()),"net_bb":net_bb,"bb100":if count>0{net_bb/count as f64*100.}else{0.},"sd":money::format(sd),"nsd":money::format(nsd),"adjusted":money::format(adj),"stats":stats,"groups":groups,"groups_truncated":groups_truncated,"coverage":coverage,"ev":{"complete":complete,"pending":pending,"excluded":excluded,"reasons":reasons},"stats_version":STATS_VERSION}),
     )
 }
 
@@ -705,6 +724,18 @@ fn rollup_report(c: &Connection, f: &Filter, group: &str) -> Result<Value> {
         .map(|k| format!("COALESCE(SUM({k}),0)"))
         .collect::<Vec<_>>()
         .join(",");
+    let mut currency_stmt = c.prepare(&format!("SELECT DISTINCT currency FROM rollups WHERE dimension='{dimension}' AND {pred} AND hands>0"))?;
+    let currencies = currency_stmt
+        .query_map(params_from_iter(vals.iter()), |r| r.get::<_, String>(0))?
+        .collect::<std::result::Result<Vec<_>, _>>()?;
+    anyhow::ensure!(
+        currencies.len() <= 1,
+        "Multiple currencies selected; choose one currency before viewing monetary results"
+    );
+    let currency = currencies
+        .first()
+        .map(String::as_str)
+        .unwrap_or(f.currency.as_deref().unwrap_or("USD"));
     let sql=format!("SELECT COALESCE(SUM(hands),0),COALESCE(SUM(net),0),COALESCE(SUM(net_bb),0),COALESCE(SUM(sd),0),COALESCE(SUM(nsd),0),{sums} FROM rollups WHERE dimension='{dimension}' AND {pred}");
     let (count,net,bb,sd,nsd,stats)=c.query_row(&sql,params_from_iter(vals.iter()),|r| {
         let mut stats=vec![];for (i,(id,label,definition)) in STAT_DEFINITIONS.iter().enumerate(){let n:i64=r.get(5+i*2)?;let d:i64=r.get(6+i*2)?;stats.push(json!({"id":id,"label":label,"definition":definition,"numerator":n,"opportunities":d,"value":if d>0{Some(n as f64/d as f64*100.)}else{None}}));}
@@ -760,7 +791,7 @@ fn rollup_report(c: &Connection, f: &Filter, group: &str) -> Result<Value> {
         groups.push(json!({"key":key,"hands":n,"net":money::format(result),"net_bb":bb,"bb100":bb/n as f64*100.,"sd":money::format(r.get(4)?),"nsd":money::format(r.get(5)?),"adjusted":money::format(adj)}));
     }
     Ok(
-        json!({"hands":count,"net":money::format(net),"currency":f.currency.as_deref().unwrap_or("USD"),"net_bb":bb,"bb100":if count>0{bb/count as f64*100.}else{0.},"sd":money::format(sd),"nsd":money::format(nsd),"adjusted":money::format(net+delta),"stats":stats,"groups":groups,"groups_truncated":false,"coverage":{"valid":count,"quarantined":excluded},"ev":{"complete":evcounts.get("complete").copied().unwrap_or(0),"pending":evcounts.get("pending").copied().unwrap_or(0),"excluded":evcounts.get("excluded").copied().unwrap_or(0),"reasons":reasons},"stats_version":STATS_VERSION}),
+        json!({"hands":count,"net":money::format(net),"currency":currency,"net_bb":bb,"bb100":if count>0{bb/count as f64*100.}else{0.},"sd":money::format(sd),"nsd":money::format(nsd),"adjusted":money::format(net+delta),"stats":stats,"groups":groups,"groups_truncated":false,"coverage":{"valid":count,"quarantined":excluded},"ev":{"complete":evcounts.get("complete").copied().unwrap_or(0),"pending":evcounts.get("pending").copied().unwrap_or(0),"excluded":evcounts.get("excluded").copied().unwrap_or(0),"reasons":reasons},"stats_version":STATS_VERSION}),
     )
 }
 
@@ -791,9 +822,9 @@ pub fn list_hands(
         vals.extend([Sql::Real(v), Sql::Real(v), Sql::Integer(id)]);
     }
     vals.push(Sql::Integer(limit.clamp(1, 200) as i64 + 1));
-    let mut st=c.prepare(&format!("SELECT h.id,hand_id,played_at,local_date,position,hand_class,net,net_bb,stakes,pot_type,game,status,ev_status,COALESCE(a.reviewed,0),h.{sort_col} FROM hands h LEFT JOIN annotations a ON a.hand=h.id WHERE {pred} ORDER BY h.{sort_col} {direction},h.id DESC LIMIT ?"))?;
+    let mut st=c.prepare(&format!("SELECT h.id,hand_id,played_at,local_date,position,hand_class,net,net_bb,stakes,pot_type,game,status,ev_status,COALESCE(a.reviewed,0),h.{sort_col},h.currency FROM hands h LEFT JOIN annotations a ON a.hand=h.id WHERE {pred} ORDER BY h.{sort_col} {direction},h.id DESC LIMIT ?"))?;
     let mut rows = vec![];
-    for r in st.query_map(params_from_iter(vals.iter()),|r|Ok(json!({"id":r.get::<_,i64>(0)?,"hand_id":r.get::<_,String>(1)?,"played_at":r.get::<_,i64>(2)?,"date":r.get::<_,String>(3)?,"position":r.get::<_,String>(4)?,"hand_class":r.get::<_,String>(5)?,"net":money::format(r.get(6)?),"net_bb":r.get::<_,f64>(7)?,"stakes":r.get::<_,String>(8)?,"pot_type":r.get::<_,String>(9)?,"game":r.get::<_,String>(10)?,"status":r.get::<_,String>(11)?,"ev_status":r.get::<_,String>(12)?,"reviewed":r.get::<_,bool>(13)?,"sort_value":r.get::<_,f64>(14)?})))?{rows.push(r?);}
+    for r in st.query_map(params_from_iter(vals.iter()),|r|Ok(json!({"id":r.get::<_,i64>(0)?,"hand_id":r.get::<_,String>(1)?,"played_at":r.get::<_,i64>(2)?,"date":r.get::<_,String>(3)?,"position":r.get::<_,String>(4)?,"hand_class":r.get::<_,String>(5)?,"net":money::format(r.get(6)?),"net_bb":r.get::<_,f64>(7)?,"stakes":r.get::<_,String>(8)?,"pot_type":r.get::<_,String>(9)?,"game":r.get::<_,String>(10)?,"status":r.get::<_,String>(11)?,"ev_status":r.get::<_,String>(12)?,"reviewed":r.get::<_,bool>(13)?,"sort_value":r.get::<_,f64>(14)?,"currency":r.get::<_,String>(15)?})))?{rows.push(r?);}
     let has_more = rows.len() > limit.clamp(1, 200) as usize;
     if has_more {
         rows.pop();
@@ -854,6 +885,12 @@ pub fn save_annotation(c: &mut Connection, id: i64, a: &Annotation) -> Result<()
     Ok(())
 }
 pub fn matrix(c: &Connection, f: &Filter, stat: &str) -> Result<Value> {
+    let (currency_pred, currency_vals) = predicate(f, true)?;
+    let currency_count:i64=c.query_row(&format!("SELECT COUNT(DISTINCT currency) FROM hands h WHERE {currency_pred} AND h.status='valid'"),params_from_iter(currency_vals.iter()),|r|r.get(0))?;
+    anyhow::ensure!(
+        currency_count <= 1,
+        "Multiple currencies selected; choose one currency before viewing monetary results"
+    );
     anyhow::ensure!(
         STAT_DEFINITIONS.iter().any(|(k, _, _)| *k == stat),
         "unknown matrix stat"
@@ -1039,7 +1076,7 @@ pub fn export(
     if let Some(report) = grouped {
         writeln!(
             file,
-            "group,hands,net_usd,net_bb,bb_per_100,showdown_usd,non_showdown_usd,adjusted_usd"
+            "group,hands,net,net_bb,bb_per_100,showdown,non_showdown,adjusted,currency"
         )?;
         for row in report["groups"]
             .as_array()
@@ -1047,7 +1084,7 @@ pub fn export(
         {
             writeln!(
                 file,
-                "{},{},{},{},{},{},{},{}",
+                "{},{},{},{},{},{},{},{},{}",
                 csv(row["key"].as_str().unwrap_or("")),
                 row["hands"],
                 row["net"].as_str().unwrap_or(""),
@@ -1055,16 +1092,17 @@ pub fn export(
                 row["bb100"],
                 row["sd"].as_str().unwrap_or(""),
                 row["nsd"].as_str().unwrap_or(""),
-                row["adjusted"].as_str().unwrap_or("")
+                row["adjusted"].as_str().unwrap_or(""),
+                csv(report["currency"].as_str().unwrap_or(""))
             )?;
             n += 1;
         }
     } else if format == "csv" {
         writeln!(
             file,
-            "hand_id,time_utc,position,starting_hand,stakes,net,net_bb,ev_status"
+            "hand_id,time_utc,position,starting_hand,stakes,net,net_bb,ev_status,currency,game,tournament_id"
         )?;
-        let mut s=c.prepare(&format!("SELECT hand_id,played_at,position,hand_class,stakes,net,net_bb,ev_status FROM hands h WHERE {pred} ORDER BY played_at,id"))?;
+        let mut s=c.prepare(&format!("SELECT hand_id,played_at,position,hand_class,stakes,net,net_bb,ev_status,currency,game,COALESCE(tournament_id,'') FROM hands h WHERE {pred} ORDER BY played_at,id"))?;
         for r in s.query_map(params_from_iter(vals.iter()), |r| {
             Ok((
                 r.get::<_, String>(0)?,
@@ -1075,12 +1113,15 @@ pub fn export(
                 r.get::<_, i64>(5)?,
                 r.get::<_, f64>(6)?,
                 r.get::<_, String>(7)?,
+                r.get::<_, String>(8)?,
+                r.get::<_, String>(9)?,
+                r.get::<_, String>(10)?,
             ))
         })? {
-            let (id, time, pos, card, stakes, net, bb, ev) = r?;
+            let (id, time, pos, card, stakes, net, bb, ev, currency, game, tournament_id) = r?;
             writeln!(
                 file,
-                "{},{},{},{},{},{},{:.4},{}",
+                "{},{},{},{},{},{},{:.4},{},{},{},{}",
                 csv(&id),
                 time,
                 csv(&pos),
@@ -1088,7 +1129,10 @@ pub fn export(
                 csv(&stakes),
                 money::format(net),
                 bb,
-                csv(&ev)
+                csv(&ev),
+                csv(&currency),
+                csv(&game),
+                csv(&tournament_id)
             )?;
             n += 1;
         }

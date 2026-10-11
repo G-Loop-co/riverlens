@@ -195,9 +195,11 @@ export function RangeView({
           <strong className="mono">{number(current?.hands || 0)}</strong>
         </div>
         <div className="detail-metric">
-          <span>{t("牌局盈虧 USD")}</span>
+          <span>
+            {t("牌局盈虧")} {filter.currency || ""}
+          </span>
           <strong className="mono">
-            {current ? `$${money(current.net, true)}` : "—"}
+            {current ? `${money(current.net, true)}` : "—"}
           </strong>
         </div>
         <div className="detail-metric">

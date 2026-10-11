@@ -6,7 +6,7 @@
 
 [English](README.md) · [繁體中文](README.zh-TW.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-BR.md) · [Italiano](README.it.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md) · [Türkçe](README.tr.md)
 
-RiverLens 是 Natural8／GGPoker 个人现金桌牌谱与独立 MDA 群体资料分析桌面工具。介面使用 React／TypeScript，Rust core 负责解析及统计；个人资料存 SQLite，MDA 资料集存 DuckDB。
+RiverLens 是 多牌室个人现金桌及指定锦标赛牌谱与独立 MDA 群体资料分析桌面工具。介面使用 React／TypeScript，Rust core 负责解析及统计；个人资料存 SQLite，MDA 资料集存 DuckDB。
 
 > **[下载 v0.4.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.4.0)** — MDA＋AI、本机 MCP 及离线学习。提供 Windows、Apple Silicon、Intel Mac 套件。macOS 为 ad-hoc 签章，未经 Apple notarization。[发布说明](docs/release-v0.4.0.md)。
 
@@ -16,13 +16,42 @@ README 共 **13 种语言**；个人复盘介面支援 **English／繁中／简�
 
 **v0.4.0** 新增群体研究，保留 AI 个人复盘及 Spot Explorer → Leak Finder → 翻前策略对照 → Trainer。策略包需自行提供；频率对照不是 decision EV。[学习工作台](docs/study-workflow.md) · [主题](docs/theme-selection.md)。
 
+## 个人复盘牌谱格式（尚未发布）
+
+英文 NLHE、2–10 席、UTF-8；以下格式适用于个人复盘，MDA 维持 GG 一般桌 USD NLH 6-max 范围；可导入 TXT、XML、ZIP 或文件夹。“原生”表示已实现牌室语法，不代表每个现行客户端版本均已验收。[导出指南、公开来源及完整限制](docs/hand-history-formats.md)。
+
+| 牌室／网络 | Cash 输入 | MTT／锦标赛 | 支持范围 |
+| --- | --- | --- | --- |
+| GG / Natural8 | TXT | 支持 | 原生语法 |
+| PokerStars | TXT | 支持 | 原生语法 |
+| WPN / ACR / Black Chip / PokerKing | TXT (legacy + modern) | 仅 modern 格式 | 原生语法 |
+| 888 / Pacific | TXT | 支持 | 原生语法 |
+| partypoker / bwin | TXT | — | 原生语法 |
+| Winamax | TXT | 支持 | 原生语法 |
+| iPoker skins | XML | 支持 | 原生语法 |
+| CoinPoker | TXT (USDT) | — | 原生语法；仅合成验证 |
+| Ignition / Bovada / Bodog | TXT | — | 原生语法 |
+| Unibet | TXT | — | 原生语法 |
+| Full Tilt | TXT | 支持 | 历史原生语法 |
+| Cake / Revolution | TXT | — | 历史原生语法 |
+| OnGame | TXT | — | 历史原生语法 |
+| Merge / Carbon | XML | — | 历史原生语法 |
+| Microgaming / MPN | XML | — | 历史原生语法 |
+| Chico / BetOnline / SportsBetting / TigerGaming | PokerStars TXT | — | 仅已有完整转换文件 |
+| PPPoker / PokerBros / UPoker / ClubGG / X-Poker / QQPK | PokerStars TXT | — | 仅已有完整转换文件 |
+| WPT Global | PokerStars TXT | — | 仅已有完整转换文件 |
+
+“—”表示该行未实现锦标赛解析。转换牌室须先持有完整 PokerStars cash 导出文件；RiverLens 没有实现其原生 capture 或 converter。WPN modern Cash 与 CoinPoker 原生 Cash 仍缺本次原生真实样本验证。历史名称不表示牌室仍在运营。其他研究中的牌室及 PHH／OHH／ACPC 尚未实现。
+
+MTT 以 CHIPS 保存筹码；可用时保留赛事编号、级别及 Buy-in 原文，现金币种与筹码分开。All-in chip EV 不代表奖金、ROI、ICM 或 bounty EV。v0.3.2 基底的测试 App 原生验证涵盖 13 份公开 Cash 样本、7 种锦标赛语法及原有 Cash／Rush 原文；4 手不兼容锦标赛样本仍拒收。v0.4.0 整合的源代码回归另列于上述指南。已有 release 下载包未包含此功能。
+
 ## 功能
 
 | 功能 | 用途 |
 | --- | --- |
 | AI 教练与 agent 连接 | 透过 23 个本机 MCP 工具查阅统计与决策情境，建立附手牌依据的复盘、练习及学习计划草稿，由您确认。 |
 | MDA 群体分析 | 汇入独立 GG 一般桌资料集；按情境分析全桌合法机会、Wilson 区间及研究假设，点开匿名手牌验证。 |
-| 汇入中心 | 汇入 TXT、ZIP 或资料夹；查看进度、暂停／续汇、去重及异常隔离。 |
+| 汇入中心 | 汇入 TXT、XML、ZIP 或资料夹；查看进度、暂停／续汇、去重及异常隔离。 |
 | 盈亏总览 | 查看净盈亏、bb/100、Session 与位置分类，点入原始手牌。 |
 | 13 项核心统计 | VPIP、PFR、RFI、3-bet、盲位防守及翻后／摊牌频率；分子、机会分母可分别查阅。 |
 | 13 × 13 起手牌矩阵 | 查看实际样本、net bb、bb/100、行动频率，开启对应手牌。 |

@@ -1,0 +1,29 @@
+Winamax Poker - CashGame - HandId: #5343878-96-1383820687 - Holdem no limit (0.25€/0.50€) - 2013/11/07 10:38:07 UTC
+Table: 'Athens 11' 5-max (real money) Seat #4 is the button
+Seat 1: Player1 (67.80€)
+Seat 2: Player2 (38.52€)
+Seat 3: Player3 (53.65€)
+Seat 4: Hero (22.85€)
+Seat 5: Player5 (42.59€)
+*** ANTE/BLINDS ***
+Player5 posts small blind 0.25€
+Player1 posts big blind 0.50€
+*** PRE-FLOP *** 
+Player2 raises 2€ to 2.50€
+Player3 folds
+Hero raises 20.35€ to 22.85€ and is all-in
+Player5 folds
+Player1 folds
+Player2 calls 20.35€
+*** FLOP *** [3c 7c Jd]
+*** TURN *** [3c 7c Jd] [6c]
+*** RIVER *** [3c 7c Jd 6c] [5s]
+*** SHOW DOWN ***
+Hero shows [Kh Ah] (high card : Ace)
+Player2 shows [Qh Qc] (One pair : Queens)
+Player2 collected 43.45€ from pot
+*** SUMMARY ***
+Total pot 43.45€ | Rake 3€
+Board: [3c 7c Jd 6c 5s]
+Seat 2: Player2 showed [Qh Qc] and won 43.45€ with One pair : Queens
+Seat 4: Hero (button) mucked

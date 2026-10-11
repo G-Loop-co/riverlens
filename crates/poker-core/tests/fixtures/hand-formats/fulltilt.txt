@@ -1,0 +1,53 @@
+Full Tilt Poker Game #33727524963: Table Dear - NL Hold'em - $0.05/$0.10 - 19:01:12 ET - 2014/01/05
+Seat 1: Player1 ($30.06)
+Seat 2: Player2 ($17.32)
+Seat 3: Hero ($10.15)
+Seat 4: Player4 ($9.78)
+Seat 5: Player5 ($10)
+Seat 6: Player6 ($16.67)
+Seat 7: Player7 ($15.58), is sitting out
+Seat 8: Player8 ($10)
+Seat 9: Player9 ($35.75)
+Player8 posts the small blind of $0.05
+Player9 posts the big blind of $0.10
+The button is in seat #6
+*** HOLE CARDS ***
+Player1 raises to $0.40
+Player2 folds
+Hero calls $0.40
+Player4 folds
+Player5 has 15 seconds left to act
+Player5 folds
+Player6 folds
+Player8 folds
+Player8 adds $0.05
+Player9 folds
+*** FLOP *** [4h Jc 3c] (Total Pot: $0.95, 2 Players)
+Player1 has 15 seconds left to act
+Player1 bets $0.80
+Hero calls $0.80
+*** TURN *** [4h Jc 3c] [6h] (Total Pot: $2.55, 2 Players)
+Player1 has 15 seconds left to act
+Player1 has timed out
+Player1 checks
+Hero bets $1.70
+Player1 calls $1.70
+*** RIVER *** [4h Jc 3c 6h] [2h] (Total Pot: $5.95, 2 Players)
+Player1 checks
+Hero checks
+*** SHOW DOWN ***
+Hero shows [Kh Ks] a pair of Kings
+Player1 mucks
+Hero wins the pot ($5.66) with a pair of Kings
+*** SUMMARY ***
+Total pot $5.95 | Rake $0.29
+Board: [4h Jc 3c 6h 2h]
+Seat 1: Player1 mucked
+Seat 2: Player2 didn't bet (folded)
+Seat 3: Hero collected ($5.66)
+Seat 4: Player4 didn't bet (folded)
+Seat 5: Player5 didn't bet (folded)
+Seat 6: Player6 (button) didn't bet (folded)
+Seat 7: Player7 is sitting out
+Seat 8: Player8 (small blind) folded before the Flop
+Seat 9: Player9 (big blind) folded before the Flop

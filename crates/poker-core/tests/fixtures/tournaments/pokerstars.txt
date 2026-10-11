@@ -1,0 +1,24 @@
+PokerStars Hand #T1001: Tournament #7001, $10+$1 USD Hold'em No Limit - Level IV (50/100) - 2026/10/11 12:00:00 ET
+Table '7001 2' 9-max Seat #3 is the button
+Seat 1: Hero (1,000 in chips)
+Seat 2: Villain2 (1,500 in chips)
+Seat 3: Folder3 (3,000 in chips)
+Hero: posts the ante 10
+Villain2: posts the ante 10
+Folder3: posts the ante 10
+Hero: posts small blind 50
+Villain2: posts big blind 100
+*** HOLE CARDS ***
+Dealt to Hero [Ah Ad]
+Folder3: folds
+Hero: raises 940 to 990 and is all-in
+Villain2: calls 890
+*** FLOP *** [2c 3d 7s]
+*** TURN *** [2c 3d 7s] [9h]
+*** RIVER *** [2c 3d 7s 9h] [Jc]
+*** SHOW DOWN ***
+Hero: shows [Ah Ad]
+Villain2: shows [Kh Kd]
+Hero collected 2,010 from pot
+*** SUMMARY ***
+Total pot 2,010 | Rake 0

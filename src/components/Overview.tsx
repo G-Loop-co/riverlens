@@ -22,7 +22,7 @@ import {
 } from "recharts";
 import { api, chooseOutput, desktop, errorText, useRpc } from "../api";
 import type { Filter, Report } from "../types";
-import { decimal, EV_REASONS, money, number } from "../format";
+import { currencySymbol, decimal, EV_REASONS, money, number } from "../format";
 import { Empty, ErrorBanner, Signed, Skeleton } from "./UI";
 import { CoreStats } from "./CoreStats";
 import { readPreference, writePreference } from "../preferences";
@@ -114,7 +114,7 @@ export function Overview({
         <Empty
           title={t("由第一手牌開始")}
           description={t(
-            "匯入 PokerCraft 匯出嘅 TXT 或 ZIP，建立自己的牌局資料庫。亦可以清除篩選查看其他手牌。",
+            "匯入牌室匯出的 TXT、XML 或 ZIP，建立自己的牌局資料庫。亦可以清除篩選查看其他手牌。",
           )}
           action={
             <button className="button primary" onClick={onImport}>
@@ -149,6 +149,13 @@ export function Overview({
 
   return (
     <div className="overview-view">
+      {report.currency === "CHIPS" && (
+        <p className="helper" role="status">
+          {t(
+            "錦標賽結果以籌碼／bb 計算；Adjusted 為牌局 All-in chip EV，不代表獎金、ROI、ICM 或 PKO bounty EV。",
+          )}
+        </p>
+      )}
       {(report.groups_truncated || graph.data?.groups_truncated) && (
         <ErrorBanner>
           {t(
@@ -163,7 +170,9 @@ export function Overview({
             <span className="metric-unit">{currencies}</span>
           </span>
           <strong className={Number(report.net) < 0 ? "negative" : "positive"}>
-            <span className="currency-prefix">$</span>
+            <span className="currency-prefix">
+              {currencySymbol(report.currency)}
+            </span>
             {money(report.net, true)}
           </strong>
           <small>
@@ -205,7 +214,9 @@ export function Overview({
             <Info size={13} />
           </span>
           <strong>
-            <span className="currency-prefix">$</span>
+            <span className="currency-prefix">
+              {currencySymbol(report.currency)}
+            </span>
             {money(report.adjusted, true)}
           </strong>
           <small>
@@ -224,11 +235,12 @@ export function Overview({
             <strong>{t("已固定比較報表")}</strong>
             <span>
               {pinned.data
-                ? t("{{v0}} 手 · ${{v1}} · {{v2}} bb/100", {
+                ? t("{{v0}} 手 · {{v1}} {{v3}} · {{v2}} bb/100", {
                     count: pinned.data.hands,
                     v0: number(pinned.data.hands),
                     v1: money(pinned.data.net, true),
                     v2: decimal(pinned.data.bb100, 2),
+                    v3: pinned.data.currency,
                   })
                 : pinned.error
                   ? t("載入失敗")
@@ -253,7 +265,7 @@ export function Overview({
               <h2>{t("盈利走勢")}</h2>
             </div>
             <div className="inline-controls">
-              <span className="subtle-badge">{t("USD")}</span>
+              <span className="subtle-badge">{report.currency}</span>
               <button
                 className="icon-button"
                 title={t("固定目前報表作比較")}
@@ -313,7 +325,9 @@ export function Overview({
                     }}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(v) => `$${v}`}
+                    tickFormatter={(v) =>
+                      `${currencySymbol(report.currency)}${v}`
+                    }
                   />
                   <ReferenceLine y={0} stroke="var(--line)" />
                   <Tooltip
@@ -325,7 +339,7 @@ export function Overview({
                     }}
                     labelStyle={{ color: "var(--text)" }}
                     formatter={(value, name) => [
-                      `$${money(Number(value))}`,
+                      `${currencySymbol(report.currency)}${money(Number(value))}`,
                       (
                         {
                           net: t("實際盈虧"),
@@ -480,7 +494,9 @@ export function Overview({
               <tr>
                 <th>{group === "date" ? t("日期 · 來源時區") : t("分類")}</th>
                 <th>{t("手數")}</th>
-                <th>{t("盈虧 USD")}</th>
+                <th>
+                  {t("盈虧")} {report.currency}
+                </th>
                 <th>{t("Net bb")}</th>
                 <th>{t("bb/100")}</th>
                 <th>

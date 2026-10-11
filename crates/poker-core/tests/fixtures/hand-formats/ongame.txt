@@ -1,0 +1,32 @@
+***** History for hand R5-361920831-111 *****
+Start hand: Mon Jan 06 09:05:00 CET 2014
+Table: Bagdad [361920831] (NO_LIMIT TEXAS_HOLDEM $0.50/$1, Real money)
+Button: seat 3
+Players in round: 3
+Seat 2: Hero ($107.38) 
+Seat 3: Player2 ($35.73) 
+Seat 8: Player3 ($102.00) 
+Player3 posts small blind ($0.50)
+Hero posts big blind ($1)
+---
+Dealing pocket cards
+Player2 folds
+Player3 raises $2.50 to $3.00
+Hero calls $2.00
+--- Dealing flop [Jd, 7c, Kc]
+Player3 checks
+Hero checks
+--- Dealing turn [5h]
+Player3 checks
+Hero checks
+--- Dealing river [As]
+Player3 bets $4.50
+Hero calls $4.50
+---
+Summary:
+Main pot: $15.00 won by Hero ($14.25)
+Rake taken: $0.75
+Seat 2: Hero ($114.13), net: +$6.75, [Ad, 9c]
+Seat 3: Player2 ($35.73), net: -$0.00
+Seat 8: Player3 ($94.50), net: -$7.50, [Ah, 8s]
+***** End of hand R5-361920831-111 *****

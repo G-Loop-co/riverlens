@@ -1,0 +1,24 @@
+***** Hand History for Game 13550276397 *****
+$0.05/$0.10 USD NL Texas Hold'em - Monday, January 06, 03:13:25 EST 2014
+Table Bloemfontein (Real Money)
+Seat 1 is the button
+Total number of players : 2/6 
+Seat 1: Player1 ( $8.54 USD )
+Seat 5: Hero ( $11 USD )
+Player1 posts small blind [$0.05 USD].
+Hero posts big blind [$0.10 USD].
+** Dealing down cards **
+Player1 calls [$0.05 USD]
+Hero checks
+** Dealing Flop ** [ Ah, 3s, 4s ]
+Hero checks
+Player1 checks
+** Dealing Turn ** [ 9d ]
+Hero checks
+Player1 checks
+** Dealing River ** [ Tc ]
+Hero checks
+Player1 checks
+Hero shows [ 7h, 3c ]a pair of Threes.
+Player1 doesn't show [ Ks, 6d ]high card Ace.
+Hero wins $0.19 USD from the main pot with a pair of Threes.

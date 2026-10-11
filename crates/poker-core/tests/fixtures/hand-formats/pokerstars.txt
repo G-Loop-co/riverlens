@@ -1,0 +1,50 @@
+PokerStars Game #109673533027:  Hold'em No Limit ($5/$10 USD) - 2014/01/06 1:11:20 ET
+Table 'Hveen II 40-100 bb' 9-max Seat #4 is the button
+Seat 1: Player1 ($1151.30 in chips) 
+Seat 2: Player2 ($1695 in chips) 
+Seat 3: Player3 ($1048.82 in chips) 
+Seat 4: Player4 ($1642 in chips) 
+Seat 5: Player5 ($620.40 in chips) 
+Seat 6: Hero ($1693.92 in chips) 
+Seat 7: Player7 ($719.36 in chips) 
+Seat 8: Player8 ($932 in chips) 
+Seat 9: Player9 ($1000 in chips) 
+Player5: posts small blind $5
+Hero: posts big blind $10
+*** HOLE CARDS ***
+Player7: raises $20 to $30
+Player8: folds 
+Player9: folds 
+Player1: folds 
+Player2: folds 
+Player3: folds 
+Player4: folds 
+Player5: folds 
+Hero: calls $20
+*** FLOP *** [5c 7c 7d]
+Hero: checks 
+Player7: bets $50
+Hero: raises $50 to $100
+Player7: calls $50
+*** TURN *** [5c 7c 7d] [Jd]
+Hero: bets $150
+Player7: calls $150
+*** RIVER *** [5c 7c 7d Jd] [Jc]
+Hero: checks 
+Player7: checks 
+*** SHOW DOWN ***
+Hero: shows [7h 6h] (a full house, Sevens full of Jacks)
+Player7: mucks hand 
+Hero collected $562 from pot
+*** SUMMARY ***
+Total pot $565 | Rake $3 
+Board [5c 7c 7d Jd Jc]
+Seat 1: Player1 folded before Flop (didn't bet)
+Seat 2: Player2 folded before Flop (didn't bet)
+Seat 3: Player3 folded before Flop (didn't bet)
+Seat 4: Player4 (button) folded before Flop (didn't bet)
+Seat 5: Player5 (small blind) folded before Flop
+Seat 6: Hero (big blind) showed [7h 6h] and won ($562) with a full house, Sevens full of Jacks
+Seat 7: Player7 mucked
+Seat 8: Player8 folded before Flop (didn't bet)
+Seat 9: Player9 folded before Flop (didn't bet)

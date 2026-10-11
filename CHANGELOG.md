@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- Support seven English NLHE tournament grammars (GG, PokerStars, modern WPN, Winamax, 888, iPoker XML and archived Full Tilt); use CHIPS, indexed tournament-ID filters and optional source metadata. Cash and chips cannot be summed. All-in chip EV does not represent ROI, prize money, ICM or bounty EV.
+
+- Expand to 15 fixture-tested English NLHE cash hand-history families, including text and iPoker / Merge / MPN XML; retain source text and existing reconciliation, quarantine, duplicate and rebuild paths.
+- Add a source-linked catalog of 94 room, network, archive and standard entries, with separate native, converted-only and unimplemented statuses.
+- Support XML files inside ZIPs; retain per-hand session metadata and reject DTDs or unknown actions.
+- Keep USD, EUR, GBP, CAD and USDT separate in reports and matrices; label replay/results and CSV exports with the actual currency.
+- Respect explicit source timezone tags and use requested timezone boundaries for date filters.
+- See [format/export research and limits](docs/hand-history-formats.md). No release package or room-client certification yet.
+
 ## 0.4.0 — 2026-10-11 — MDA population analysis
 
 - Add independent local DuckDB datasets for GG Regular USD NLH 6-max, with streaming TXT/ZIP/folder imports, atomic checkpoints, resume, deduplication, conflict quarantine and independent backup/restore.

@@ -198,11 +198,44 @@ export function StudyWorkspace({
             options={[
               ["Cash", "Cash"],
               ["Rush", "Rush"],
+              ["Tournament", t("MTT／錦標賽")],
             ]}
-            change={(game) => updateFilter({ game })}
+            change={(game) =>
+              updateFilter({
+                game,
+                currency: game === "Tournament" ? "CHIPS" : undefined,
+                tournament_id: undefined,
+                stakes: undefined,
+              })
+            }
           />
-          <StudySelect label="study.stakes" value={filter.stakes} options={["0.01/0.02","0.02/0.05","0.05/0.10","0.10/0.25","0.25/0.50","0.50/1.00","1.00/2.00"].map(s=>[s,s])} change={stakes=>updateFilter({stakes})}/>
-        <StudySelect
+          <Field label={t("賽事編號")}>
+            <input
+              value={filter.tournament_id || ""}
+              onChange={(e) =>
+                updateFilter({
+                  tournament_id: e.target.value || undefined,
+                  game: "Tournament",
+                  currency: "CHIPS",
+                })
+              }
+            />
+          </Field>
+          <StudySelect
+            label="study.stakes"
+            value={filter.stakes}
+            options={[
+              "0.01/0.02",
+              "0.02/0.05",
+              "0.05/0.10",
+              "0.10/0.25",
+              "0.25/0.50",
+              "0.50/1.00",
+              "1.00/2.00",
+            ].map((s) => [s, s])}
+            change={(stakes) => updateFilter({ stakes })}
+          />
+          <StudySelect
             label="study.pack"
             value={pack}
             options={(packs.data || []).map((p) => [p.id, p.name])}

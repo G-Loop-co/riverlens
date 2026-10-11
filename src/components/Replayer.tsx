@@ -1,3 +1,4 @@
+import { currencySymbol } from "../format";
 import { study, useStudy, useStudyMutation } from "../study-api";
 import type { DecisionRef } from "../study-types";
 import { useTranslation } from "react-i18next";
@@ -66,12 +67,18 @@ export function Replayer({
   saved: () => void;
   initialStep?: number;
   askAi?: (seq: number) => void;
-  population?: {dataset_id: string;version: string;hand_key: string};
+  population?: { dataset_id: string; version: string; hand_key: string };
 }) {
   const { t } = useTranslation();
-  const result = useRpc<HandDetail>(population ? {op:"mda",request:{op:"hand",...population}} : { op: "hand", id });
+  const result = useRpc<HandDetail>(
+    population
+      ? { op: "mda", request: { op: "hand", ...population } }
+      : { op: "hand", id },
+  );
   const h = result.data?.hand;
-  const trainingRefs = useStudy<DecisionRef[]>(population ? null : { op: "hand_decisions", hand: id });
+  const trainingRefs = useStudy<DecisionRef[]>(
+    population ? null : { op: "hand_decisions", hand: id },
+  );
   const training = useStudyMutation();
   const [trainingNotice, setTrainingNotice] = useState("");
   const [step, setStep] = useState(0),
@@ -91,11 +98,13 @@ export function Replayer({
       setNote(a.note);
       setTags(a.tags.join(", "));
       setReviewed(a.reviewed);
-      setStep(Math.min(Math.max(initialStep,0),result.data.hand.actions.length));
+      setStep(
+        Math.min(Math.max(initialStep, 0), result.data.hand.actions.length),
+      );
       setPlaying(false);
       setClean(true);
     }
-  }, [result.data,initialStep]);
+  }, [result.data, initialStep]);
   useEffect(() => {
     if (!h || !playing) return;
     const t = setInterval(
@@ -188,7 +197,9 @@ export function Replayer({
             <h2>
               {h ? (
                 <>
-                  <span className="mono">{population ? "MDA · 無 Hero" : h.hand_class}</span>
+                  <span className="mono">
+                    {population ? "MDA · 無 Hero" : h.hand_class}
+                  </span>
                   <span className="position-badge">{h.position}</span>
                 </>
               ) : (
@@ -211,49 +222,100 @@ export function Replayer({
           </button>
         </div>
         {result.error && <ErrorBanner>{result.error}</ErrorBanner>}
-        {(training.error || trainingRefs.error) && <ErrorBanner>{training.error || trainingRefs.error}</ErrorBanner>}
-        {!population && <div className="study-row-actions">
-          <button className="button subtle" disabled={training.busy || !trainingRefs.data?.some(r => r.seq === step)}
-            onClick={() => void training.run(async () => {
-              const ref = trainingRefs.data?.find(r => r.seq === step);
-              if (!ref) return;
-              const added = await study<{added: number; duplicates: number}>({op: "enqueue", references: [ref]});
-              setTrainingNotice(t("study.added", added));
-              saved();
-            })}>{t("study.trainCurrentDecision")}</button>
-          <button className="text-button" disabled={!trainingRefs.data?.some(r => r.seq > step)}
-            onClick={() => { const ref = trainingRefs.data?.find(r => r.seq > step); if (ref) {setPlaying(false); setStep(ref.seq);} }}>
-            {t("study.nextHeroDecision")}
-          </button>
-          <span role="status">{trainingNotice}</span>
-        </div>}
+        {(training.error || trainingRefs.error) && (
+          <ErrorBanner>{training.error || trainingRefs.error}</ErrorBanner>
+        )}
+        {!population && (
+          <div className="study-row-actions">
+            <button
+              className="button subtle"
+              disabled={
+                training.busy || !trainingRefs.data?.some((r) => r.seq === step)
+              }
+              onClick={() =>
+                void training.run(async () => {
+                  const ref = trainingRefs.data?.find((r) => r.seq === step);
+                  if (!ref) return;
+                  const added = await study<{
+                    added: number;
+                    duplicates: number;
+                  }>({ op: "enqueue", references: [ref] });
+                  setTrainingNotice(t("study.added", added));
+                  saved();
+                })
+              }
+            >
+              {t("study.trainCurrentDecision")}
+            </button>
+            <button
+              className="text-button"
+              disabled={!trainingRefs.data?.some((r) => r.seq > step)}
+              onClick={() => {
+                const ref = trainingRefs.data?.find((r) => r.seq > step);
+                if (ref) {
+                  setPlaying(false);
+                  setStep(ref.seq);
+                }
+              }}
+            >
+              {t("study.nextHeroDecision")}
+            </button>
+            <span role="status">{trainingNotice}</span>
+          </div>
+        )}
         {result.error ? null : !h || !frame ? (
           <Skeleton rows={8} />
         ) : (
           <>
             <div className="hand-context">
               <span>
-                {h.brand} · {h.game} · ${h.sb}/${h.bb}
+                {h.brand} · {h.game} · {currencySymbol(h.currency)}
+                {h.sb}/{currencySymbol(h.currency)}
+                {h.bb}
               </span>
               <span className="mono">
                 {h.local_time} {h.timezone}
               </span>
             </div>
+            {h.tournament && (
+              <p className="helper">
+                {t("MTT／錦標賽")} · {h.tournament.name}
+                {h.tournament.id && <> · #{h.tournament.id}</>}
+                {h.tournament.level && (
+                  <>
+                    {" "}
+                    · {t("級別")} {h.tournament.level}
+                  </>
+                )}
+                {h.tournament.buy_in && (
+                  <>
+                    {" "}
+                    · {t("Buy-in 原文")} {h.tournament.buy_in}
+                  </>
+                )}
+                <br />
+                {t(
+                  "錦標賽結果以籌碼／bb 計算；Adjusted 為牌局 All-in chip EV，不代表獎金、ROI、ICM 或 PKO bounty EV。",
+                )}
+              </p>
+            )}
             <div className="replayer-tabs">
               {[
                 ["replay", t("逐步回放")],
                 ["ledger", t("帳本與 EV")],
                 ["raw", t("原始牌譜")],
-              ].filter(([k]) => !population || k === "replay").map(([k, l]) => (
-                <button
-                  key={k}
-                  className={tab === k ? "active" : ""}
-                  aria-pressed={tab === k}
-                  onClick={() => setTab(k)}
-                >
-                  {t(l)}
-                </button>
-              ))}
+              ]
+                .filter(([k]) => !population || k === "replay")
+                .map(([k, l]) => (
+                  <button
+                    key={k}
+                    className={tab === k ? "active" : ""}
+                    aria-pressed={tab === k}
+                    onClick={() => setTab(k)}
+                  >
+                    {t(l)}
+                  </button>
+                ))}
             </div>
             <div className="replayer-body">
               {h.status !== "valid" && (
@@ -278,7 +340,8 @@ export function Replayer({
                             ? t("剩餘底池／費用")
                             : t("底池")}{" "}
                           <strong className="mono">
-                            ${money(fromUnits(frame.pot))}
+                            {currencySymbol(h.currency)}
+                            {money(fromUnits(frame.pot))}
                           </strong>
                         </span>
                         {frame.boards.map(
@@ -332,12 +395,14 @@ export function Replayer({
                               )}
                             </div>
                             <strong className="mono">
-                              ${money(fromUnits(frame.stacks[p.seat]))}
+                              {currencySymbol(h.currency)}
+                              {money(fromUnits(frame.stacks[p.seat]))}
                             </strong>
                           </div>
                           {(frame.contributions[p.seat] || 0n) > 0n && (
                             <span className="player-contribution mono">
-                              ${money(fromUnits(frame.contributions[p.seat]))}
+                              {currencySymbol(h.currency)}
+                              {money(fromUnits(frame.contributions[p.seat]))}
                             </span>
                           )}
                         </div>
@@ -359,7 +424,7 @@ export function Replayer({
                         </strong>
                         {Number(last.amount) > 0 && (
                           <span className="mono">
-                            $
+                            {currencySymbol(h.currency)}
                             {money(
                               last.kind === "raise" ? last.to : last.amount,
                             )}
@@ -490,7 +555,7 @@ export function Replayer({
                         <strong>{t(ACTIONS[a.kind] || a.kind)}</strong>
                         <span className="mono">
                           {Number(a.amount) > 0
-                            ? `$${money(a.kind === "raise" ? a.to : a.amount)}`
+                            ? `${currencySymbol(h.currency)}${money(a.kind === "raise" ? a.to : a.amount)}`
                             : a.kind === "show" &&
                                 a.actor !== h.hero_seat &&
                                 !reveal &&
@@ -510,18 +575,29 @@ export function Replayer({
               )}
               {tab === "ledger" && (
                 <div className="ledger">
-                  <h3>{t("Hero 現金流")}</h3>
+                  <h3>
+                    {t(
+                      h.currency === "CHIPS" ? "Hero 籌碼帳本" : "Hero 現金流",
+                    )}
+                  </h3>
                   {[
                     [t("投入"), h.invested],
                     [t("退回未跟注"), h.returned],
                     [t("底池派彩"), h.collected],
-                    [t("Cashout 收款"), h.cashout],
-                    ["Cashout Risk", h.cashout_risk],
+                    ...(h.currency === "CHIPS"
+                      ? []
+                      : [
+                          [t("Cashout 收款"), h.cashout],
+                          ["Cashout Risk", h.cashout_risk],
+                        ]),
                     [t("牌局淨結果"), h.net],
                   ].map(([k, v]) => (
                     <div key={k}>
                       <span>{k}</span>
-                      <strong className="mono">${money(v)}</strong>
+                      <strong className="mono">
+                        {currencySymbol(h.currency)}
+                        {money(v)}
+                      </strong>
                     </div>
                   ))}
                   <h3>{t("底池與全桌費用")}</h3>
@@ -536,13 +612,19 @@ export function Replayer({
                           v1: p.eligible.length,
                         })}
                       </span>
-                      <strong className="mono">${money(p.amount)}</strong>
+                      <strong className="mono">
+                        {currencySymbol(h.currency)}
+                        {money(p.amount)}
+                      </strong>
                     </div>
                   ))}
                   {Object.entries(h.fees).map(([k, v]) => (
                     <div key={k}>
                       <span>{k}</span>
-                      <strong className="mono">${money(v)}</strong>
+                      <strong className="mono">
+                        {currencySymbol(h.currency)}
+                        {money(v)}
+                      </strong>
                     </div>
                   ))}
                   <p>
@@ -567,7 +649,10 @@ export function Replayer({
                   {h.adjusted_net !== null && (
                     <div>
                       <span>{t("Adjusted net")}</span>
-                      <strong>${money(h.adjusted_net, true)}</strong>
+                      <strong>
+                        {currencySymbol(h.currency)}
+                        {money(h.adjusted_net, true)}
+                      </strong>
                     </div>
                   )}
                   <p>
@@ -577,62 +662,66 @@ export function Replayer({
                   </p>
                 </div>
               )}
-              {!population && <section className="hand-notes">
-                <div className="section-title">
-                  <h3>{t("你的複盤筆記")}</h3>
-                  <span className={`note-status ${clean ? "" : "dirty"}`}>
-                    {clean ? t("已儲存") : t("未儲存")}
-                  </span>
-                </div>
-                <Field label={t("筆記")}>
-                  <textarea
+              {!population && (
+                <section className="hand-notes">
+                  <div className="section-title">
+                    <h3>{t("你的複盤筆記")}</h3>
+                    <span className={`note-status ${clean ? "" : "dirty"}`}>
+                      {clean ? t("已儲存") : t("未儲存")}
+                    </span>
+                  </div>
+                  <Field label={t("筆記")}>
+                    <textarea
+                      disabled={saving}
+                      value={note}
+                      onChange={(e) => {
+                        setNote(e.target.value);
+                        setClean(false);
+                      }}
+                      placeholder={t(
+                        "當時嘅 range、下注理由，下次想確認嘅問題…",
+                      )}
+                      rows={3}
+                    />
+                  </Field>
+                  <Field
+                    label={t("標籤")}
+                    help={t("以逗號分隔，例如：3-bet pot, river call")}
+                  >
+                    <input
+                      disabled={saving}
+                      value={tags}
+                      onChange={(e) => {
+                        setTags(e.target.value);
+                        setClean(false);
+                      }}
+                      placeholder={t("新增標籤")}
+                    />
+                  </Field>
+                  <label className="check-label">
+                    <input
+                      type="checkbox"
+                      disabled={saving}
+                      checked={reviewed}
+                      onChange={(e) => {
+                        setReviewed(e.target.checked);
+                        setClean(false);
+                      }}
+                    />
+                    <CheckCircle size={17} />
+                    {t("標記為已複盤")}
+                  </label>
+                  {error && <ErrorBanner>{error}</ErrorBanner>}
+                  <button
+                    className="button primary full-width"
+                    onClick={() => void save()}
                     disabled={saving}
-                    value={note}
-                    onChange={(e) => {
-                      setNote(e.target.value);
-                      setClean(false);
-                    }}
-                    placeholder={t("當時嘅 range、下注理由，下次想確認嘅問題…")}
-                    rows={3}
-                  />
-                </Field>
-                <Field
-                  label={t("標籤")}
-                  help={t("以逗號分隔，例如：3-bet pot, river call")}
-                >
-                  <input
-                    disabled={saving}
-                    value={tags}
-                    onChange={(e) => {
-                      setTags(e.target.value);
-                      setClean(false);
-                    }}
-                    placeholder={t("新增標籤")}
-                  />
-                </Field>
-                <label className="check-label">
-                  <input
-                    type="checkbox"
-                    disabled={saving}
-                    checked={reviewed}
-                    onChange={(e) => {
-                      setReviewed(e.target.checked);
-                      setClean(false);
-                    }}
-                  />
-                  <CheckCircle size={17} />
-                  {t("標記為已複盤")}
-                </label>
-                {error && <ErrorBanner>{error}</ErrorBanner>}
-                <button
-                  className="button primary full-width"
-                  onClick={() => void save()}
-                  disabled={saving}
-                >
-                  <FloppyDisk size={17} />
-                  {saving ? t("儲存中…") : t("儲存筆記與標籤")}
-                </button>
-              </section>}
+                  >
+                    <FloppyDisk size={17} />
+                    {saving ? t("儲存中…") : t("儲存筆記與標籤")}
+                  </button>
+                </section>
+              )}
             </div>
             <div className="replayer-footer">
               <span className="mono">#{h.id}</span>
