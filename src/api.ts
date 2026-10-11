@@ -65,7 +65,7 @@ export async function chooseInput(directory = false): Promise<string[]> {
     multiple: !directory,
     filters: directory
       ? undefined
-      : [{ name: i18n.t("牌譜"), extensions: ["txt", "zip"] }],
+      : [{ name: i18n.t("牌譜"), extensions: ["txt", "xml", "zip"] }],
   });
   return result ? (Array.isArray(result) ? result : [result]) : [];
 }

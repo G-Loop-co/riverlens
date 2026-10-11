@@ -342,17 +342,23 @@ pub fn call_scoped(
             let coverage:Value=tx.query_row("SELECT count(*),min(played_at),max(played_at),sum(status='valid') FROM hands",[],|r|Ok(json!({"hands":r.get::<_,i64>(0)?,"from":r.get::<_,Option<i64>>(1)?,"to":r.get::<_,Option<i64>>(2)?,"valid":r.get::<_,Option<i64>>(3)?})))?;
             let mut values = serde_json::Map::new();
             for field in [
-                "profile", "game", "stakes", "position", "currency", "pot_type",
+                "profile",
+                "game",
+                "tournament_id",
+                "stakes",
+                "position",
+                "currency",
+                "pot_type",
             ] {
                 let v = tx
                     .prepare(&format!(
-                        "SELECT DISTINCT {field} FROM hands ORDER BY {field} LIMIT 1001"
+                        "SELECT DISTINCT {field} FROM hands WHERE {field} IS NOT NULL ORDER BY {field} LIMIT 1001"
                     ))?
                     .query_map([], |r| r.get::<_, String>(0))?
                     .collect::<rusqlite::Result<Vec<_>>>()?;
                 values.insert(field.into(),json!({"values":v.iter().take(1000).collect::<Vec<_>>(),"truncated":v.len()>1000}));
             }
-            json!({"values":values,"coverage":coverage,"filter_fields":serde_json::to_value(Filter::default())?,"money":"Hand and decision amounts are decimal currency strings; explicitly named *_units fields are integer micro-units (1 currency unit = 1000000 micro-units).","stats_version":STATS_VERSION})
+            json!({"values":values,"coverage":coverage,"filter_fields":serde_json::to_value(Filter::default())?,"money":"Hand and decision amounts are decimal strings in the hand currency. CHIPS denotes tournament chips, not cash profit, ROI or ICM EV. Explicitly named *_units fields are integer micro-units (1 currency unit or chip = 1000000 micro-units).","stats_version":STATS_VERSION})
         }
         "get_metric_definitions" => json!(STAT_DEFINITIONS
             .iter()

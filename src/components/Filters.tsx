@@ -14,6 +14,26 @@ export function AdvancedFilters({
   return (
     <div id="advanced-filters" className="advanced-filters">
       <div className="filter-grid">
+        <Field label={t("賽事編號")}>
+          <input
+            value={f.tournament_id || ""}
+            onChange={(e) =>
+              update({
+                tournament_id: e.target.value,
+                game: "Tournament",
+                currency: "CHIPS",
+              })
+            }
+            placeholder={t("來源牌譜的賽事編號")}
+          />
+        </Field>
+        <Field label={t("自訂盲注／級別")}>
+          <input
+            value={f.stakes || ""}
+            onChange={(e) => update({ stakes: e.target.value })}
+            placeholder="50/100"
+          />
+        </Field>
         <Field label={t("開始日期 · HKT")}>
           <input
             type="date"

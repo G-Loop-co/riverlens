@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<session sessioncode="s7007"><general><mode>real</mode><gametype>Holdem NL</gametype><tablename>Study Cup (#7007)</tablename><currency>USD</currency><tournamentname>Study Cup</tournamentname><buyin>$10+$1</buyin></general>
+<game gamecode="1007"><general><startdate>2026-10-11 12:00:00</startdate><players>
+<player seat="1" name="Hero" chips="1000" dealer="0" bet="1000" win="2010"/>
+<player seat="2" name="Villain2" chips="1500" dealer="0" bet="1000" win="0"/>
+<player seat="3" name="Folder3" chips="3000" dealer="1" bet="10" win="0"/>
+</players></general><round no="0">
+<action no="1" player="Hero" type="15" sum="10"/><action no="2" player="Villain2" type="15" sum="10"/><action no="3" player="Folder3" type="15" sum="10"/><action no="4" player="Hero" type="1" sum="50"/><action no="5" player="Villain2" type="2" sum="100"/>
+</round><round no="1"><cards type="Pocket" player="Hero">HA DA</cards><cards type="Pocket" player="Villain2">HK DK</cards>
+<action no="6" player="Folder3" type="0" sum="0"/><action no="7" player="Hero" type="7" sum="940"/><action no="8" player="Villain2" type="3" sum="890"/>
+</round><round no="2"><cards type="Flop">C2 D3 S7</cards></round><round no="3"><cards type="Turn">H9</cards></round><round no="4"><cards type="River">CJ</cards></round></game></session>

@@ -1,3 +1,4 @@
+import { HandFormats } from "./HandFormats";
 import { useTranslation } from "react-i18next";
 import { useEffect, useState } from "react";
 import {
@@ -90,7 +91,7 @@ export function ImportDialog({
           </button>
         </div>
         <p className="muted">
-          {t("選取 PokerCraft 匯出嘅 TXT 或 ZIP。原始檔案保持不變。")}
+          {t("選取牌室匯出的 TXT、XML 或 ZIP。原始檔案保持不變。")}
         </p>
         <Field label={t("來源設定")}>
           <select
@@ -275,9 +276,7 @@ export function Imports({
         {!jobs.length ? (
           <Empty
             title={t("資料庫準備就緒")}
-            description={t(
-              "由 Natural8／GGPoker PokerCraft 匯出自己嘅牌譜，再匯入呢度。",
-            )}
+            description={t("由牌室客戶端匯出自己的完整牌譜，再匯入這裡。")}
             action={
               <button className="button primary" onClick={onImport}>
                 {t("選擇牌譜")}
@@ -383,6 +382,7 @@ export function Imports({
           </p>
         )}
       </section>
+      <HandFormats />
       <section className="panel">
         <div className="panel-heading">
           <div>

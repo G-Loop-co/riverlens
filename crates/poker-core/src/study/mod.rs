@@ -424,6 +424,7 @@ pub fn predicate(q: &StudyQuery) -> Result<(String, Vec<Sql>)> {
         date_to: f.date_to.clone(),
         timezone: f.timezone.clone(),
         game: f.game.clone(),
+        tournament_id: f.tournament_id.clone(),
         stakes: f.stakes.clone(),
         currency: f.currency.clone(),
         hand_class: f.hand_class.clone(),
@@ -431,7 +432,7 @@ pub fn predicate(q: &StudyQuery) -> Result<(String, Vec<Sql>)> {
     };
     anyhow::ensure!(
         serde_json::to_value(f)? == serde_json::to_value(&clean)?,
-        "Study cohorts accept only source, date, stakes, game, currency and starting hand"
+        "Study cohorts accept only source, date, stakes, game, tournament, currency and starting hand"
     );
     let (mut clause, mut values) = store::predicate(&clean, true)?;
     clause.push_str(" AND d.hand=h.id AND si.hand=h.id AND si.version=?");

@@ -2,7 +2,7 @@ use crate::money;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-pub const PARSER_VERSION: &str = "gg-cash/1.0.0";
+pub const PARSER_VERSION: &str = "multi-room/2.1.0";
 pub const STATS_VERSION: &str = "hero-opportunities/1.0.0";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -86,6 +86,16 @@ pub struct EquityInput {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Tournament {
+    /// Source tournament identity. Absent when the export only supplies a name.
+    pub id: Option<String>,
+    pub name: String,
+    pub level: Option<String>,
+    /// Source text only: never included in the chip ledger or treated as profit.
+    pub buy_in: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Hand {
     pub id: String,
     pub profile: String,
@@ -98,6 +108,8 @@ pub struct Hand {
     pub player_count: usize,
     pub currency: String,
     pub game: String,
+    #[serde(default)]
+    pub tournament: Option<Tournament>,
     #[serde(with = "money")]
     pub sb: i64,
     #[serde(with = "money")]
@@ -248,6 +260,7 @@ impl ObservedHand {
             player_count: self.player_count,
             currency: self.currency,
             game: self.game,
+            tournament: None,
             sb: self.sb,
             bb: self.bb,
             button: self.button,
@@ -301,6 +314,7 @@ pub struct Filter {
     pub timezone: Option<String>,
     pub position: Option<String>,
     pub game: Option<String>,
+    pub tournament_id: Option<String>,
     pub stakes: Option<String>,
     pub currency: Option<String>,
     pub player_count: Option<u8>,

@@ -1,0 +1,272 @@
+{
+  "checkedOn": "2026-10-11",
+  "scope": "English NLHE cash plus explicitly supported tournament grammars, 2–10 seats; UTF-8. Tournament amounts are CHIPS, never cash profit or ICM/ROI. Native grammar support is fixture-tested, not blanket client certification. Converted rooms require a complete supported PokerStars export. Historical skins do not imply current operation.",
+  "formats": [
+    {
+      "id": "gg",
+      "label": "GG / Natural8",
+      "rooms": ["Natural8", "GGPoker", "GGNetwork"],
+      "status": "native",
+      "files": "TXT / ZIP",
+      "guide": "https://docs.pokertracker.com/pt4/site-configuration/ggpoker-configuration-guide/",
+      "tournament": true
+    },
+    {
+      "id": "pokerstars",
+      "label": "PokerStars",
+      "rooms": ["PokerStars"],
+      "status": "native",
+      "files": "TXT / ZIP",
+      "guide": "https://www.pokerstars.com/help/articles/save-hand-histories/",
+      "tournament": true
+    },
+    {
+      "id": "winning",
+      "label": "Winning Poker Network",
+      "rooms": [
+        "Winning Poker Network",
+        "Americas Cardroom",
+        "Black Chip Poker",
+        "PokerKing",
+        "TruePoker",
+        "TowerTorneos",
+        "YaPoker",
+        "Heritage Sports",
+        "Betcoin Poker",
+        "PokerNuts"
+      ],
+      "status": "native",
+      "files": "TXT / ZIP",
+      "guide": "https://docs.pokertracker.com/pt4/site-configuration/winning-poker-network-configuration-guide-wpn/",
+      "tournament": true
+    },
+    {
+      "id": "888",
+      "label": "888 / Pacific",
+      "rooms": ["888poker", "Pacific Poker"],
+      "status": "native",
+      "files": "TXT / ZIP",
+      "guide": "https://docs.pokertracker.com/pt4/site-configuration/888-poker-configuration-guide/",
+      "tournament": true
+    },
+    {
+      "id": "partypoker",
+      "label": "partypoker",
+      "rooms": ["partypoker", "bwin Poker"],
+      "status": "native",
+      "files": "TXT / ZIP",
+      "guide": "https://docs.pokertracker.com/pt4/site-configuration/partypoker-configuration-guide/",
+      "tournament": false
+    },
+    {
+      "id": "winamax",
+      "label": "Winamax",
+      "rooms": ["Winamax"],
+      "status": "native",
+      "files": "TXT / ZIP",
+      "guide": "https://docs.pokertracker.com/pt4/site-configuration/winamax-configuration-guide/",
+      "tournament": true
+    },
+    {
+      "id": "ipoker",
+      "label": "iPoker",
+      "rooms": [
+        "iPoker",
+        "bet365 Poker",
+        "Betfair Poker",
+        "Titan Poker",
+        "William Hill Poker",
+        "NetBet Poker",
+        "Red Star Poker",
+        "bet-at-home Poker",
+        "BetClic Poker",
+        "BetFred Poker",
+        "BetMost Poker",
+        "BetNGo",
+        "BoylePoker",
+        "Coral Poker",
+        "DafaPoker",
+        "Expekt Poker",
+        "Genting Poker",
+        "IronPoker",
+        "Ladbrokes Poker",
+        "Mansion Poker",
+        "OffsideBet",
+        "OneWayPoker",
+        "Paddy Power Poker",
+        "PokerEncore",
+        "PokerPlex24",
+        "SportsInteraction Poker",
+        "WinMasters Poker",
+        "Winner Poker"
+      ],
+      "status": "native",
+      "files": "XML / TXT / ZIP",
+      "guide": "https://docs.pokertracker.com/pt4/site-configuration/ipoker-configuration-guide/",
+      "tournament": true
+    },
+    {
+      "id": "coinpoker",
+      "label": "CoinPoker",
+      "rooms": ["CoinPoker"],
+      "status": "native",
+      "files": "TXT / ZIP",
+      "guide": "https://docs.pokertracker.com/pt4/site-configuration/coinpoker-configuration-guide/",
+      "tournament": false
+    },
+    {
+      "id": "ignition",
+      "label": "Ignition / Bovada / Bodog",
+      "rooms": ["Ignition", "Bovada", "Bodog"],
+      "status": "native",
+      "files": "TXT / ZIP",
+      "guide": "https://docs.pokertracker.com/pt4/site-configuration/ignition-configuration-guide-bovadabodog/",
+      "tournament": false
+    },
+    {
+      "id": "unibet",
+      "label": "Unibet",
+      "rooms": ["Unibet"],
+      "status": "native",
+      "files": "TXT / ZIP",
+      "guide": "https://docs.pokertracker.com/pt4/site-configuration/unibet-configuration-guide/",
+      "tournament": false
+    },
+    {
+      "id": "fulltilt",
+      "label": "Full Tilt (archive)",
+      "rooms": ["Full Tilt Poker"],
+      "status": "native",
+      "files": "TXT / ZIP",
+      "guide": "https://github.com/HHSmithy/PokerHandHistoryParser/tree/master/HandHistories.Parser.UnitTests/SampleHandHistories/FullTilt",
+      "tournament": true
+    },
+    {
+      "id": "cake",
+      "label": "Cake / Revolution (archive)",
+      "rooms": ["Cake Poker", "Revolution Poker"],
+      "status": "native",
+      "files": "TXT / ZIP",
+      "guide": "https://github.com/jejellyroll-fr/fpdb-3/tree/development/regression-test-files/cash/Cake",
+      "tournament": false
+    },
+    {
+      "id": "chico",
+      "label": "Chico (converted)",
+      "rooms": ["Chico", "BetOnline", "SportsBetting", "TigerGaming"],
+      "status": "converted",
+      "files": "PokerStars TXT",
+      "guide": "https://drivehud.com/knowledge-base/what-poker-sites-does-drivehud-support/",
+      "tournament": false
+    },
+    {
+      "id": "clubs",
+      "label": "Club apps (converted)",
+      "rooms": ["PPPoker", "PokerBros", "UPoker", "ClubGG", "X-Poker", "QQPK"],
+      "status": "converted",
+      "files": "PokerStars TXT",
+      "guide": "https://hand2note.com/Help/supported-sites",
+      "tournament": false
+    },
+    {
+      "id": "wptglobal",
+      "label": "WPT Global (converted)",
+      "rooms": ["WPT Global"],
+      "status": "converted",
+      "files": "PokerStars TXT",
+      "guide": "https://wptglobal.com/poker/promotions/turn-your-leaks-into-wins",
+      "tournament": false
+    },
+    {
+      "id": "merge",
+      "label": "Merge (archive)",
+      "rooms": ["Merge / Carbon Poker"],
+      "status": "native",
+      "files": "XML / ZIP",
+      "guide": "https://github.com/HHSmithy/PokerHandHistoryParser/tree/master/HandHistories.Parser.UnitTests/SampleHandHistories/Merge",
+      "tournament": false
+    },
+    {
+      "id": "microgaming",
+      "label": "Microgaming / MPN (archive)",
+      "rooms": ["Microgaming / MPN"],
+      "status": "native",
+      "files": "XML / ZIP",
+      "guide": "https://github.com/HHSmithy/PokerHandHistoryParser/tree/master/HandHistories.Parser.UnitTests/SampleHandHistories/MicroGaming",
+      "tournament": false
+    },
+    {
+      "id": "ongame",
+      "label": "OnGame (archive)",
+      "rooms": ["OnGame"],
+      "status": "native",
+      "files": "TXT / ZIP",
+      "guide": "https://github.com/HHSmithy/PokerHandHistoryParser/tree/master/HandHistories.Parser.UnitTests/SampleHandHistories/OnGame",
+      "tournament": false
+    },
+    {
+      "id": "boss",
+      "label": "Boss Media / IPN",
+      "rooms": ["Boss Media / IPN"],
+      "status": "research",
+      "files": "XML",
+      "guide": "https://github.com/HHSmithy/PokerHandHistoryParser/tree/master/HandHistories.Parser.UnitTests/SampleHandHistories/BossMedia",
+      "tournament": false
+    },
+    {
+      "id": "historic",
+      "label": "Other archives",
+      "rooms": [
+        "Absolute Poker",
+        "UltimateBet",
+        "Everest",
+        "Everleaf",
+        "Entraction",
+        "PKR",
+        "PokerMaster",
+        "Seals with Clubs",
+        "KingsClub"
+      ],
+      "status": "research",
+      "files": "Room-specific",
+      "guide": "https://github.com/jejellyroll-fr/fpdb-3/tree/development/fpdb_3_legacy",
+      "tournament": false
+    },
+    {
+      "id": "standards",
+      "label": "Open standards",
+      "rooms": ["PHH", "Open Hand History (OHH)", "ACPC"],
+      "status": "research",
+      "files": "TOML / JSON / text",
+      "guide": "https://github.com/uoftcprg/phh-std",
+      "tournament": false
+    },
+    {
+      "id": "additional-tracker-sites",
+      "label": "Additional tracker sites",
+      "rooms": [
+        "Adda52",
+        "Pocket52",
+        "PokerBaazi",
+        "The Spartan Poker",
+        "BlitzPoker / FTR Poker",
+        "WSOP.net",
+        "Intertops / Horizon",
+        "Juicy Stakes"
+      ],
+      "status": "research",
+      "files": "Export / converter unverified",
+      "guide": "https://drivehud.com/knowledge-base/what-poker-sites-does-drivehud-support/",
+      "tournament": false
+    },
+    {
+      "id": "additional-converter-identities",
+      "label": "Additional converter identities",
+      "rooms": ["Hive Poker", "Run It Once Poker", "MPLPoker", "SupremaPoker"],
+      "status": "research",
+      "files": "Converter grammar only",
+      "guide": "https://github.com/jejellyroll-fr/fpdb-3/blob/development/fpdb_3_legacy/PokerStarsToFpdb.py",
+      "tournament": false
+    }
+  ]
+}

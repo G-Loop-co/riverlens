@@ -1,0 +1,10 @@
+{
+  "kind": "independently authored synthetic fixtures; no external hand copied",
+  "sources": [
+    "https://github.com/jejellyroll-fr/fpdb-3/tree/development/regression-test-files/tour",
+    "https://hh-specs.handhistory.org/examples/holdem-tournament-hand-pokerstars"
+  ],
+  "purpose": "same independent chip ledger in seven native grammars; ante and all-in, folded dead money, showdown, WPN summary-only payout",
+  "expectedHeroNetChips": "1010",
+  "expectedGrossPotChips": "2010"
+}

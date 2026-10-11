@@ -44,7 +44,15 @@ import { Dialog } from "./components/Dialog";
 import { normalizeFilter, readFilter, writePreference } from "./preferences";
 
 type Page =
-  "coach" | "mda" | "overview" | "hands" | "ranges" | "review" | "study" | "imports" | "settings";
+  | "coach"
+  | "mda"
+  | "overview"
+  | "hands"
+  | "ranges"
+  | "review"
+  | "study"
+  | "imports"
+  | "settings";
 const nav = [
   ["coach", "AI 教練", Cards],
   ["mda", "MDA 群體分析", Database],
@@ -69,7 +77,10 @@ const titles: Record<Page, [string, string]> = {
 export default function App() {
   const { t } = useTranslation();
   const [page, setPage] = useState<Page>("overview");
-  const [filter, setFilter] = useState<Filter>(readFilter);
+  const [filter, setFilter] = useState<Filter>(() => ({
+    currency: "USD",
+    ...readFilter(),
+  }));
   const [revision, setRevision] = useState(0);
   const [importOpen, setImportOpen] = useState(false);
   const [advanced, setAdvanced] = useState(false);
@@ -102,7 +113,7 @@ export default function App() {
   const jobs = useRpc<Job[]>({ op: "jobs" }, revision);
   const saved = useRpc<SavedFilter[]>({ op: "saved_filters" }, revision);
   const overall = useRpc<Report>(
-    { op: "overview", filter: {}, group: "game" },
+    { op: "overview", filter: { currency: filter.currency }, group: "game" },
     revision,
   );
   const refresh = () => setRevision((v) => v + 1);
@@ -194,6 +205,7 @@ export default function App() {
     position: t("位置"),
     game: t("牌局"),
     stakes: t("盲注"),
+    tournament_id: t("賽事編號"),
     player_count: t("人數"),
     pot_type: t("底池"),
     hand_class: t("起手牌"),
@@ -300,13 +312,17 @@ export default function App() {
             <strong>
               {page === "settings" || page === "imports"
                 ? t("LIBRARY")
-                : t("CASH GAMES")}
+                : filter.currency === "CHIPS" || filter.game === "Tournament"
+                  ? t("MTT／錦標賽")
+                  : t("CASH GAMES")}
             </strong>
           </div>
           <div className="topbar-actions">
-            {page!=="mda" && <button className="button" onClick={() => navigate("coach")}>
-              {t("問 AI")}
-            </button>}
+            {page !== "mda" && (
+              <button className="button" onClick={() => navigate("coach")}>
+                {t("問 AI")}
+              </button>
+            )}
             <LanguageSelect />
             <span className="connection">
               <i className={`status-dot ${health.error ? "offline" : ""}`} />
@@ -341,13 +357,15 @@ export default function App() {
               <h1>{t(titles[page][0])}</h1>
               <p>{t(titles[page][1])}</p>
             </div>
-            {page!=="mda" && <button
-              className="button primary"
-              onClick={() => setImportOpen(true)}
-            >
-              <Plus size={17} weight="bold" />
-              {t("匯入牌譜")}
-            </button>}
+            {page !== "mda" && (
+              <button
+                className="button primary"
+                onClick={() => setImportOpen(true)}
+              >
+                <Plus size={17} weight="bold" />
+                {t("匯入牌譜")}
+              </button>
+            )}
           </div>
           {(globalError || profiles.error) && (
             <ErrorBanner>
@@ -385,13 +403,54 @@ export default function App() {
                   </select>
                 </div>
                 <select
+                  aria-label={t("幣別篩選")}
+                  value={filter.currency || ""}
+                  onChange={(e) =>
+                    update({
+                      currency: e.target.value,
+                      game:
+                        e.target.value === "CHIPS"
+                          ? "Tournament"
+                          : filter.game === "Tournament"
+                            ? undefined
+                            : filter.game,
+                      tournament_id: undefined,
+                      stakes: undefined,
+                    })
+                  }
+                >
+                  <option value="">{t("全部幣別 · 金額須分開查看")}</option>
+                  {["USD", "EUR", "GBP", "CAD", "USDT", "CHIPS"].map(
+                    (currency) => (
+                      <option key={currency} value={currency}>
+                        {currency === "CHIPS"
+                          ? t("CHIPS · 錦標賽籌碼")
+                          : currency}
+                      </option>
+                    ),
+                  )}
+                </select>
+                <select
                   aria-label={t("牌局類型")}
                   value={filter.game || ""}
-                  onChange={(e) => update({ game: e.target.value })}
+                  onChange={(e) =>
+                    update({
+                      game: e.target.value,
+                      currency:
+                        e.target.value === "Tournament"
+                          ? "CHIPS"
+                          : filter.currency === "CHIPS" && e.target.value
+                            ? "USD"
+                            : filter.currency,
+                      tournament_id: undefined,
+                      stakes: undefined,
+                    })
+                  }
                 >
-                  <option value="">{t("全部 Cash Games")}</option>
+                  <option value="">{t("全部牌局類型")}</option>
                   <option value="Cash">{t("Cash")}</option>
                   <option value="Rush">{t("Rush")}</option>
+                  <option value="Tournament">{t("MTT／錦標賽")}</option>
                 </select>
                 <select
                   aria-label={t("盲注篩選")}
@@ -409,7 +468,7 @@ export default function App() {
                     "1.00/2.00",
                   ].map((s) => (
                     <option key={s} value={s}>
-                      ${s.replace("/", " / $")}
+                      {s.replace("/", " / ")}
                     </option>
                   ))}
                 </select>
@@ -514,7 +573,7 @@ export default function App() {
                   ))}
                   <button
                     className="clear-filters"
-                    onClick={() => setFilter({})}
+                    onClick={() => setFilter({ currency: "USD" })}
                   >
                     {t("清除全部")}
                   </button>
@@ -615,7 +674,7 @@ export default function App() {
             <span className="footer-separator">·</span>
             <span>{t("不連接遊戲客戶端")}</span>
             <span className="footer-spacer" />
-            <span>{t("HKT · USD / bb")}</span>
+            <span>HKT · {filter.currency || t("全部")} / bb</span>
           </footer>
         </main>
       </div>

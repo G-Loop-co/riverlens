@@ -1,0 +1,24 @@
+Full Tilt Poker Game #T1005: Study Cup (7005), Table 2 - 50/100 Ante 10 - No Limit Hold'em - 12:00:00 ET - 2026/10/11
+The button is in seat #3
+Seat 1: Hero (1,000)
+Seat 2: Villain2 (1,500)
+Seat 3: Folder3 (3,000)
+Hero posts the ante 10
+Villain2 posts the ante 10
+Folder3 posts the ante 10
+Hero posts small blind 50
+Villain2 posts big blind 100
+*** HOLE CARDS ***
+Dealt to Hero [Ah Ad]
+Folder3 folds
+Hero raises to 990 and is all-in
+Villain2 calls 890
+*** FLOP *** [2c 3d 7s]
+*** TURN *** [2c 3d 7s] [9h]
+*** RIVER *** [2c 3d 7s 9h] [Jc]
+*** SHOW DOWN ***
+Hero shows [Ah Ad]
+Villain2 shows [Kh Kd]
+Hero wins the pot (2,010)
+*** SUMMARY ***
+Total pot 2,010 | Rake 0

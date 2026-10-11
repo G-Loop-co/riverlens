@@ -47,6 +47,7 @@ export function normalizeFilter(value: unknown): Filter {
     "timezone",
     "position",
     "game",
+    "tournament_id",
     "stakes",
     "currency",
     "pot_type",

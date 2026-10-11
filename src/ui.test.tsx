@@ -64,6 +64,41 @@ const row = (id: number, position: string): HandRow => ({
 });
 
 describe("UI request and storage regressions", () => {
+  it("switches tournaments to chips and restores a cash currency when selecting cash", async () => {
+    const requests = delayedFetch();
+    const storage = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => storage.set(key, value),
+    });
+    render(<App />);
+    const game = screen.getByRole("combobox", { name: "牌局類型" });
+    fireEvent.change(game, { target: { value: "Tournament" } });
+    await waitFor(() =>
+      expect(
+        requests.some(
+          ({ body }) =>
+            body.op === "overview" &&
+            body.filter?.game === "Tournament" &&
+            body.filter.currency === "CHIPS",
+        ),
+      ).toBe(true),
+    );
+    expect(
+      (screen.getByRole("combobox", { name: "幣別篩選" }) as HTMLSelectElement)
+        .value,
+    ).toBe("CHIPS");
+    expect(readFilter()).toMatchObject({
+      game: "Tournament",
+      currency: "CHIPS",
+    });
+    fireEvent.change(game, { target: { value: "Cash" } });
+    expect(
+      (screen.getByRole("combobox", { name: "幣別篩選" }) as HTMLSelectElement)
+        .value,
+    ).toBe("USD");
+    expect(readFilter()).toMatchObject({ game: "Cash", currency: "USD" });
+  });
   it("keeps field help separate from its accessible name", () => {
     render(
       <Field label="標籤" help="以逗號分隔">

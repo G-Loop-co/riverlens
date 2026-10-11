@@ -1,0 +1,2 @@
+# Keep committed fixture bytes reproducible; tests generate CRLF inputs explicitly.
+crates/poker-core/tests/fixtures/** text eol=lf

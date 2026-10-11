@@ -1,0 +1,26 @@
+#Game No : 1006
+***** Cassava Hand History for Game 1006 *****
+$50/$100 Blinds No Limit Holdem - *** 11 10 2026 12:00:00
+Tournament #7006 $10 + $1 - Table #2 (Real Money)
+Seat 3 is the button
+Total number of players : 3
+Seat 1: Hero ( $1,000 )
+Seat 2: Villain2 ( $1,500 )
+Seat 3: Folder3 ( $3,000 )
+Hero posts ante [$10]
+Villain2 posts ante [$10]
+Folder3 posts ante [$10]
+Hero posts small blind [$50]
+Villain2 posts big blind [$100]
+** Dealing down cards **
+Dealt to Hero [ Ah, Ad ]
+Folder3 folds
+Hero raises [$940]
+Villain2 calls [$890]
+** Dealing flop ** [ 2c, 3d, 7s ]
+** Dealing turn ** [ 9h ]
+** Dealing river ** [ Jc ]
+** Summary **
+Hero shows [ Ah, Ad ]
+Villain2 shows [ Kh, Kd ]
+Hero collected [ $2,010 ]

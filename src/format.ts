@@ -74,3 +74,8 @@ export const STAT_LABELS: Record<string, string> = {
   wsd: "W$SD",
   wwsf: "WWSF",
 };
+
+export const currencySymbol = (currency = "USD") =>
+  ({ USD: "$", EUR: "€", GBP: "£", CAD: "CA$", USDT: "₮", CHIPS: "" })[
+    currency
+  ] ?? `${currency} `;

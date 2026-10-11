@@ -71,7 +71,7 @@ fn issue(h: &mut Hand, code: &str, message: impl Into<String>, line: Option<usiz
     });
 }
 
-/// GG export parser. All amounts are incremental ledger entries; source text is immutable.
+/// Detect source grammar, then reuse the exact-money ledger and validation.
 pub fn parse(raw: &str, profile: &Profile) -> Result<Hand> {
     parse_inner(raw, profile, false)
 }
@@ -93,6 +93,37 @@ fn parse_inner(raw: &str, profile: &Profile, population: bool) -> Result<Hand> {
     if raw.len() > 1_048_576 {
         bail!("hand exceeds 1 MiB limit")
     }
+    // Personal format support must not widen the GG-only population contract.
+    if population {
+        return parse_ledger(raw, profile, true);
+    }
+    let source = crate::hand_formats::normalize(raw, profile)?;
+    let mut source_profile = profile.clone();
+    if let Some(timezone) = &source.timezone {
+        source_profile.timezone = timezone.clone();
+    }
+    let mut h = parse_ledger(&source.text, &source_profile, false)?;
+    h.currency = source.currency;
+    h.tournament = source.tournament;
+    if h.tournament.is_some() {
+        h.game = "Tournament".into();
+        anyhow::ensure!(
+            h.fees.values().all(|v| money::parse(v).ok() == Some(0)),
+            "tournament hand fees must not mix cash rewards with chips"
+        );
+    }
+    h.parser_version = format!("{PARSER_VERSION}/{}", source.format);
+    h.raw = raw.trim().trim_start_matches('\u{feff}').into();
+    // Canonical line numbers must not point into the original source text.
+    if source.format != "gg" {
+        for issue in &mut h.issues {
+            issue.line = None;
+        }
+    }
+    Ok(h)
+}
+
+fn parse_ledger(raw: &str, profile: &Profile, population: bool) -> Result<Hand> {
     let raw = raw.trim().trim_start_matches('\u{feff}');
     let head = HEADER
         .captures(raw)
@@ -124,6 +155,7 @@ fn parse_inner(raw: &str, profile: &Profile, population: bool) -> Result<Hand> {
         player_count: 0,
         currency: "USD".into(),
         game: "Cash".into(),
+        tournament: None,
         sb,
         bb,
         button: 0,
@@ -209,7 +241,12 @@ fn parse_inner(raw: &str, profile: &Profile, population: bool) -> Result<Hand> {
             h.max_seats = c[2].parse()?;
             h.button = c[3].parse()?;
             let t = h.table_name.to_lowercase();
-            if t.contains("rush") || h.id.starts_with("RC") {
+            if t.contains("rush")
+                || t.contains("zoom")
+                || t.contains("blitz")
+                || t.contains("fast fold")
+                || h.id.starts_with("RC")
+            {
                 h.game = "Rush".into();
             }
             continue;
@@ -569,7 +606,7 @@ fn parse_inner(raw: &str, profile: &Profile, population: bool) -> Result<Hand> {
     if !population && h.hero_seat == 0 {
         bail!("Hero '{}' not in this hand", profile.hero);
     }
-    if h.max_seats < 2 || h.max_seats > 9 {
+    if h.max_seats < 2 || h.max_seats > 10 {
         bail!("unsupported or missing table seat count")
     }
     if !total_found || !summary {
@@ -741,6 +778,9 @@ fn assign_positions(h: &mut Hand) {
         7 => vec!["SB", "BB", "UTG", "MP", "HJ", "CO", "BTN"],
         8 => vec!["SB", "BB", "UTG", "UTG+1", "MP", "HJ", "CO", "BTN"],
         9 => vec!["SB", "BB", "UTG", "UTG+1", "UTG+2", "MP", "HJ", "CO", "BTN"],
+        10 => vec![
+            "SB", "BB", "UTG", "UTG+1", "UTG+2", "UTG+3", "MP", "HJ", "CO", "BTN",
+        ],
         _ => vec![],
     };
     for (seat, label) in seats.iter().zip(labels) {

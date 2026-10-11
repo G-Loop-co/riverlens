@@ -956,13 +956,17 @@ fn sources(paths: &[String]) -> Result<Vec<Source>> {
             .to_ascii_lowercase()
             .as_str()
         {
-            "txt" => out.push(Source::Text(p)),
+            "txt" | "xml" => out.push(Source::Text(p)),
             "zip" => {
                 let mut z = zip::ZipArchive::new(File::open(&p)?)?;
                 anyhow::ensure!(z.len() <= 100_000, "too many archive entries");
                 for i in 0..z.len() {
                     let e = z.by_index(i)?;
-                    if !e.is_dir() && e.name().to_ascii_lowercase().ends_with(".txt") {
+                    if !e.is_dir()
+                        && [".txt", ".xml"]
+                            .iter()
+                            .any(|ext| e.name().to_ascii_lowercase().ends_with(ext))
+                    {
                         out.push(Source::Zip(p.clone(), i));
                     }
                 }
@@ -970,15 +974,28 @@ fn sources(paths: &[String]) -> Result<Vec<Source>> {
             _ => {}
         }
     }
-    anyhow::ensure!(!out.is_empty(), "沒有可匯入嘅 TXT／ZIP 牌譜");
+    anyhow::ensure!(!out.is_empty(), "沒有可匯入嘅 TXT／XML／ZIP 牌譜");
     Ok(out)
 }
-fn stream(reader: impl BufRead, consume: &mut impl FnMut(&str) -> Result<bool>) -> Result<()> {
+fn stream(mut reader: impl BufRead, consume: &mut impl FnMut(&str) -> Result<bool>) -> Result<()> {
+    let prefix = reader.fill_buf()?;
+    // A buffered chunk can end midway through a UTF-8 character. Detect the
+    // ASCII XML opener without decoding the entire chunk.
+    let prefix = prefix.strip_prefix(b"\xef\xbb\xbf").unwrap_or(prefix);
+    if prefix.iter().copied().find(|b| !b.is_ascii_whitespace()) == Some(b'<') {
+        return crate::hand_formats::stream_xml(reader, consume);
+    }
     let mut hand = String::new();
-    for line in reader.lines() {
-        let line = line?;
+    let mut line = String::new();
+    loop {
+        line.clear();
+        if reader.read_line(&mut line)? == 0 {
+            break;
+        }
+        // Retain LF/CRLF inside source text. Fingerprints already normalize
+        // CRLF, so old imports and exports with different endings still dedup.
         let line = line.trim_start_matches('\u{feff}');
-        if line.starts_with("Poker Hand #") && !hand.trim().is_empty() {
+        if crate::hand_formats::is_header(line) && !hand.trim().is_empty() {
             if !consume(&hand)? {
                 return Ok(());
             }
@@ -988,7 +1005,6 @@ fn stream(reader: impl BufRead, consume: &mut impl FnMut(&str) -> Result<bool>) 
             return Err(anyhow!("single hand exceeds 1 MiB; source may be invalid"));
         }
         hand.push_str(line);
-        hand.push('\n');
     }
     if !hand.trim().is_empty() {
         consume(&hand)?;

@@ -6,7 +6,7 @@ New in **v0.4.0: MDA population analysis with AI evidence**. Import independent 
 
 [English](README.md) · [繁體中文](README.zh-TW.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-BR.md) · [Italiano](README.it.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md) · [Türkçe](README.tr.md)
 
-RiverLens is a Tauri desktop application for reviewing completed Natural8 / GGPoker cash-game hand histories and independent MDA population datasets. React and TypeScript power the interface; a Rust core handles parsing and statistics, with personal review in SQLite and MDA in DuckDB.
+RiverLens is a Tauri desktop application for reviewing your own completed cash-game and supported tournament hand histories from multiple rooms, alongside independent MDA population datasets. React and TypeScript power the interface; a Rust core handles parsing and statistics, with personal review in SQLite and MDA in DuckDB.
 
 > **[Download v0.4.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.4.0)** — MDA + AI, local MCP and offline study. Windows, Apple Silicon and Intel Mac packages. macOS downloads are ad-hoc signed, not notarized. [Release notes](docs/release-v0.4.0.md).
 
@@ -16,13 +16,42 @@ README translations: **13 languages**. Personal-review interface: **English, Tra
 
 **v0.4.0** adds population research alongside AI-assisted personal review and Spot Explorer → Leak Finder → Preflop reference → Trainer. User-supplied strategy packs are required for strategy comparisons; frequencies are not decision EV. [Study workflow](docs/study-workflow.md) · [Themes](docs/theme-selection.md).
 
+## Personal-review hand-history formats (unreleased)
+
+English NLHE, 2–10 seats, UTF-8. These formats apply to personal review; MDA remains GG Regular USD NLH 6-max. Import TXT, XML, ZIP or folders. “Native” means an implemented room grammar; it does not certify every current client version. [Export guides, sources and exact limitations](docs/hand-history-formats.md).
+
+| Room / network | Cash input | MTT / tournament | Support scope |
+| --- | --- | --- | --- |
+| GG / Natural8 | TXT | Yes | Native grammar |
+| PokerStars | TXT | Yes | Native grammar |
+| WPN / ACR / Black Chip / PokerKing | TXT (legacy + modern) | Modern format only | Native grammar |
+| 888 / Pacific | TXT | Yes | Native grammar |
+| partypoker / bwin | TXT | — | Native grammar |
+| Winamax | TXT | Yes | Native grammar |
+| iPoker skins | XML | Yes | Native grammar |
+| CoinPoker | TXT (USDT) | — | Native grammar; synthetic proof only |
+| Ignition / Bovada / Bodog | TXT | — | Native grammar |
+| Unibet | TXT | — | Native grammar |
+| Full Tilt | TXT | Yes | Archived native grammar |
+| Cake / Revolution | TXT | — | Archived native grammar |
+| OnGame | TXT | — | Archived native grammar |
+| Merge / Carbon | XML | — | Archived native grammar |
+| Microgaming / MPN | XML | — | Archived native grammar |
+| Chico / BetOnline / SportsBetting / TigerGaming | PokerStars TXT | — | Existing complete conversion only |
+| PPPoker / PokerBros / UPoker / ClubGG / X-Poker / QQPK | PokerStars TXT | — | Existing complete conversion only |
+| WPT Global | PokerStars TXT | — | Existing complete conversion only |
+
+“—” means tournament parsing is not implemented for that row. Converted rooms require an existing complete PokerStars cash export; RiverLens does not capture or convert their native histories. WPN modern Cash and CoinPoker native Cash still lack real-sample native-app validation in this run. Historical names do not imply that a room still operates. Other researched rooms and PHH / OHH / ACPC are not implemented.
+
+MTT amounts are stored as CHIPS, with tournament ID, level and source buy-in text when available. Chips and cash currencies stay separate. All-in chip EV is not prize money, ROI, ICM or bounty EV. Native validation on a v0.3.2-based test app covers 13 public Cash samples, seven tournament grammars and preserved own Cash/Rush histories; four incompatible tournament samples remain rejected. The v0.4.0 integration has separate source regression results in the linked guide. Existing release downloads do not include these changes.
+
 ## Features
 
 | Feature | What you can do |
 | --- | --- |
 | AI coach and agent connection | Explore statistics and decision context through 23 local MCP tools; create evidence-linked review, practice and study-plan drafts for your approval. |
 | MDA population analysis | Import independent GG Regular datasets; filter legal all-player opportunities, inspect confidence intervals and research hypotheses, then verify anonymous hand evidence. |
-| Import center | Import TXT, ZIP or folders; monitor progress, pause/resume, detect duplicates and inspect quarantined records. |
+| Import center | Import TXT, XML, ZIP or folders; monitor progress, pause/resume, detect duplicates and inspect quarantined records. |
 | Results dashboard | Explore net results, bb/100, session and position breakdowns; drill into underlying hands. |
 | 13 core statistics | Review VPIP, PFR, RFI, 3-bet, blind defense and postflop/showdown frequencies with explicit opportunity denominators. |
 | 13 × 13 starting-hand matrix | Inspect observed hand counts, net bb, bb/100 and action frequency; open the matching hand list. |

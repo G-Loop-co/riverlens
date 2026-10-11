@@ -1,0 +1,67 @@
+{
+  "repository": "https://github.com/HHSmithy/PokerHandHistoryParser",
+  "commit": "91600818d95e23f154073735c1258e92c4f55f97",
+  "license": "MIT",
+  "fixtures": [
+    {
+      "fixture": "pokerstars.txt",
+      "source": "HandHistories.Parser.UnitTests/SampleHandHistories/PokerStars/CashGame/PlayerTests/WithShowdown.txt",
+      "source_sha256": "f8aacb3dafd043f505659ff23bdf2df5baee50406b0f5c40318bda0ad86b9e24",
+      "changes": "Public player aliases replaced; encoding normalized to UTF-8. Actions and amounts unchanged."
+    },
+    {
+      "fixture": "fulltilt.txt",
+      "source": "HandHistories.Parser.UnitTests/SampleHandHistories/FullTilt/CashGame/PlayerTests/WithShowdown.txt",
+      "source_sha256": "9e9aef4b0fc09a186e9eb1ee01ef17d19a5a5977d88123366302d1662468ef06",
+      "changes": "Public player aliases replaced; encoding normalized to UTF-8. Actions and amounts unchanged."
+    },
+    {
+      "fixture": "partypoker.txt",
+      "source": "HandHistories.Parser.UnitTests/SampleHandHistories/PartyPoker/CashGame/PlayerTests/WithShowdown.txt",
+      "source_sha256": "25e1a87fb0017cfae79266bf4c8054e1d8fb02a3c298805bdc788a70949c8494",
+      "changes": "Public player aliases replaced; encoding normalized to UTF-8. Actions and amounts unchanged."
+    },
+    {
+      "fixture": "888.txt",
+      "source": "HandHistories.Parser.UnitTests/SampleHandHistories/Pacific/CashGame/PlayerTests/WithShowdown.txt",
+      "source_sha256": "7f5cffe8cceb62556a3aa6800e121d6ce531a2a69892c37cabc7111189611ca0",
+      "changes": "Public player aliases replaced; encoding normalized to UTF-8. Actions and amounts unchanged."
+    },
+    {
+      "fixture": "winamax.txt",
+      "source": "HandHistories.Parser.UnitTests/SampleHandHistories/Winamax/CashGame/PlayerTests/WithShowdown.txt",
+      "source_sha256": "6b75b1029003149ce5876dc21b9a6b20d264842e5f2cc9634c82d2ca22169905",
+      "changes": "Public player aliases replaced; encoding normalized to UTF-8. Actions and amounts unchanged."
+    },
+    {
+      "fixture": "winning-legacy.txt",
+      "source": "HandHistories.Parser.UnitTests/SampleHandHistories/WinningPoker/CashGame/PlayerTests/WithShowdown.txt",
+      "source_sha256": "402a082c3404c9e8261d49e9ea94f75882d51e240c5fde5767780785ef36f879",
+      "changes": "Public player aliases replaced; encoding normalized to UTF-8. Actions and amounts unchanged."
+    },
+    {
+      "fixture": "ipoker.xml",
+      "source": "HandHistories.Parser.UnitTests/SampleHandHistories/IPoker/CashGame/PlayerTests/WithShowdown.txt",
+      "source_sha256": "0a1c943bfa556d41269b6c328d87589a488920d5b2a20a3ac32bf8077f0d4c4b",
+      "changes": "Public player aliases replaced; encoding normalized to UTF-8. Actions and amounts unchanged."
+    },
+    {
+      "fixture": "ongame.txt",
+      "source": "HandHistories.Parser.UnitTests/SampleHandHistories/OnGame/CashGame/PlayerTests/WithShowdown.txt",
+      "source_sha256": "0e67294f8c21a4403ec8785b2d54866176df2382c1b97c560081f9581299db4a",
+      "changes": "Public player aliases replaced; encoding normalized to UTF-8. Actions and amounts unchanged."
+    },
+    {
+      "fixture": "merge.xml",
+      "source": "HandHistories.Parser.UnitTests/SampleHandHistories/Merge/CashGame/PlayerTests/WithShowdown.txt",
+      "source_sha256": "b49e32812fadf943af6ff3e73266fb37d227f57bc9210c45abb27edc7d48069a",
+      "changes": "Public player aliases replaced; encoding normalized to UTF-8. Actions and amounts unchanged."
+    },
+    {
+      "fixture": "microgaming.xml",
+      "source": "HandHistories.Parser.UnitTests/SampleHandHistories/MicroGaming/CashGame/PlayerTests/WithShowdown.txt",
+      "source_sha256": "f8772cb2021b1033e7b73ded033dec322605713800e09a09be9bc5c98197813c",
+      "changes": "Public player aliases replaced; encoding normalized to UTF-8. Actions and amounts unchanged. Redundant unicodealias attributes removed."
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+#Game No : 280009830
+***** 888poker Hand History for Game 280009830 *****
+$0.50/$1 Blinds No Limit Holdem - *** 06 01 2014 02:31:23
+Table Acapulco 6 Max (Real Money)
+Seat 6 is the button
+Total number of players : 2
+Seat 2: Hero ( $128.38 )
+Seat 6: Player2 ( $267.90 )
+Player2 posts small blind [$0.50]
+Hero posts big blind [$1]
+** Dealing down cards **
+Player2 raises [$2.50]
+Hero calls [$2]
+** Dealing flop ** [ 6d, Js, Ks ]
+Hero checks
+Player2 checks
+** Dealing turn ** [ 3d ]
+Hero checks
+Player2 checks
+** Dealing river ** [ Jc ]
+Hero bets [$3]
+Player2 calls [$3]
+** Summary **
+Hero shows [ 7s, 8c ]
+Player2 shows [ Ac, Tc ]
+Player2 collected [ $11.40 ]

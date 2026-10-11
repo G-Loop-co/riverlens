@@ -14,6 +14,7 @@ export interface Filter {
   timezone?: string;
   position?: string;
   game?: string;
+  tournament_id?: string;
   stakes?: string;
   currency?: string;
   player_count?: number;
@@ -83,6 +84,7 @@ export interface Report {
   stats_version: string;
 }
 export interface HandRow {
+  currency?: string;
   id: number;
   hand_id: string;
   played_at: number;
@@ -139,6 +141,12 @@ export interface Hand {
   player_count: number;
   currency: string;
   game: string;
+  tournament?: {
+    id: string | null;
+    name: string;
+    level: string | null;
+    buy_in: string | null;
+  } | null;
   sb: Money;
   bb: Money;
   button: number;
