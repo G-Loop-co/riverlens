@@ -49,7 +49,9 @@ export function AiCoach({
   openMdaHand?: (key: string, seq?: number) => void;
 }) {
   const { t } = useTranslation();
-  const [tab, setTab] = useState("coach"),
+  const [tab, setTab] = useState(
+      mda && !mda.cloud_enabled ? "library" : "coach",
+    ),
     [prompt, setPrompt] = useState(question || "");
   const [provider, setProvider] = useState("openai"),
     [model, setModel] = useState("");
@@ -95,15 +97,17 @@ export function AiCoach({
     }
   };
   const refresh = async () => {
-    setProfiles(await api<Profile[]>({ op: "profiles" }));
-    const result = await tool(
-      "get_learning_progress",
-      mda ? { dataset_id: mda.dataset_id } : {},
-    );
-    setLearning(result.data);
-    const ps = await tool("list_strategy_packs");
-    setPacks(ps.data as unknown as Data[]);
-    if (desktop) setStatus(await invoke("ai_status"));
+    if (mda) {
+      setLearning(
+        await api<Data>({ op: "agent_learning", dataset_id: mda.dataset_id }),
+      );
+    } else {
+      setProfiles(await api<Profile[]>({ op: "profiles" }));
+      setLearning((await tool("get_learning_progress")).data);
+      setPacks((await tool("list_strategy_packs")).data as unknown as Data[]);
+    }
+    if (desktop && (!mda || mda.cloud_enabled))
+      setStatus(await invoke("ai_status"));
   };
   useEffect(() => {
     void run(refresh);
@@ -112,7 +116,7 @@ export function AiCoach({
     if (question) setPrompt(question);
   }, [question]);
   useEffect(() => {
-    if (!desktop) return;
+    if (!desktop || (mda && !mda.cloud_enabled)) return;
     let disposed = false;
     let unlisten: (() => void) | undefined;
     void listen<Data>("riverlens-ai", ({ payload: e }) => {
@@ -262,7 +266,11 @@ export function AiCoach({
     <section className="ai-workspace">
       <nav className="ai-tabs" aria-label={t("AI 工作區")}>
         {tabs
-          .filter(([key]) => !mda || key !== "spots")
+          .filter(
+            ([key]) =>
+              !mda ||
+              (key !== "spots" && (mda.cloud_enabled || key === "library")),
+          )
           .map(([key, label]) => (
             <button
               key={key}
@@ -570,12 +578,18 @@ export function AiCoach({
               onClick={() =>
                 void run(async () =>
                   setHits(
-                    (
-                      await tool("search_learning", {
-                        query: search,
-                        ...(mda ? { dataset_id: mda.dataset_id } : {}),
-                      })
-                    ).data.rows,
+                    mda
+                      ? learning.drafts
+                          .filter((d: Data) =>
+                            `${d.title}\n${d.body.text}`
+                              .toLocaleLowerCase()
+                              .includes(search.toLocaleLowerCase()),
+                          )
+                          .map((d: Data) => ({
+                            text: `${d.title}\n${d.body.text}`,
+                          }))
+                      : (await tool("search_learning", { query: search })).data
+                          .rows,
                   ),
                 )
               }
@@ -692,6 +706,7 @@ export function AiCoach({
                     className="button"
                     disabled={
                       !desktop ||
+                      (mda && !mda.cloud_enabled) ||
                       !consent ||
                       !validModel ||
                       busy ||
@@ -733,7 +748,9 @@ export function AiCoach({
                                   t("證據格式不完整，請重新整理。"),
                                 );
                               setEvidence([saved]);
-                              setTab("coach");
+                              setTab(
+                                mda && !mda.cloud_enabled ? "library" : "coach",
+                              );
                             })
                           }
                         >
@@ -755,6 +772,16 @@ export function AiCoach({
                 </article>
               ))}
           </div>
+          {mda &&
+            !mda.cloud_enabled &&
+            evidence.map((e) => (
+              <EvidenceCard
+                key={e.evidence_id}
+                e={e}
+                openHand={openHand}
+                openMdaHand={openMdaHand}
+              />
+            ))}
           {edit && (
             <section className="ai-panel">
               <h3>{t("編輯草稿")}</h3>
@@ -968,90 +995,94 @@ export function AiCoach({
               </pre>
             </>
           )}
-          <h3>{t("翻前策略包")}</h3>
-          <p>
-            {t("匯入既有 Nexus manifest。未驗證權重及 rake 配置只供參考。")}
-          </p>
-          <button
-            className="button"
-            disabled={!desktop}
-            onClick={() =>
-              void run(async () => {
-                const file = await open({
-                  multiple: false,
-                  filters: [{ name: "JSON", extensions: ["json"] }],
-                });
-                if (typeof file === "string") {
-                  await api({ op: "agent_import_strategy", path: file });
-                  await refresh();
+          {!mda && (
+            <>
+              <h3>{t("翻前策略包")}</h3>
+              <p>
+                {t("匯入既有 Nexus manifest。未驗證權重及 rake 配置只供參考。")}
+              </p>
+              <button
+                className="button"
+                disabled={!desktop}
+                onClick={() =>
+                  void run(async () => {
+                    const file = await open({
+                      multiple: false,
+                      filters: [{ name: "JSON", extensions: ["json"] }],
+                    });
+                    if (typeof file === "string") {
+                      await api({ op: "agent_import_strategy", path: file });
+                      await refresh();
+                    }
+                  })
                 }
-              })
-            }
-          >
-            {t("匯入策略包")}
-          </button>
-          <h3>{t("確認牌局來源配置")}</h3>
-          <p>
-            {t(
-              "僅在已核實時填寫策略包的 rake 與 tree 識別值；此設定不會把參考包升級為精確策略。",
-            )}
-          </p>
-          <div className="ai-row">
-            <label>
-              {t("資料來源")}
-              <select
-                value={profile}
-                onChange={(e) => setProfile(e.target.value)}
               >
-                <option value="">{t("選擇資料來源")}</option>
-                {profiles.map((p) => (
-                  <option value={p.id} key={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Rake ID
-              <input
-                value={rakeId}
-                onChange={(e) => setRakeId(e.target.value)}
-              />
-            </label>
-            <label>
-              Tree ID
-              <input
-                value={treeId}
-                onChange={(e) => setTreeId(e.target.value)}
-              />
-            </label>
-            <button
-              className="button"
-              disabled={!profile || !rakeId || !treeId}
-              onClick={() =>
-                void run(async () => {
-                  await api({
-                    op: "agent_strategy_config",
-                    profile,
-                    rake_id: rakeId,
-                    tree_id: treeId,
-                  });
-                  await refresh();
-                })
-              }
-            >
-              {t("儲存已核實配置")}
-            </button>
-          </div>
-          {packs.map((p) => (
-            <p key={p.id}>
-              {p.id} · {p.node_count} {t("節點")} · {p.invalid_nodes}{" "}
-              {t("權重待核實")} ·{" "}
-              {p.validation === "reference_only"
-                ? t("僅供參考")
-                : t("條件頻率已驗證")}
-            </p>
-          ))}
+                {t("匯入策略包")}
+              </button>
+              <h3>{t("確認牌局來源配置")}</h3>
+              <p>
+                {t(
+                  "僅在已核實時填寫策略包的 rake 與 tree 識別值；此設定不會把參考包升級為精確策略。",
+                )}
+              </p>
+              <div className="ai-row">
+                <label>
+                  {t("資料來源")}
+                  <select
+                    value={profile}
+                    onChange={(e) => setProfile(e.target.value)}
+                  >
+                    <option value="">{t("選擇資料來源")}</option>
+                    {profiles.map((p) => (
+                      <option value={p.id} key={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Rake ID
+                  <input
+                    value={rakeId}
+                    onChange={(e) => setRakeId(e.target.value)}
+                  />
+                </label>
+                <label>
+                  Tree ID
+                  <input
+                    value={treeId}
+                    onChange={(e) => setTreeId(e.target.value)}
+                  />
+                </label>
+                <button
+                  className="button"
+                  disabled={!profile || !rakeId || !treeId}
+                  onClick={() =>
+                    void run(async () => {
+                      await api({
+                        op: "agent_strategy_config",
+                        profile,
+                        rake_id: rakeId,
+                        tree_id: treeId,
+                      });
+                      await refresh();
+                    })
+                  }
+                >
+                  {t("儲存已核實配置")}
+                </button>
+              </div>
+              {packs.map((p) => (
+                <p key={p.id}>
+                  {p.id} · {p.node_count} {t("節點")} · {p.invalid_nodes}{" "}
+                  {t("權重待核實")} ·{" "}
+                  {p.validation === "reference_only"
+                    ? t("僅供參考")
+                    : t("條件頻率已驗證")}
+                </p>
+              ))}
+            </>
+          )}
         </div>
       )}
     </section>

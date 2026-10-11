@@ -19,6 +19,7 @@ export type MdaFilter = {
   metric?: string;
 };
 export type MdaContext = {
+  cloud_enabled: boolean;
   dataset_id: string;
   version: string;
   filter: MdaFilter;

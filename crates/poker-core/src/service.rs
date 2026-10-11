@@ -21,7 +21,9 @@ pub enum Request {
     Mda {
         request: crate::mda::Request,
     },
-    AgentLearning,
+    AgentLearning {
+        dataset_id: Option<String>,
+    },
     Study {
         request: Box<study::StudyRequest>,
     },
@@ -179,7 +181,10 @@ impl Service {
         let mut c = store::open(&self.path)?;
         match request {
             Request::Mda { request } => self.mda.handle(request),
-            Request::AgentLearning => crate::agent::learning(&c),
+            Request::AgentLearning { dataset_id } => match dataset_id {
+                Some(id) => crate::agent::learning_scoped(&c, Some(&id)),
+                None => crate::agent::learning(&c),
+            },
             Request::Study { request } => {
                 let _guard = if request.writes() {
                     Some(self.writer.lock().unwrap())

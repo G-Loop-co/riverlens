@@ -9,7 +9,7 @@
 | Rust core | 原個人 parser／帳本／學習回歸通過；MDA 四項整合測試包含 256 個合法場景、無 Hero／未知牌、walk、短 all-in 不重開加注、決策前牌面及剩餘有效籌碼 |
 | MDA 儲存／匯入 | 同交易 checkpoint、跨批／跨檔去重、衝突保留、ZIP 檔案中段續傳、增量彙總一致、備份還原、新 epoch 及關閉分享權限 |
 | AI／IPC | 13 項 Rust AI 測試通過；MDA 本機／socket 共用結果精確一致、各自分享權限、匿名手牌、報告草稿及撤權拒絕；JSON 浮點採 float_roundtrip |
-| 前端 | 39 項測試／8 個檔案通過；MDA 預設分享關閉、版本綁定、手牌回放使用 MDA opaque key；個人 AI／學習／三語／主題回歸通過 |
+| 前端 | 40 項測試／8 個檔案通過；MDA 預設分享關閉、版本綁定、手牌回放使用 MDA opaque key；撤回分享後仍能在本機閱覽／確認草稿及開啟匿名證據；個人 AI／學習／三語／主題回歸通過 |
 | 前端 build | 通過；既有大 chunk 與 dialog 混合匯入警告仍在 |
 | Rustfmt／Clippy | 全 workspace format；core／AI／desktop all-targets Clippy `-D warnings` 通過 |
 | 本機 Apple Silicon package | `.app` 成功建立（本機 `--no-sign` 驗證包）；不代表簽章或 notarization 驗收 |
@@ -21,7 +21,7 @@ MDA tests 的部分底牌缺失、多人首人 fold、短 all-in、檔案中段�
 
 ## 1,000 萬手效能
 
-狀態：RUNNING。最終核心來源的完整重跑使用 ZIP64 合成 GG 牌譜及全新資料集；不把途中進度或 10,000 手小測試當作完整驗收。
+狀態：RUNNING。完整重跑使用 ZIP64 合成 GG 牌譜及全新資料集；不把途中進度或 10,000 手小測試當作完整驗收。測量二進位來源為 `d5bbd2b`，JSON 保存完整核心來源 hash。後續修正本機草稿控制、UI 及回放 DTO 的 flop 人數；parser／facts／storage／統計查詢／匯入路徑和 DuckDB 配置均沒有改動，這些修正以功能測試另驗，不把本次量測稱為完整桌面程序測量。
 
 硬體：Apple M3 Pro、11 logical threads、18 GiB RAM、macOS aarch64。DuckDB crate `1.10506.0`；buffer memory limit `2GiB`，threads `4`。量測 parser、ZIP streaming、Appender、去重、彙總及 checkpoint，全程序 `getrusage` 峰值 RSS。每類情境各 21 次查詢，報 p50／p95／max；暖 OS cache，排除 UI／IPC 與真實供應商／AI 延遲。
 

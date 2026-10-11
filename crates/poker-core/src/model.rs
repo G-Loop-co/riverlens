@@ -220,6 +220,22 @@ impl From<Hand> for ObservedHand {
 impl ObservedHand {
     /// UI adapter only. Hero-only panels and personal study are disabled by MDA mode.
     pub fn replay(self) -> Hand {
+        // Population cards may be partially dealt-to. Reconstruct attendance from
+        // actions rather than the personal parser's known-card roster.
+        let flop_players = self
+            .actions
+            .iter()
+            .find(|a| a.kind == "board" && a.street == "flop")
+            .map_or(0, |flop| {
+                self.players
+                    .iter()
+                    .filter(|p| {
+                        !self.actions.iter().any(|a| {
+                            a.seq < flop.seq && a.kind == "fold" && a.actor == Some(p.seat)
+                        })
+                    })
+                    .count()
+            });
         Hand {
             id: self.id,
             profile: "mda".into(),
@@ -251,9 +267,9 @@ impl ObservedHand {
             total_pot: self.total_pot,
             fees: self.fees,
             showdown: self.showdown,
-            saw_flop: self.flop_players > 0,
+            saw_flop: flop_players > 0,
             pot_type: self.pot_type,
-            flop_players: self.flop_players,
+            flop_players,
             hu_effective_bb: None,
             hero_stack_bb: 0.,
             texture: String::new(),

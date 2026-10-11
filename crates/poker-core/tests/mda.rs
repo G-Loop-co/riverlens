@@ -72,6 +72,18 @@ fn population_all_players_no_hero_and_before_decision() {
     for index in 0..256 {
         row(index);
     }
+    let partial = fixtures::population_hand(2).replace(
+        "*** HOLE CARDS ***",
+        &format!(
+            "*** HOLE CARDS ***\nDealt to {} [Ah Ad]",
+            r.hand.players[0].name
+        ),
+    );
+    let observed = parser::parse_observed(&partial, "UTC", "GG").unwrap();
+    assert_eq!(observed.players.len(), 6);
+    let replay = observed.replay();
+    assert_eq!(replay.flop_players, 2);
+    assert!(replay.saw_flop);
     let r = row(7);
     assert!(r
         .decisions

@@ -8,7 +8,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { MdaWorkspace } from "./components/MdaWorkspace";
-import { EvidenceCard } from "./components/AiCoach";
+import { AiCoach, EvidenceCard } from "./components/AiCoach";
 import * as backend from "./api";
 import "./i18n";
 vi.mock("./api", async () => ({
@@ -23,6 +23,7 @@ afterEach(() => {
 });
 it("keeps datasets separate, pins queries and requires dataset cloud consent", async () => {
   vi.mocked(backend.api).mockImplementation(async (req: any): Promise<any> => {
+    if (req.op === "agent_learning") return { drafts: [], attempts: [] };
     if (req.op !== "mda") throw Error("Unexpected personal query");
     const r = req.request;
     if (r.op === "list")
@@ -77,6 +78,7 @@ it("keeps datasets separate, pins queries and requires dataset cloud consent", a
     await screen.findByText("在「平台限制及資料分享」", { exact: false }),
   ).toBeTruthy();
   expect(screen.queryByRole("button", { name: "開始分析" })).toBeNull();
+  expect(screen.getByRole("heading", { name: "學習資料" })).toBeTruthy();
   const share = screen.getByLabelText(
     "允許此資料集供雲端 AI Coach 分析",
   ) as HTMLInputElement;
@@ -111,4 +113,68 @@ it("anonymous evidence opens an opaque population key rather than personal hand 
   fireEvent.click(screen.getByRole("button", { name: "匿名回放" }));
   expect(open).toHaveBeenCalledWith("000000000000000a", 9);
   expect(personal).not.toHaveBeenCalled();
+});
+
+it("keeps saved MDA drafts and anonymous evidence available after cloud sharing is disabled", async () => {
+  const open = vi.fn();
+  const body = {
+    id: "mda-report",
+    title: "Saved MDA report",
+    text: "適用情境\n數據與分母\n調整方向\n理由\n例外\n匿名手牌證據",
+    items: [],
+    evidence: ["e-mda"],
+  };
+  const draft = {
+    id: body.id,
+    title: body.title,
+    body,
+    status: "draft",
+    revision: 1,
+  };
+  vi.mocked(backend.api).mockImplementation(async (req: any): Promise<any> => {
+    if (req.op === "agent_learning") return { drafts: [draft], attempts: [] };
+    if (req.op === "agent_review") return { saved: true };
+    if (req.op === "agent_evidence")
+      return {
+        evidence_id: "e-mda",
+        version: "mda:mda-test:1",
+        tool: "get_mda_hand",
+        args: { dataset_id: "mda-test", hand_key: "000000000000000a" },
+        data: {},
+      };
+    throw new Error("Unexpected shared tool call");
+  });
+  render(
+    <AiCoach
+      filter={{}}
+      openHand={() => {}}
+      openMdaHand={open}
+      mda={{
+        dataset_id: "mda-test",
+        version: "mda:mda-test:1",
+        filter: { hu_postflop: true },
+        cloud_enabled: false,
+      }}
+    />,
+  );
+  await screen.findByText("Saved MDA report");
+  expect(screen.queryByRole("button", { name: "開始分析" })).toBeNull();
+  expect(backend.api).toHaveBeenCalledWith({
+    op: "agent_learning",
+    dataset_id: "mda-test",
+  });
+  fireEvent.click(screen.getByRole("button", { name: "編輯與確認" }));
+  fireEvent.click(screen.getByRole("button", { name: "接受並儲存" }));
+  await waitFor(() =>
+    expect(backend.api).toHaveBeenCalledWith(
+      expect.objectContaining({ op: "agent_review", accept: true }),
+    ),
+  );
+  fireEvent.click(screen.getByText("來源證據", { exact: false }));
+  fireEvent.click(screen.getByRole("button", { name: "查看證據 mda" }));
+  fireEvent.click(await screen.findByRole("button", { name: "匿名回放" }));
+  expect(open).toHaveBeenCalledWith("000000000000000a", undefined);
+  expect(backend.api).not.toHaveBeenCalledWith(
+    expect.objectContaining({ op: "agent_tool" }),
+  );
 });

@@ -83,7 +83,7 @@ pub async fn organize(service: Arc<Service>, provider: &str, model: &str, id: &s
                 .all(|b| b.is_ascii_alphanumeric() || b"._-".contains(&b)),
         "invalid model ID"
     );
-    let learning = service.handle(Request::AgentLearning)?;
+    let learning = service.handle(Request::AgentLearning { dataset_id: None })?;
     let row = learning["drafts"]
         .as_array()
         .context("drafts missing")?

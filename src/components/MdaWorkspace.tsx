@@ -30,7 +30,7 @@ type Result<T> = {
     river_bluff_model?: { pure_bluff_break_even_fold_pct: number };
   };
 };
-const POSITIONS = ["UTG", "HJ", "CO", "BTN", "SB", "BB"];
+const POSITIONS = ["UTG", "HJ", "CO", "BTN", "SB", "BB", "BTN/SB"];
 export function MdaWorkspace() {
   const [revision, setRevision] = useState(0),
     [selected, setSelected] = useState("");
@@ -139,8 +139,9 @@ export function MdaWorkspace() {
     setFilter((f) => ({ ...f, ...patch }));
   }
   function rowContext(row: MdaStat): Partial<MdaFilter> {
-    const grouped: Partial<MdaFilter> =
-      group === "position"
+    const grouped: Partial<MdaFilter> = !row.context
+      ? {}
+      : group === "position"
         ? { position: row.context }
         : group === "opponent"
           ? { opponent: row.context }
@@ -159,7 +160,12 @@ export function MdaWorkspace() {
     };
   }
   const context = catalog
-    ? { dataset_id: selected, version: catalog.version, filter }
+    ? {
+        dataset_id: selected,
+        version: catalog.version,
+        filter,
+        cloud_enabled: catalog.dataset.cloud_enabled,
+      }
     : undefined;
   return (
     <section className="mda-workspace">
@@ -787,18 +793,28 @@ export function MdaWorkspace() {
             </div>
           )}
           {tab === "coach" &&
-            (catalog.dataset.cloud_enabled && context ? (
-              <AiCoach
-                key={`${selected}:${catalog.version}:${JSON.stringify(filter)}`}
-                mda={context}
-                filter={{}}
-                openHand={() => {}}
-                openMdaHand={(hand_key, seq) => setReplay({ hand_key, seq })}
-                question={
-                  question ||
-                  "請找這個情境的群體研究候選，說明如何調整下注尺寸、bluff/value 與防守，附分母、例外及匿名手牌證據。"
-                }
-              />
+            (context ? (
+              <>
+                {!catalog.dataset.cloud_enabled && (
+                  <div className="ai-panel">
+                    <p>
+                      在「平台限制及資料分享」啟用此資料集的雲端 AI Coach
+                      後才可分析。 本機學習草稿可在分享關閉時檢視、編輯及回查。
+                    </p>
+                  </div>
+                )}
+                <AiCoach
+                  key={`${selected}:${catalog.version}:${catalog.dataset.cloud_enabled}:${JSON.stringify(filter)}`}
+                  mda={context}
+                  filter={{}}
+                  openHand={() => {}}
+                  openMdaHand={(hand_key, seq) => setReplay({ hand_key, seq })}
+                  question={
+                    question ||
+                    "請找這個情境的群體研究候選，說明如何調整下注尺寸、bluff/value 與防守，附分母、例外及匿名手牌證據。"
+                  }
+                />
+              </>
             ) : (
               <div className="ai-panel">
                 <p>

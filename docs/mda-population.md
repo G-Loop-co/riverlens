@@ -46,6 +46,8 @@ RFI、盲位面對單次 open 的 fold／call／raise、3-bet、面對 3-bet、�
 
 AI 報告必須包含：適用情境、分子／分母、調整方向及尺寸、理由、例外、匿名手牌證據。版本變更停止分析。雲端與 MCP 分別按資料集啟用；只分享彙總及有界匿名案例。來源原文不是 AI 指令。
 
+MDA 本機學習草稿在撤回分享後仍可檢視、編輯、確認及查看已保存的匿名證據；重新發出 AI 分析或分類須另有雲端權限。本機 library RPC 不暴露為 MCP 工具。
+
 ## 平台限制
 
 GG 現行 [Security & Ecology Policy](https://ggpoker.com/network/security-ecology-policy/) 第 7／19 條限制收集他人牌譜及系統化收集／分享 MDA，可能導致停權、封禁或資金沒收。RiverLens 提供離線研究功能，不代表平台授權。不得將此功能文件當作 GG 合規許可。

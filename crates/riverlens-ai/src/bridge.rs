@@ -329,7 +329,7 @@ mod tests {
             .mda
             .handle(MdaRequest::Share {
                 dataset_id: id.clone(),
-                cloud_enabled: true,
+                cloud_enabled: false,
                 mcp_enabled: false,
             })
             .unwrap();
@@ -337,5 +337,11 @@ mod tests {
             .await
             .get("error")
             .is_some());
+        let local = service
+            .handle(Request::AgentLearning {
+                dataset_id: Some(id),
+            })
+            .unwrap();
+        assert_eq!(local["drafts"].as_array().unwrap().len(), 1);
     }
 }

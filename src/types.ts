@@ -236,7 +236,7 @@ export interface Health {
 }
 export type Request =
   | {op: "mda";request: import("./mda-types").MdaRequest}
-  | {op: "agent_learning"}
+  | {op: "agent_learning"; dataset_id?: string}
   | { op: "study"; request: import("./study-types").StudyRequest }
   | { op: "study_control"; paused: boolean }
   | {
