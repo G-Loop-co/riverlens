@@ -73,6 +73,23 @@ fn issue(h: &mut Hand, code: &str, message: impl Into<String>, line: Option<usiz
 
 /// GG export parser. All amounts are incremental ledger entries; source text is immutable.
 pub fn parse(raw: &str, profile: &Profile) -> Result<Hand> {
+    parse_inner(raw, profile, false)
+}
+
+/// The same GG ledger and card validation, without a designated Hero.
+/// Unknown hole cards remain empty; population analysis never runs Hero equity.
+pub fn parse_observed(raw: &str, timezone: &str, network: &str) -> Result<ObservedHand> {
+    let profile = Profile {
+        id: "mda".into(),
+        name: "MDA".into(),
+        brand: network.into(),
+        hero: String::new(),
+        timezone: timezone.into(),
+    };
+    Ok(parse_inner(raw, &profile, true)?.into())
+}
+
+fn parse_inner(raw: &str, profile: &Profile, population: bool) -> Result<Hand> {
     if raw.len() > 1_048_576 {
         bail!("hand exceeds 1 MiB limit")
     }
@@ -549,7 +566,7 @@ pub fn parse(raw: &str, profile: &Profile) -> Result<Hand> {
             );
         }
     }
-    if h.hero_seat == 0 {
+    if !population && h.hero_seat == 0 {
         bail!("Hero '{}' not in this hand", profile.hero);
     }
     if h.max_seats < 2 || h.max_seats > 9 {
@@ -563,44 +580,58 @@ pub fn parse(raw: &str, profile: &Profile) -> Result<Hand> {
             None,
         );
     }
-    h.player_count = if dealt.is_empty() {
+    h.player_count = if population || dealt.is_empty() {
         h.players.len()
     } else {
         dealt.len()
     };
-    if !dealt.is_empty() {
+    if !population && !dealt.is_empty() {
         h.players.retain(|p| dealt.contains(&p.seat));
     }
     assign_positions(&mut h);
-    let hero = h
-        .players
-        .iter()
-        .find(|p| p.hero)
-        .context("Hero not dealt in")?;
-    h.position = hero.position.clone();
-    h.hero_stack_bb = hero.stack as f64 / bb as f64;
-    h.hand_class = classify_cards(&hero.cards);
-    if hero.cards.len() != 2 {
-        issue(
-            &mut h,
-            "missing_hero_cards",
-            "Missing Hero hole cards",
-            None,
-        );
+    if !population {
+        let hero = h
+            .players
+            .iter()
+            .find(|p| p.hero)
+            .context("Hero not dealt in")?;
+        h.position = hero.position.clone();
+        h.hero_stack_bb = hero.stack as f64 / bb as f64;
+        h.hand_class = classify_cards(&hero.cards);
+        if hero.cards.len() != 2 {
+            issue(
+                &mut h,
+                "missing_hero_cards",
+                "Missing Hero hole cards",
+                None,
+            );
+        }
+        h.invested = invested.get(&h.hero_seat).copied().unwrap_or(0);
+        h.returned = returned.get(&h.hero_seat).copied().unwrap_or(0);
+        h.net = h.collected + h.cashout - h.cashout_risk + h.returned - h.invested;
+        // A GG SHOWDOWN marker also appears in hands won without a showdown.
+        let remaining = h
+            .players
+            .iter()
+            .filter(|p| !folded.contains(&p.seat))
+            .count();
+        h.showdown = showdown_marker
+            && !folded.contains(&h.hero_seat)
+            && remaining >= 2
+            && (hero_showed || h.saw_flop);
+    } else {
+        h.hero_seat = 0;
+        for player in &mut h.players {
+            player.hero = false;
+        }
+        h.showdown = showdown_marker
+            && h.players
+                .iter()
+                .filter(|p| !folded.contains(&p.seat))
+                .count()
+                >= 2;
+        h.saw_flop = h.flop_players > 0;
     }
-    h.invested = invested.get(&h.hero_seat).copied().unwrap_or(0);
-    h.returned = returned.get(&h.hero_seat).copied().unwrap_or(0);
-    h.net = h.collected + h.cashout - h.cashout_risk + h.returned - h.invested;
-    // A GG SHOWDOWN marker also appears in hands won without a showdown.
-    let remaining = h
-        .players
-        .iter()
-        .filter(|p| !folded.contains(&p.seat))
-        .count();
-    h.showdown = showdown_marker
-        && !folded.contains(&h.hero_seat)
-        && remaining >= 2
-        && (hero_showed || h.saw_flop);
     if pot != h.total_pot {
         let message = format!(
             "Action ledger {} differs from total pot {} (delta {})",
@@ -687,8 +718,10 @@ pub fn parse(raw: &str, profile: &Profile) -> Result<Hand> {
     if !h.issues.is_empty() {
         h.status = "quarantined".into();
     }
-    stats::derive(&mut h, collected_hero);
-    crate::equity::classify(&mut h);
+    if !population {
+        stats::derive(&mut h, collected_hero);
+        crate::equity::classify(&mut h);
+    }
     Ok(h)
 }
 

@@ -1,6 +1,18 @@
 use crate::model::*;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
+/// Shared legal raise gate: a short all-in does not reopen a prior actor.
+pub(crate) fn may_raise(
+    remaining: i64,
+    to_call: i64,
+    last: Option<i64>,
+    level: i64,
+    minimum: i64,
+    responsive: bool,
+) -> bool {
+    remaining > to_call && last.is_none_or(|v| level - v >= minimum) && responsive
+}
+
 fn mark(stats: &mut BTreeMap<String, StatValue>, key: &str, opportunity: bool, hit: bool) {
     let s = stats.entry(key.into()).or_default();
     if opportunity {
@@ -57,15 +69,19 @@ pub fn derive(h: &mut Hand, hero_won: bool) {
             .unwrap_or(0);
         let remaining = stack - spent.get(&seat).copied().unwrap_or(0);
         let to_call = (max_bet - previous).max(0);
-        let reopened = acted
-            .get(&seat)
-            .is_none_or(|last| max_bet - last >= min_raise);
         let responsive_opponent = h.players.iter().any(|p| {
             p.seat != seat
                 && !folded.contains(&p.seat)
                 && p.stack > spent.get(&p.seat).copied().unwrap_or(0)
         });
-        let can_raise = remaining > to_call && reopened && responsive_opponent;
+        let can_raise = may_raise(
+            remaining,
+            to_call,
+            acted.get(&seat).copied(),
+            max_bet,
+            min_raise,
+            responsive_opponent,
+        );
         let decision =
             matches!(a.kind.as_str(), "fold" | "check" | "call" | "bet" | "raise") && remaining > 0;
         if seat == hero && decision && street == "preflop" {

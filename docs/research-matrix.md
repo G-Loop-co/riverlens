@@ -38,3 +38,15 @@
 GG／Natural8 只採手動匯出、個人 Hero、賽後離線分析；不接入遊戲客戶端、不提供 RTA、live HUD 或對手群體 MDA，亦無平台認證。[GG Security & Ecology Policy](https://ggpoker.com/network/security-ecology-policy/) 查證版本 20260313；平台政策可變，以上是產品範圍而非平台批准。
 
 EV 曲線採「實際結果＋已完成適用牌局調整」，只對完整帳本、HU、單底池、單 runout、雙方底牌已知、無 Cashout／特殊結算的 all-in 牌局計算；不是完整 EV、GTO score 或 decision EV。[PokerTracker equity graph 定義](https://docs.pokertracker.com/pt4/tutorials/hand-analysis-and-tools/all-in-equity-graphs/)
+
+## MDA 擴展研究 — 2026-10-11
+
+上方「不做 MDA」為 2026-09-08 的個人複盤範圍；本次使用者要求獨立離線群體研究，已更新功能範圍。參考 Hand2Note 的情境報表與證據回查；使用開源 DuckDB，沿用本專案 GG parser、精確帳本、replayer 及 AI 草稿。
+
+| 來源 | 本次採用／界限 |
+|---|---|
+| [Hand2Note Multi-player Reports](https://www.hand2note.com/Blog/News/multi-player-report-in-hand2note4) | 以情境分析群體，回查手牌證據；不複製商業程式碼或資料 |
+| [duckdb-rs](https://github.com/duckdb/duckdb-rs)、[Rust Appender](https://duckdb.org/docs/current/clients/rust/data_import) | 本機列式查詢、批次 Appender、交易與明確 flush；鎖定 crate 1.10506.0 |
+| [DuckDB configuration](https://duckdb.org/docs/lts/configuration/pragmas) | 每資料集 2GiB buffer limit／4 threads；另量測 RSS，不把 buffer limit 當程序記憶體上限 |
+| [HHDealer formats](https://www.hhdealer.com/buy.php) | GG Regular 的 PT／HM／H2N4 是待驗格式；目前沒有真實供應商樣本，不能聲稱已相容 |
+| [GG Security & Ecology Policy](https://ggpoker.com/network/security-ecology-policy/) | 第 7／19 條限制他人牌譜及 MDA 收集／分享；保留停權、封禁及資金沒收限制，沒有平台批准 |

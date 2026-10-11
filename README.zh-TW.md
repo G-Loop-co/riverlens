@@ -2,6 +2,8 @@
 
 v0.3.2：AI 學習資料自動分類、tags、按主題分段；修復查看證據白畫面；macOS 打包前後驗證完整簽章。目前為 ad-hoc 簽章，未經 Apple notarization。[版本詳情](docs/release-v0.3.2.md)。
 
+未發布：**MDA 群體分析**，支援 GG 一般桌 USD NLH 6-max、獨立 DuckDB 資料集、匿名回放，以及內建 Coach／MCP 共用證據工具。資料集分享預設關閉。[範圍、統計定義與平台限制](docs/mda-population.md)。
+
 **您的牌譜，由您掌握。以本機資料為本的賽後 Poker 複盤工作台。**
 
 [English](README.md) · [繁體中文](README.zh-TW.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-BR.md) · [Italiano](README.it.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md) · [Türkçe](README.tr.md)
@@ -20,14 +22,15 @@ README 共 **13 種語言**；App 介面維持 **English／繁中／簡中**。
 
 | 功能 | 用途 |
 | --- | --- |
-| AI 教練與 agent 連接 | 透過 17 個本機 MCP 工具查閱統計與決策情境，建立附手牌依據的複盤、練習及學習計劃草稿，由您確認。 |
+| AI 教練與 agent 連接 | 透過 23 個本機 MCP 工具查閱統計與決策情境，建立附手牌依據的複盤、練習及學習計劃草稿，由您確認。 |
+| MDA 群體分析（未發布） | 匯入獨立 GG 一般桌資料集；按情境分析全桌合法機會、Wilson 區間及研究假設，點開匿名手牌驗證。 |
 | 匯入中心 | 匯入 TXT、ZIP 或資料夾；查看進度、暫停／續匯、去重及異常隔離。 |
 | 盈虧總覽 | 查看淨盈虧、bb/100、Session 與位置分類，點入原始手牌。 |
 | 13 項核心統計 | VPIP、PFR、RFI、3-bet、盲位防守及翻後／攤牌頻率；分子、機會分母可分別查閱。 |
 | 13 × 13 起手牌矩陣 | 查看實際樣本、net bb、bb/100、行動頻率，開啟對應手牌。 |
 | 手牌回放 | 逐步行動、跳街、自動播放及已知底牌。 |
 | 複盤工作台 | 保存筆記、標籤、已複盤狀態及常用篩選。 |
-| 本機資料管理 | SQLite 儲存、CSV／牌譜匯出、備份及還原。 |
+| 本機資料管理 | 個人 SQLite、獨立 MDA DuckDB；個人 CSV／牌譜匯出，各資料庫獨立備份還原。 |
 | 外觀主題 | 森林綠、午夜藍、暖白；選擇儲存於本機。 |
 | 三語介面 | 即時切換繁中、簡中及 English，離線可用。 |
 | 適用 All-in equity | 支援單挑、單底池、已知底牌、單 runout 的適用情況；不是 decision EV 或 GTO 評分。 |
@@ -125,7 +128,7 @@ npm run desktop:build -- --target x86_64-pc-windows-msvc --bundles nsis
 
 ## 範圍與發布狀態
 
-本工具供個人離線賽後複盤；不連接遊戲客戶端，沒有即時 HUD、RTA、群體資料挖掘、雲端同步或 GTO 最佳行動評分。與 Natural8／GGPoker 無隸屬關係。
+本工具供個人離線賽後複盤；此未發布來源分支另提供 MDA 群體研究。不連接遊戲客戶端，沒有即時 HUD、RTA、雲端同步或 GTO 最佳行動評分。與 Natural8／GGPoker 無隸屬關係。GG SEP 第 7／19 條限制收集他人牌譜與收集／分享 MDA，可能涉及停權、封禁或資金沒收；詳見 [MDA 功能限制及驗證](docs/mda-population.md)。
 
 v0.3.1 包含 AI／MCP 整合及離線學習流程；不包含私人牌譜、本機資料庫或策略包。驗收限制見[發布說明](docs/release-v0.3.1.md)。
 

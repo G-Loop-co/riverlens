@@ -235,6 +235,8 @@ export interface Health {
   offline: boolean;
 }
 export type Request =
+  | {op: "mda";request: import("./mda-types").MdaRequest}
+  | {op: "agent_learning"}
   | { op: "study"; request: import("./study-types").StudyRequest }
   | { op: "study_control"; paused: boolean }
   | {

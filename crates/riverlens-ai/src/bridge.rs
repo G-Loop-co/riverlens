@@ -116,6 +116,9 @@ impl Bridge {
                 state.as_ref().is_some_and(|s| s.0 == token),
                 "connection revoked"
             );
+            if let Some(id) = arguments.get("dataset_id").and_then(Value::as_str) {
+                b.service.mda.permitted(id, false)?;
+            }
             b.service.handle(Request::AgentTool {
                 name,
                 arguments,
@@ -198,5 +201,141 @@ mod tests {
         assert!(query(&b, "test-token", "restore").await.is_err());
         *b.state.lock().unwrap() = None;
         assert!(query(&b, "test-token", "get_data_catalog").await.is_err());
+    }
+
+    #[tokio::test]
+    async fn mda_ipc_matches_coach_core_and_enforces_dataset_consent() {
+        use poker_core::mda::{facts, storage, Request as MdaRequest};
+        let dir = tempfile::tempdir().unwrap();
+        let service = Service::new(dir.path().join("personal.db")).unwrap();
+        let cat = service
+            .mda
+            .handle(MdaRequest::Create {
+                name: "test pool".into(),
+                timezone: "UTC".into(),
+                source: "synthetic".into(),
+            })
+            .unwrap();
+        let id = cat["dataset"]["id"].as_str().unwrap().to_string();
+        let ds = service.mda.dataset(&id).unwrap();
+        let mut c = ds.connection().unwrap();
+        let incoming = (0..32)
+            .map(|i| {
+                let mut hand = poker_core::parser::parse_observed(
+                    &poker_core::fixtures::population_hand(i),
+                    "UTC",
+                    "GG",
+                )
+                .unwrap();
+                let decisions = facts::derive(&mut hand).unwrap();
+                storage::Incoming { hand, decisions }
+            })
+            .collect();
+        storage::commit_batch(
+            &mut c,
+            incoming,
+            vec![],
+            &mut storage::Job {
+                id: "j".into(),
+                ..Default::default()
+            },
+            32,
+            "synthetic",
+        )
+        .unwrap();
+        let b = Bridge::start(service.clone()).await.unwrap();
+        *b.state.lock().unwrap() = Some(("synthetic-token".into(), false));
+        async fn query(b: &Bridge, name: &str, args: Value) -> Value {
+            let mut s =
+                Stream::connect(b.socket.as_str().to_ns_name::<GenericNamespaced>().unwrap())
+                    .await
+                    .unwrap();
+            write_frame(
+                &mut s,
+                &json!({"token":"synthetic-token","name":name,"arguments":args}),
+            )
+            .await
+            .unwrap();
+            read_frame(&mut s).await.unwrap()
+        }
+        let args = json!({"dataset_id":id,"version":service.mda.version(&id).unwrap(),"filter":{"metric":"fold_cbet"}});
+        assert!(query(&b, "query_mda_stats", args.clone())
+            .await
+            .get("error")
+            .is_some());
+        service
+            .mda
+            .handle(MdaRequest::Share {
+                dataset_id: id.clone(),
+                cloud_enabled: true,
+                mcp_enabled: false,
+            })
+            .unwrap();
+        assert!(query(&b, "query_mda_stats", args.clone())
+            .await
+            .get("error")
+            .is_some());
+        service
+            .mda
+            .handle(MdaRequest::Share {
+                dataset_id: id.clone(),
+                cloud_enabled: true,
+                mcp_enabled: true,
+            })
+            .unwrap();
+        let ipc = query(&b, "query_mda_stats", args.clone()).await;
+        let core = service
+            .handle(Request::AgentTool {
+                name: "query_mda_stats".into(),
+                arguments: args.clone(),
+                share_notes: false,
+            })
+            .unwrap();
+        assert_eq!(ipc["result"], core);
+        let hand=query(&b,"get_mda_hand",json!({"dataset_id":id,"version":core["version"],"hand_key":storage::hex_key(storage::key("GG","MDA000000000001"))})).await;
+        let draft = json!({"id":"mda-draft","title":"MDA research","text":"適用情境\n數據與分母\n調整方向\n理由\n例外\n匿名手牌證據\nsynthetic report","evidence":[core["evidence_id"],hand["result"]["evidence_id"]],"items":[]});
+        assert!(query(
+            &b,
+            "create_report_draft",
+            json!({"dataset_id":id,"version":core["version"],"draft":draft})
+        )
+        .await
+        .get("error")
+        .is_none());
+        assert_eq!(
+            query(&b, "get_learning_progress", json!({})).await["result"]["data"]["drafts"]
+                .as_array()
+                .unwrap()
+                .len(),
+            0
+        );
+        assert_eq!(
+            query(&b, "get_learning_progress", json!({"dataset_id":id})).await["result"]["data"]
+                ["drafts"]
+                .as_array()
+                .unwrap()
+                .len(),
+            1
+        );
+        assert_eq!(
+            query(&b, "search_learning", json!({"query":"synthetic"})).await["result"]["data"]
+                ["rows"]
+                .as_array()
+                .unwrap()
+                .len(),
+            0
+        );
+        service
+            .mda
+            .handle(MdaRequest::Share {
+                dataset_id: id.clone(),
+                cloud_enabled: true,
+                mcp_enabled: false,
+            })
+            .unwrap();
+        assert!(query(&b, "get_learning_progress", json!({"dataset_id":id}))
+            .await
+            .get("error")
+            .is_some());
     }
 }

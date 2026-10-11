@@ -132,6 +132,9 @@ fn main() {
         .expect("RiverLens could not start")
         .run(|app, event| {
             if matches!(event, tauri::RunEvent::Exit) {
+                if let Some(service) = app.try_state::<Arc<Service>>() {
+                    service.mda.shutdown();
+                }
                 if let Some(state) = app.try_state::<AiState>() {
                     let _ = state.bridge.configure(false, false);
                     if let Some((_, job)) = state.job.lock().unwrap().take() {

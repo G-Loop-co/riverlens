@@ -36,7 +36,15 @@ OpenCode Go is intended for coding-agent traffic. RiverLens poker coaching is no
 - Strategy: list_strategy_packs, compare_preflop.
 - Learn: get_learning_progress, search_learning, create_report_draft, create_practice_draft, create_study_plan_draft.
 
-17 tool schemas are shared across MCP and all providers. Unknown tools, unknown arguments, unrecognized filter fields, null required values, unbounded pages and invalid identifiers are rejected before dispatch. No administration RPC, SQL, restore, import or annotation-apply tool is exposed.
+The current unreleased source shares 23 tool schemas across MCP and all providers (18 personal learning tools, including organize_learning, plus five MDA tools). Unknown tools, unknown arguments, unrecognized filter fields, null required values, unbounded pages and invalid identifiers are rejected before dispatch. No administration RPC, SQL, restore, import or annotation-apply tool is exposed.
+
+### MDA population analysis — unreleased
+
+`get_mda_catalog`, `query_mda_stats`, `find_mda_candidates`, `find_mda_spots` and `get_mda_hand` share one engine. Every call is scoped to a dataset; data-dependent queries require its current version. Pages cap at 100, with a bounded cursor. No raw source or player names are exposed. Cloud Coach access and MCP access are separate per-dataset opt-ins, both off by default; the existing global connection / cloud consent remains required. A changed dataset stops a pinned analysis and requires a fresh query.
+
+MDA report drafts require these six sections: 適用情境、數據與分母、調整方向、理由、例外、匿名手牌證據. They require population statistics/candidate evidence and an anonymous hand reference when data exists. The adjustment must discuss sizing and bluff/value/defense direction, without claiming an unavailable solver baseline. Candidates need at least 200 legal opportunities, descriptive Wilson intervals, period evidence and shown-card selection-bias context. Personal learning/search stays in its original scope; passing `dataset_id` opens that dataset's MDA reports. All saved drafts use the existing evidence and review workflow.
+
+The MDA workspace preview currently uses Traditional Chinese labels; existing language resources and personal UI regression tests remain unchanged. [MDA definitions and GG policy restrictions](mda-population.md), [current validation](validation/mda-population-ai.md). The historical checks below do not certify MDA vendor, live provider or external model-client compatibility.
 
 find_spots matches an ordered subsequence of position/street/action steps; intervening actions are permitted. Page size defaults to 60 and caps at 200; the ID cursor and dataset version must be retained when paging. Existing effective-stack filters retain their documented HU-flop meaning; they are not a new universal multiway preflop effective-stack metric.
 

@@ -2,6 +2,8 @@
 
 New in v0.3.2: AI learning categories, tags and topic sections; saved evidence crash fix; verified macOS bundle signatures. Downloads are ad-hoc signed, not notarized. [Release details](docs/release-v0.3.2.md).
 
+Unreleased: independent **MDA population analysis** for GG Regular USD NLH 6-max, local DuckDB imports, anonymous replay and shared in-app Coach / MCP evidence tools. Dataset sharing is off by default. [Scope, statistical definitions and platform restrictions](docs/mda-population.md).
+
 **Your hands. Your data. A local workspace for post-session poker review.**
 
 [English](README.md) · [繁體中文](README.zh-TW.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-BR.md) · [Italiano](README.it.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md) · [Türkçe](README.tr.md)
@@ -20,14 +22,15 @@ README translations: **13 languages**. App interface: **English, Traditional Chi
 
 | Feature | What you can do |
 | --- | --- |
-| AI coach and agent connection | Explore statistics and decision context through 17 local MCP tools; create evidence-linked review, practice and study-plan drafts for your approval. |
+| AI coach and agent connection | Explore statistics and decision context through 23 local MCP tools; create evidence-linked review, practice and study-plan drafts for your approval. |
+| MDA population analysis (unreleased) | Import independent GG Regular datasets; filter legal all-player opportunities, inspect confidence intervals and research hypotheses, then verify anonymous hand evidence. |
 | Import center | Import TXT, ZIP or folders; monitor progress, pause/resume, detect duplicates and inspect quarantined records. |
 | Results dashboard | Explore net results, bb/100, session and position breakdowns; drill into underlying hands. |
 | 13 core statistics | Review VPIP, PFR, RFI, 3-bet, blind defense and postflop/showdown frequencies with explicit opportunity denominators. |
 | 13 × 13 starting-hand matrix | Inspect observed hand counts, net bb, bb/100 and action frequency; open the matching hand list. |
 | Hand replayer | Step through actions, jump streets and replay known cards. |
 | Review workspace | Save notes, tags, reviewed status and reusable filters. |
-| Data ownership | Keep everything in local SQLite; export CSV / hand histories and back up or restore your database. |
+| Data ownership | Keep personal review in SQLite and MDA in independent DuckDB datasets; export personal CSV / hand histories and back up or restore each data store. |
 | Appearance themes | Choose Forest, Midnight or Paper (warm white); the selection persists locally. |
 | Three interface languages | Switch instantly between English, Traditional Chinese and Simplified Chinese, including offline use. |
 | Eligible all-in equity | Calculate supported heads-up, single-pot, known-hole-card, single-runout situations. This is not decision EV or a GTO score. |
@@ -123,7 +126,7 @@ Data lives in the Tauri app-data directory (`app.riverlens.desktop`); the settin
 
 ## Scope and release status
 
-RiverLens is for offline, personal post-session review. It does not connect to the game client and provides no live HUD, real-time assistance, population mining, cloud sync or GTO best-action scoring. It is not affiliated with Natural8 or GGPoker.
+RiverLens supports offline personal post-session review and, in this unreleased source branch, MDA population research. It does not connect to the game client and provides no live HUD, real-time assistance, cloud sync or GTO best-action scoring. It is not affiliated with Natural8 or GGPoker. GG's Security & Ecology Policy sections 7 and 19 restrict collecting other players' histories and collecting/sharing MDA; penalties can include suspension, bans and confiscation of funds. See the [MDA restrictions and validation gates](docs/mda-population.md).
 
 The v0.3.1 release includes AI/MCP integration and the offline study workflow. Private hand histories, local databases and strategy packs are excluded. See the [release notes](docs/release-v0.3.1.md) for validation limits.
 

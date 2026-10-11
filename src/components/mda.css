@@ -1,0 +1,73 @@
+.mda-workspace {
+  display: grid;
+  gap: 18px;
+}
+.mda-controls {
+  display: flex;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.mda-controls .field {
+  min-width: 140px;
+  flex: 1;
+}
+.mda-controls input,
+.mda-controls select {
+  max-width: 100%;
+}
+.mda-workspace details summary {
+  cursor: pointer;
+  font-weight: 600;
+  padding: 8px 0;
+}
+.mda-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.mda-table th,
+.mda-table td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border, #ddd);
+  vertical-align: top;
+}
+.mda-table td p {
+  max-width: 420px;
+  font-size: 12px;
+}
+.mda-table .text-button {
+  display: block;
+}
+.mda-job {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border, #ddd);
+}
+.mda-job button {
+  margin-left: 12px;
+}
+.mda-workspace .raw-hand {
+  white-space: pre-wrap;
+  max-height: 400px;
+  overflow: auto;
+}
+.mda-filters details {
+  margin-top: 14px;
+}
+.mda-datasets small {
+  overflow-wrap: anywhere;
+}
+.mda-workspace .ai-panel {
+  margin: 0;
+}
+@media (max-width: 900px) {
+  .mda-controls {
+    align-items: stretch;
+  }
+  .mda-controls .field {
+    min-width: 150px;
+  }
+  .mda-table {
+    min-width: 650px;
+  }
+}

@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased — MDA population analysis
+
+- Add independent local DuckDB datasets for GG Regular USD NLH 6-max, with streaming TXT/ZIP/folder imports, atomic checkpoints, resume, deduplication, conflict quarantine and independent backup/restore.
+- Count legal all-player decision opportunities using the shared exact-money GG parser. Unknown cards stay unknown; anonymous replay supports hands without a Hero.
+- Add population context filters, opportunity-weighted rates, descriptive Wilson intervals, period comparisons, shown-card coverage and bounded hand evidence.
+- Share five version-pinned MDA tools between the in-app Coach and MCP. Cloud and MCP access require separate per-dataset opt-in; reports use existing evidence-linked learning drafts.
+- Keep missing baselines as research hypotheses, limit pure-bluff arithmetic to its stated HU river assumptions, and document GG SEP restrictions and pending HHDealer/live-provider/client compatibility.
+- Add a reproducible 10-million-hand synthetic acceptance runner; measured results and platform packaging gates are recorded separately in the validation documents.
+
 ## 0.3.2 — 2026-09-17
 
 - AI learning reports: content-based categories, tags, lossless topic sections and reclassification of existing reports.

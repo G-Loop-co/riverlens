@@ -22,4 +22,4 @@ GTO 查詢先在精簡索引欄位分組，再解析每組資料；不逐手解�
 升級已存在的資料庫先保存 `before-study-*.db`。還原接受 schema 1/2/3，在 staging migration 後替換；完整備份包含所有學習資料。重算保留使用者資料表，再建立新的 derived rows。來源包、題目及嘗試紀錄的舊版本保持原樣。
 
 
-策略包不隨原始碼分發。沒有 live HUD、RTA、MDA、postflop Solver 或 decision EV。
+策略包不隨原始碼分發。此個人學習流程沒有 live HUD、RTA、postflop Solver 或 decision EV。獨立群體研究見 [MDA 群體分析](mda-population.md)。

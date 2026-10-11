@@ -5,6 +5,7 @@ import { listen } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
 import { api, desktop, errorText } from "../api";
 import type { Filter, Profile } from "../types";
+import type { MdaContext } from "../mda-types";
 import { Card } from "./Replayer";
 import { ErrorBanner } from "./UI";
 import "./ai-coach.css";
@@ -38,10 +39,14 @@ export function AiCoach({
   filter,
   openHand,
   question,
+  mda,
+  openMdaHand,
 }: {
   filter: Filter;
   openHand: (id: number, seq?: number) => void;
   question?: string;
+  mda?: MdaContext;
+  openMdaHand?: (key: string, seq?: number) => void;
 }) {
   const { t } = useTranslation();
   const [tab, setTab] = useState("coach"),
@@ -91,7 +96,10 @@ export function AiCoach({
   };
   const refresh = async () => {
     setProfiles(await api<Profile[]>({ op: "profiles" }));
-    const result = await tool("get_learning_progress");
+    const result = await tool(
+      "get_learning_progress",
+      mda ? { dataset_id: mda.dataset_id } : {},
+    );
     setLearning(result.data);
     const ps = await tool("list_strategy_packs");
     setPacks(ps.data as unknown as Data[]);
@@ -178,8 +186,10 @@ export function AiCoach({
           provider,
           model: model.trim(),
           prompt,
-          filter,
-          share_notes: notes,
+          filter: mda?.filter || filter,
+          mda_dataset_id: mda?.dataset_id,
+          mda_version: mda?.version,
+          share_notes: mda ? false : notes,
           history: previous,
         },
       });
@@ -198,6 +208,7 @@ export function AiCoach({
     }
   }
   async function localReport() {
+    if (mda) return;
     const e = await tool("query_stats", { filter, group: "position" });
     setEvidence([e]);
     const draft: AiDraft = {
@@ -212,7 +223,7 @@ export function AiCoach({
   }
   async function find(cursor?: unknown) {
     const e = await tool("find_spots", {
-      filter,
+      filter: mda?.filter || filter,
       path,
       ...(cursor ? { cursor, version: spots?.version } : {}),
       limit: 60,
@@ -250,22 +261,24 @@ export function AiCoach({
   return (
     <section className="ai-workspace">
       <nav className="ai-tabs" aria-label={t("AI 工作區")}>
-        {tabs.map(([key, label]) => (
-          <button
-            key={key}
-            className={tab === key ? "button primary" : "button"}
-            aria-pressed={tab === key}
-            onClick={() => setTab(key)}
-          >
-            {t(label)}
-          </button>
-        ))}
+        {tabs
+          .filter(([key]) => !mda || key !== "spots")
+          .map(([key, label]) => (
+            <button
+              key={key}
+              className={tab === key ? "button primary" : "button"}
+              aria-pressed={tab === key}
+              onClick={() => setTab(key)}
+            >
+              {t(label)}
+            </button>
+          ))}
       </nav>
       {error && <ErrorBanner>{error}</ErrorBanner>}
       {tab === "coach" && (
         <>
           <div className="ai-panel">
-            <h2>{t("從你的牌局開始")}</h2>
+            <h2>{mda ? "用群體證據調整策略" : t("從你的牌局開始")}</h2>
             <p>{t("先查證據，再給建議。報告與練習以草稿儲存。")}</p>
             <div className="ai-row">
               <label>
@@ -310,11 +323,18 @@ export function AiCoach({
               />
             </label>
             <div className="ai-row">
-              {[
-                "分析目前篩選，找出值得複盤的局面。",
-                "根據最近的複盤，建立練習草稿。",
-                "比較相同條件下前後期的表現。",
-              ].map((q) => (
+              {(mda
+                ? [
+                    "分析目前群體情境，附合法機會分母及匿名手牌。",
+                    "提出下注尺寸及 bluff／value／防守調整，列明研究假設和例外。",
+                    "比較前後時段群體傾向，說明 Wilson 區間及攤牌選擇偏差。",
+                  ]
+                : [
+                    "分析目前篩選，找出值得複盤的局面。",
+                    "根據最近的複盤，建立練習草稿。",
+                    "比較相同條件下前後期的表現。",
+                  ]
+              ).map((q) => (
                 <button
                   className="button"
                   key={q}
@@ -336,7 +356,7 @@ export function AiCoach({
               <input
                 type="checkbox"
                 checked={notes}
-                disabled={busy}
+                disabled={busy || !!mda}
                 onChange={(e) => {
                   resetConversation();
                   setNotes(e.target.checked);
@@ -377,6 +397,7 @@ export function AiCoach({
                 className="button"
                 disabled={busy}
                 onClick={() => void run(localReport)}
+                hidden={!!mda}
               >
                 {t("建立本機統計草稿")}
               </button>
@@ -419,7 +440,12 @@ export function AiCoach({
             </p>
           )}
           {evidence.map((e) => (
-            <EvidenceCard key={e.evidence_id} e={e} openHand={openHand} />
+            <EvidenceCard
+              key={e.evidence_id}
+              e={e}
+              openHand={openHand}
+              openMdaHand={openMdaHand}
+            />
           ))}
         </>
       )}
@@ -544,8 +570,12 @@ export function AiCoach({
               onClick={() =>
                 void run(async () =>
                   setHits(
-                    (await tool("search_learning", { query: search })).data
-                      .rows,
+                    (
+                      await tool("search_learning", {
+                        query: search,
+                        ...(mda ? { dataset_id: mda.dataset_id } : {}),
+                      })
+                    ).data.rows,
                   ),
                 )
               }
@@ -1030,9 +1060,11 @@ export function AiCoach({
 export function EvidenceCard({
   e,
   openHand,
+  openMdaHand,
 }: {
   e: Evidence;
   openHand: (id: number, seq?: number) => void;
+  openMdaHand?: (key: string, seq?: number) => void;
 }) {
   const { t } = useTranslation();
   const d = e.data;
@@ -1058,6 +1090,58 @@ export function EvidenceCard({
       <small>
         {e.evidence_id} · {e.version}
       </small>
+      {e.tool.startsWith("get_mda_") && object.dataset && (
+        <p>
+          {scalar(object.dataset.name)} · {scalar(object.hands)} 手
+        </p>
+      )}
+      {e.tool.includes("mda") && Array.isArray(object.rows) && (
+        <div className="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>情境／指標</th>
+                <th>分子／機會</th>
+                <th>證據</th>
+              </tr>
+            </thead>
+            <tbody>
+              {object.rows.map((row: Data, i: number) => (
+                <tr key={i}>
+                  <td>
+                    {scalar(row.metric || row.position)} · {scalar(row.street)}
+                  </td>
+                  <td>
+                    {row.opportunities === undefined
+                      ? scalar(row.board)
+                      : `${row.numerator}/${row.opportunities}`}
+                  </td>
+                  <td>
+                    {row.hand_key && (
+                      <button
+                        className="text-button"
+                        onClick={() => openMdaHand?.(row.hand_key, row.seq)}
+                      >
+                        匿名回放
+                      </button>
+                    )}
+                    {row.wilson95 &&
+                      `${row.wilson95[0].toFixed(1)}–${row.wilson95[1].toFixed(1)}%`}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {e.tool === "get_mda_hand" && (
+        <button
+          className="button"
+          onClick={() => openMdaHand?.(e.args.hand_key, e.args.seq)}
+        >
+          匿名回放
+        </button>
+      )}
       {typeof object.hands === "number" && (
         <p>
           {t("手牌")}: {object.hands}
