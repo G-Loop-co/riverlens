@@ -148,6 +148,149 @@ pub struct Hand {
     pub stats_version: String,
 }
 
+/// Population record: no Hero seat, personal cashflow, hand class or equity fields.
+/// Shared players/actions keep exact money and unknown-card semantics.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ObservedHand {
+    pub id: String,
+    pub brand: String,
+    pub played_at: i64,
+    pub local_time: String,
+    pub timezone: String,
+    pub table_name: String,
+    pub max_seats: u8,
+    pub player_count: usize,
+    pub currency: String,
+    pub game: String,
+    #[serde(with = "money")]
+    pub sb: i64,
+    #[serde(with = "money")]
+    pub bb: i64,
+    pub button: u8,
+    pub players: Vec<Player>,
+    pub actions: Vec<Action>,
+    pub boards: Vec<Vec<String>>,
+    pub pots: Vec<Pot>,
+    #[serde(with = "money")]
+    pub total_pot: i64,
+    pub fees: BTreeMap<String, String>,
+    pub showdown: bool,
+    pub pot_type: String,
+    pub flop_players: usize,
+    pub status: String,
+    pub issues: Vec<Issue>,
+    pub raw: String,
+    pub parser_version: String,
+    pub stats_version: String,
+}
+impl From<Hand> for ObservedHand {
+    fn from(h: Hand) -> Self {
+        Self {
+            id: h.id,
+            brand: h.brand,
+            played_at: h.played_at,
+            local_time: h.local_time,
+            timezone: h.timezone,
+            table_name: h.table_name,
+            max_seats: h.max_seats,
+            player_count: h.player_count,
+            currency: h.currency,
+            game: h.game,
+            sb: h.sb,
+            bb: h.bb,
+            button: h.button,
+            players: h.players,
+            actions: h.actions,
+            boards: h.boards,
+            pots: h.pots,
+            total_pot: h.total_pot,
+            fees: h.fees,
+            showdown: h.showdown,
+            pot_type: h.pot_type,
+            flop_players: h.flop_players,
+            status: h.status,
+            issues: h.issues,
+            raw: h.raw,
+            parser_version: h.parser_version,
+            stats_version: h.stats_version,
+        }
+    }
+}
+impl ObservedHand {
+    /// UI adapter only. Hero-only panels and personal study are disabled by MDA mode.
+    pub fn replay(self) -> Hand {
+        // Population cards may be partially dealt-to. Reconstruct attendance from
+        // actions rather than the personal parser's known-card roster.
+        let flop_players = self
+            .actions
+            .iter()
+            .find(|a| a.kind == "board" && a.street == "flop")
+            .map_or(0, |flop| {
+                self.players
+                    .iter()
+                    .filter(|p| {
+                        !self.actions.iter().any(|a| {
+                            a.seq < flop.seq && a.kind == "fold" && a.actor == Some(p.seat)
+                        })
+                    })
+                    .count()
+            });
+        Hand {
+            id: self.id,
+            profile: "mda".into(),
+            brand: self.brand,
+            played_at: self.played_at,
+            local_time: self.local_time,
+            timezone: self.timezone,
+            table_name: self.table_name,
+            max_seats: self.max_seats,
+            player_count: self.player_count,
+            currency: self.currency,
+            game: self.game,
+            sb: self.sb,
+            bb: self.bb,
+            button: self.button,
+            hero_seat: 0,
+            position: String::new(),
+            hand_class: String::new(),
+            players: self.players,
+            actions: self.actions,
+            boards: self.boards,
+            pots: self.pots,
+            invested: 0,
+            returned: 0,
+            collected: 0,
+            cashout: 0,
+            cashout_risk: 0,
+            net: 0,
+            total_pot: self.total_pot,
+            fees: self.fees,
+            showdown: self.showdown,
+            saw_flop: flop_players > 0,
+            pot_type: self.pot_type,
+            flop_players,
+            hu_effective_bb: None,
+            hero_stack_bb: 0.,
+            texture: String::new(),
+            paired: false,
+            high_card: String::new(),
+            stats: BTreeMap::new(),
+            cues: vec![],
+            status: self.status,
+            issues: self.issues,
+            ev_status: "not_applicable".into(),
+            ev_reason: None,
+            equity_input: None,
+            equity: None,
+            adjusted_net: None,
+            raw: self.raw,
+            parser_version: self.parser_version,
+            stats_version: self.stats_version,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(default)]
 pub struct Filter {

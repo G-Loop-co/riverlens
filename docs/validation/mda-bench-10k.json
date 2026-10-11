@@ -1,0 +1,66 @@
+{
+  "acceptance": {
+    "aggregate_p95_le_2s": true,
+    "contextual_p95_le_5s": true,
+    "peak_rss_le_4gib": true,
+    "ten_million": false
+  },
+  "aggregate": {
+    "max_ms": 16.210458,
+    "p50_ms": 10.793708,
+    "p95_ms": 13.194042,
+    "runs": 21
+  },
+  "contextual": {
+    "max_ms": 5.851791,
+    "p50_ms": 4.87725,
+    "p95_ms": 5.321417,
+    "runs": 21
+  },
+  "dataset_bytes": 42217472,
+  "duckdb": {
+    "crate": "1.10506.0",
+    "memory_limit": "2GiB",
+    "threads": 4
+  },
+  "fixture_version": "gg-population/1",
+  "generation_seconds": 0.056579834,
+  "hands": 10000,
+  "hands_per_second": 6292.310712432905,
+  "hardware": {
+    "arch": "aarch64",
+    "hw.memsize": "",
+    "logical_threads": 11,
+    "machdep.cpu.brand_string": "",
+    "os": "macos"
+  },
+  "import_seconds": 1.589241291,
+  "input": "ZIP / GG native / six seats / no Hero / source UTC",
+  "input_zip_bytes": 836899,
+  "job": {
+    "committed_hands": 0,
+    "conflicts": 0,
+    "duplicates": 0,
+    "elapsed_ms": 1588,
+    "id": "benchmark",
+    "inserted": 10000,
+    "message": null,
+    "quarantined": 0,
+    "scanned": 10000,
+    "source_index": 1,
+    "sources": [
+      {
+        "crc": 2885116153,
+        "member": "population.txt",
+        "modified": 1791699454,
+        "path": "/private/tmp/riverlens-mda-bench-10k-1/synthetic-gg-regular.zip",
+        "size": 836899
+      }
+    ],
+    "started_at": 0,
+    "state": "completed"
+  },
+  "limits": "21 in-process queries; warm OS cache; includes parser, ZIP streaming, DuckDB appender, dedup, rollups and checkpoint. Excludes UI/IPC and actual supplier/provider acceptance.",
+  "peak_process_rss_bytes": 274268160,
+  "version": "mda:mda-18dd6529357b9ee0:2284fbfe-7fe7-4b45-be71-fb4f99219e6b:5"
+}

@@ -14,6 +14,8 @@ TXT / ZIP / folder (UTF-8 streaming)
 
 `crates/poker-core` 不依賴 Tauri；相同實作可由桌面、測試、benchmark 及本機開發 server 呼叫。`src-tauri` 只處理原生視窗、檔案對話框、app data 路徑及非同步 IPC。前端不接受／執行 SQL。
 
+MDA 增加平行資料流：共用 GG parser → 無 Hero 的 `ObservedHand` → 全桌合法決策 `Decision` → 獨立 DuckDB → 維度／bitmask rollups 與原始決策查詢 → 匿名回放及五個共用 AI 工具。原個人 SQLite／離線學習及 AI 草稿表沿用；MDA 證據版本以資料集 ID、epoch 及 revision 隔離。匯入每 2,048 手交易提交資料、彙總、隔離原文及工作 checkpoint；Rust Appender 成功 flush 後才 commit。詳見 [統計及儲存契約](mda-population.md)。
+
 ## 帳本與完整度
 
 - `i64` 金額，1 USD = 1,000,000 units。decimal parser 不經 f64；IPC 字串，replayer 使用 BigInt。下注比例、equity 機率及 bb 僅為顯示／分析比例。
@@ -79,7 +81,7 @@ V1 的必要条件：valid ledger、Hero 參與 HU、單底池、單 runout、�
 
 ## 安全與部署界線
 
-無遙測、RiverLens 網路帳戶、雲端牌譜同步、遊戲客戶端接入、HUD／RTA／MDA、公開發布或自動更新。選用 AI 教練在使用者同意後，從原生 Rust adapter 傳送所需資料至指定模型供應商；API key 存於 OS credential store。前端 raw 文本由 React escape；動態 SQL 限定欄位白名單與參數，CSV 文本欄位阻止公式注入。ZIP 直接串流讀取，不接受 archive 路徑寫入。
+無遙測、RiverLens 網路帳戶、雲端牌譜同步、遊戲客戶端接入、HUD／RTA 或自動更新。MDA 為獨立本機研究資料集，雲端及 MCP 存取各自明確啟用；範圍與 GG 平台限制見 [MDA 契約](mda-population.md)。選用 AI 教練在使用者同意後，從原生 Rust adapter 傳送所需資料至指定模型供應商；API key 存於 OS credential store。前端 raw 文本由 React escape；動態 SQL 限定欄位白名單與參數，CSV 文本欄位阻止公式注入。ZIP 直接串流讀取，不接受 archive 路徑寫入。
 
 開發 HTTP server 只綁 loopback，驗證 Origin、JSON content type、POST `/api`；正式桌面不啟動該 server。Tauri CSP 僅允許本地資源與 IPC，dialog 權限為 open/save。native command 參數由 Rust serde 驗證；錯誤傳回 UI。
 

@@ -1,35 +1,36 @@
 # RiverLens
 
-v0.3.2：AI 學習資料自動分類、tags、按主題分段；修復查看證據白畫面；macOS 打包前後驗證完整簽章。目前為 ad-hoc 簽章，未經 Apple notarization。[版本詳情](docs/release-v0.3.2.md)。
+**v0.4.0：MDA 群體分析＋AI 證據建議**。支援 GG 一般桌 USD NLH 6-max、獨立 DuckDB 資料集、情境統計與匿名回放，內建 Coach／MCP 共用證據工具。資料集分享預設關閉。[版本詳情](docs/release-v0.4.0.md) · [統計定義與平台限制](docs/mda-population.md)。
 
 **您的牌譜，由您掌握。以本機資料為本的賽後 Poker 複盤工作台。**
 
 [English](README.md) · [繁體中文](README.zh-TW.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-BR.md) · [Italiano](README.it.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md) · [Türkçe](README.tr.md)
 
-RiverLens 是 Natural8／GGPoker 個人現金桌牌譜分析桌面工具。介面使用 React／TypeScript，Rust core 負責解析、統計與本機 SQLite 儲存。
+RiverLens 是 Natural8／GGPoker 個人現金桌牌譜與獨立 MDA 群體資料分析桌面工具。介面使用 React／TypeScript，Rust core 負責解析及統計；個人資料存 SQLite，MDA 資料集存 DuckDB。
 
-> **[下載 v0.3.1](https://github.com/G-Loop-co/riverlens/releases/tag/v0.3.1)** — AI 教練、本機 MCP agent 連接及離線學習。提供 Windows、Apple Silicon、Intel Mac 套件。[發布說明](docs/release-v0.3.1.md)。
+> **[下載 v0.4.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.4.0)** — MDA＋AI、本機 MCP 及離線學習。提供 Windows、Apple Silicon、Intel Mac 套件。macOS 為 ad-hoc 簽章，未經 Apple notarization。[發布說明](docs/release-v0.4.0.md)。
 
 ![RiverLens 繁體中文總覽：合成資料](docs/screenshots/overview-zh-TW.jpg)
 
-README 共 **13 種語言**；App 介面維持 **English／繁中／簡中**。
+README 共 **13 種語言**；個人複盤介面支援 **English／繁中／簡中**，首版 **MDA 工作區標籤使用繁體中文**。
 
-**v0.3.1** 新增 AI 複盤，保留 Spot Explorer → Leak Finder → 翻前策略對照 → Trainer。策略包需自行提供；頻率對照不是 decision EV。[學習工作台](docs/study-workflow.md) · [主題](docs/theme-selection.md)。
+**v0.4.0** 新增群體研究，保留 AI 個人複盤及 Spot Explorer → Leak Finder → 翻前策略對照 → Trainer。策略包需自行提供；頻率對照不是 decision EV。[學習工作台](docs/study-workflow.md) · [主題](docs/theme-selection.md)。
 
 ## 功能
 
 | 功能 | 用途 |
 | --- | --- |
-| AI 教練與 agent 連接 | 透過 17 個本機 MCP 工具查閱統計與決策情境，建立附手牌依據的複盤、練習及學習計劃草稿，由您確認。 |
+| AI 教練與 agent 連接 | 透過 23 個本機 MCP 工具查閱統計與決策情境，建立附手牌依據的複盤、練習及學習計劃草稿，由您確認。 |
+| MDA 群體分析 | 匯入獨立 GG 一般桌資料集；按情境分析全桌合法機會、Wilson 區間及研究假設，點開匿名手牌驗證。 |
 | 匯入中心 | 匯入 TXT、ZIP 或資料夾；查看進度、暫停／續匯、去重及異常隔離。 |
 | 盈虧總覽 | 查看淨盈虧、bb/100、Session 與位置分類，點入原始手牌。 |
 | 13 項核心統計 | VPIP、PFR、RFI、3-bet、盲位防守及翻後／攤牌頻率；分子、機會分母可分別查閱。 |
 | 13 × 13 起手牌矩陣 | 查看實際樣本、net bb、bb/100、行動頻率，開啟對應手牌。 |
 | 手牌回放 | 逐步行動、跳街、自動播放及已知底牌。 |
 | 複盤工作台 | 保存筆記、標籤、已複盤狀態及常用篩選。 |
-| 本機資料管理 | SQLite 儲存、CSV／牌譜匯出、備份及還原。 |
+| 本機資料管理 | 個人 SQLite、獨立 MDA DuckDB；個人 CSV／牌譜匯出，各資料庫獨立備份還原。 |
 | 外觀主題 | 森林綠、午夜藍、暖白；選擇儲存於本機。 |
-| 三語介面 | 即時切換繁中、簡中及 English，離線可用。 |
+| 個人複盤三語介面 | 繁中、簡中及 English，離線可用；MDA 工作區目前使用繁體中文標籤。 |
 | 適用 All-in equity | 支援單挑、單底池、已知底牌、單 runout 的適用情況；不是 decision EV 或 GTO 評分。 |
 
 ![起手牌矩陣：合成資料](docs/screenshots/starting-hands-en.jpg)
@@ -37,6 +38,19 @@ README 共 **13 種語言**；App 介面維持 **English／繁中／簡中**。
 截圖採 **1920px 桌面寬度、完整頁面、暖白主題**；另提供 [1920 × 1080 完整視窗](docs/screenshots/overview-desktop-en.jpg)。
 
 截圖全部使用 **240 手合成資料**，不包含私人牌譜。重複樣本僅示範介面，不代表真實玩家頻率或策略建議。矩陣呈現已觀察手牌，並非建議範圍。
+
+## MDA＋AI 快速上手
+
+1. 開啟「**MDA 群體分析**」，建立資料集並指定來源、牌譜內文時區；匯入 GG 一般桌 USD NLH 6-max 的 TXT、ZIP 或資料夾。匯入頁可暫停／續匯及查看隔離紀錄。
+2. 篩選級別、位置對位、pot type、有效籌碼、牌面及面對下注尺寸。翻後研究預設 HU；每個百分比配合合法機會分母及匿名手牌閱讀。
+3. 內建 Coach：啟用此資料集的雲端分享及既有 provider 分享同意，選擇 provider／model。外部 agent：啟用此資料集的 MCP 權限及本機連接。兩種資料集權限均預設關閉。
+4. 要求適用情境、分子／分母、調整方向及尺寸、理由、例外與匿名案例；在資料集的 AI 頁審閱草稿，再回放證據手牌。
+
+Apple M3 Pro 的 **1,000 萬手合成資料驗收通過**：彙總 p95 **16.4 ms**、情境查詢 **1.20 秒**、程序峰值 RSS **1.39 GiB**。範圍為兩組指定核心查詢、暖 OS cache，不包含桌面 UI／IPC／provider 延遲。[來源、硬體、正確性與完整效能紀錄](docs/validation/mda-population-ai.md)。
+
+沒有基準時標示研究假設；攤牌樣本顯示覆蓋率與選擇偏差。純 bluff 門檻只適用於列明假設的 HU river 情境，不是 Solver 或 decision EV。HHDealer PT／HM／H2N4、真實 provider 及外部模型客戶端仍待真實樣本或實測。
+
+![MDA 群體統計：10,000 手合成資料、繁體中文工作區](docs/validation/mda-stats.jpg)
 
 ## AI 功能與快速上手
 
@@ -125,9 +139,9 @@ npm run desktop:build -- --target x86_64-pc-windows-msvc --bundles nsis
 
 ## 範圍與發布狀態
 
-本工具供個人離線賽後複盤；不連接遊戲客戶端，沒有即時 HUD、RTA、群體資料挖掘、雲端同步或 GTO 最佳行動評分。與 Natural8／GGPoker 無隸屬關係。
+本工具供個人離線賽後複盤與 MDA 群體研究。不連接遊戲客戶端，沒有即時 HUD、RTA、雲端同步或 GTO 最佳行動評分。與 Natural8／GGPoker 無隸屬關係。GG SEP 第 7／19 條限制收集他人牌譜與收集／分享 MDA，可能涉及停權、封禁或資金沒收；詳見 [MDA 功能限制及驗證](docs/mda-population.md)。
 
-v0.3.1 包含 AI／MCP 整合及離線學習流程；不包含私人牌譜、本機資料庫或策略包。驗收限制見[發布說明](docs/release-v0.3.1.md)。
+v0.4.0 包含 MDA、AI／MCP 整合及離線學習流程；不包含私人牌譜、本機資料庫或策略包。驗收限制見[發布說明](docs/release-v0.4.0.md)。
 
 - [使用說明](docs/user-guide.md)
 - [架構與統計定義](docs/architecture.md)

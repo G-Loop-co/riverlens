@@ -59,17 +59,19 @@ export function Replayer({
   saved,
   initialStep = 0,
   askAi,
+  population,
 }: {
   id: number;
   close: () => void;
   saved: () => void;
   initialStep?: number;
   askAi?: (seq: number) => void;
+  population?: {dataset_id: string;version: string;hand_key: string};
 }) {
   const { t } = useTranslation();
-  const result = useRpc<HandDetail>({ op: "hand", id });
+  const result = useRpc<HandDetail>(population ? {op:"mda",request:{op:"hand",...population}} : { op: "hand", id });
   const h = result.data?.hand;
-  const trainingRefs = useStudy<DecisionRef[]>({ op: "hand_decisions", hand: id });
+  const trainingRefs = useStudy<DecisionRef[]>(population ? null : { op: "hand_decisions", hand: id });
   const training = useStudyMutation();
   const [trainingNotice, setTrainingNotice] = useState("");
   const [step, setStep] = useState(0),
@@ -175,7 +177,7 @@ export function Replayer({
       setSaving(false);
     }
   }
-  const heroIndex = h?.players.findIndex((p) => p.hero) || 0;
+  const heroIndex = Math.max(0, h?.players.findIndex((p) => p.hero) ?? 0);
   const last = h?.actions[step - 1];
   return (
     <Dialog label={t("Hand Replayer")} close={attemptClose} drawer>
@@ -186,7 +188,7 @@ export function Replayer({
             <h2>
               {h ? (
                 <>
-                  <span className="mono">{h.hand_class}</span>
+                  <span className="mono">{population ? "MDA · 無 Hero" : h.hand_class}</span>
                   <span className="position-badge">{h.position}</span>
                 </>
               ) : (
@@ -210,7 +212,7 @@ export function Replayer({
         </div>
         {result.error && <ErrorBanner>{result.error}</ErrorBanner>}
         {(training.error || trainingRefs.error) && <ErrorBanner>{training.error || trainingRefs.error}</ErrorBanner>}
-        <div className="study-row-actions">
+        {!population && <div className="study-row-actions">
           <button className="button subtle" disabled={training.busy || !trainingRefs.data?.some(r => r.seq === step)}
             onClick={() => void training.run(async () => {
               const ref = trainingRefs.data?.find(r => r.seq === step);
@@ -224,7 +226,7 @@ export function Replayer({
             {t("study.nextHeroDecision")}
           </button>
           <span role="status">{trainingNotice}</span>
-        </div>
+        </div>}
         {result.error ? null : !h || !frame ? (
           <Skeleton rows={8} />
         ) : (
@@ -242,7 +244,7 @@ export function Replayer({
                 ["replay", t("逐步回放")],
                 ["ledger", t("帳本與 EV")],
                 ["raw", t("原始牌譜")],
-              ].map(([k, l]) => (
+              ].filter(([k]) => !population || k === "replay").map(([k, l]) => (
                 <button
                   key={k}
                   className={tab === k ? "active" : ""}
@@ -575,7 +577,7 @@ export function Replayer({
                   </p>
                 </div>
               )}
-              <section className="hand-notes">
+              {!population && <section className="hand-notes">
                 <div className="section-title">
                   <h3>{t("你的複盤筆記")}</h3>
                   <span className={`note-status ${clean ? "" : "dirty"}`}>
@@ -630,7 +632,7 @@ export function Replayer({
                   <FloppyDisk size={17} />
                   {saving ? t("儲存中…") : t("儲存筆記與標籤")}
                 </button>
-              </section>
+              </section>}
             </div>
             <div className="replayer-footer">
               <span className="mono">#{h.id}</span>

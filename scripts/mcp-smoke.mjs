@@ -62,13 +62,19 @@ try {
       "\n",
   );
   const { tools } = await request("tools/list", {});
-  assert.equal(tools.length, 18);
-  assert.equal(new Set(tools.map((tool) => tool.name)).size, 18);
+  assert.equal(tools.length, 23);
+  assert.equal(new Set(tools.map((tool) => tool.name)).size, 23);
   for (const tool of tools)
     assert.equal(tool.inputSchema.additionalProperties, false);
   assert.ok(tools.some((tool) => tool.name === "get_decision_context"));
   assert.ok(tools.some((tool) => tool.name === "organize_learning"));
   assert.ok(tools.some((tool) => tool.name === "create_practice_draft"));
+  for (const name of ["get_mda_catalog", "query_mda_stats", "find_mda_candidates", "find_mda_spots", "get_mda_hand"]) {
+    const tool = tools.find((tool) => tool.name === name);
+    assert.ok(tool);
+    assert.ok(tool.inputSchema.required.includes("dataset_id"));
+    if (name !== "get_mda_catalog") assert.ok(tool.inputSchema.required.includes("version"));
+  }
   assert.ok(!tools.some((tool) => /restore|delete|accept|sql/.test(tool.name)));
   const denied = await request("tools/call", {
     name: "get_data_catalog",

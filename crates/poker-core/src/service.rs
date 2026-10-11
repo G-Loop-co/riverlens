@@ -18,6 +18,12 @@ use walkdir::WalkDir;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case")]
 pub enum Request {
+    Mda {
+        request: crate::mda::Request,
+    },
+    AgentLearning {
+        dataset_id: Option<String>,
+    },
     Study {
         request: Box<study::StudyRequest>,
     },
@@ -128,6 +134,7 @@ pub enum Request {
 }
 
 pub struct Service {
+    pub mda: Arc<crate::mda::Manager>,
     pub path: PathBuf,
     writer: Mutex<()>,
     active: AtomicBool,
@@ -153,6 +160,7 @@ impl Service {
             }
         }
         let service = Arc::new(Self {
+            mda: crate::mda::Manager::new(path.parent().unwrap_or(Path::new(".")).join("mda"))?,
             path,
             writer: Mutex::new(()),
             active: AtomicBool::new(false),
@@ -172,6 +180,11 @@ impl Service {
     pub fn handle(self: &Arc<Self>, request: Request) -> Result<Value> {
         let mut c = store::open(&self.path)?;
         match request {
+            Request::Mda { request } => self.mda.handle(request),
+            Request::AgentLearning { dataset_id } => match dataset_id {
+                Some(id) => crate::agent::learning_scoped(&c, Some(&id)),
+                None => crate::agent::learning(&c),
+            },
             Request::Study { request } => {
                 let _guard = if request.writes() {
                     Some(self.writer.lock().unwrap())
@@ -194,7 +207,37 @@ impl Service {
                 share_notes,
             } => {
                 let _l = self.writer.lock().unwrap();
-                crate::agent::call(&mut c, &name, arguments, share_notes)
+                if crate::mda::tools::is_tool(&name) {
+                    let a = crate::mda::tools::validate(&name, &arguments)?;
+                    let i =
+                        crate::mda::storage::info(&self.mda.dataset(&a.dataset_id)?.connection()?)?;
+                    anyhow::ensure!(i.cloud_enabled || i.mcp_enabled, "MDA 資料集分享尚未啟用");
+                    let result = self.mda.query(&name, arguments.clone())?;
+                    crate::agent::record_evidence(
+                        &c,
+                        result["version"].as_str().unwrap(),
+                        &name,
+                        &arguments,
+                        &result["data"],
+                    )
+                } else if let Some(id) = arguments.get("dataset_id").and_then(Value::as_str) {
+                    anyhow::ensure!(
+                        [
+                            "create_report_draft",
+                            "get_learning_progress",
+                            "organize_learning",
+                            "search_learning"
+                        ]
+                        .contains(&name.as_str()),
+                        "tool not available in MDA scope"
+                    );
+                    let i = crate::mda::storage::info(&self.mda.dataset(id)?.connection()?)?;
+                    anyhow::ensure!(i.cloud_enabled || i.mcp_enabled, "MDA 資料集分享尚未啟用");
+                    let ver = self.mda.version(id)?;
+                    crate::agent::call_scoped(&mut c, &name, arguments, share_notes, Some(ver))
+                } else {
+                    crate::agent::call(&mut c, &name, arguments, share_notes)
+                }
             }
             Request::AgentEvidence { id } => {
                 let (version, tool, args, data): (String, String, String, String) = c
@@ -254,7 +297,22 @@ impl Service {
                 let _l = self.writer.lock().unwrap();
                 let tx = c.transaction()?;
                 anyhow::ensure!(id == draft.id, "draft id mismatch");
-                crate::agent::validate_draft(&tx, &draft, &crate::agent::version(&tx)?, false)?;
+                let evidence_version: String = tx.query_row(
+                    "SELECT version FROM ai_evidence WHERE id=?1",
+                    [draft.evidence.first().context("evidence required")?],
+                    |r| r.get(0),
+                )?;
+                let ver = if evidence_version.starts_with("mda:") {
+                    self.mda.version(
+                        evidence_version
+                            .split(':')
+                            .nth(1)
+                            .context("invalid MDA evidence")?,
+                    )?
+                } else {
+                    crate::agent::version(&tx)?
+                };
+                crate::agent::validate_draft(&tx, &draft, &ver, false)?;
                 let n=tx.execute("UPDATE ai_drafts SET title=?1,body=?2,status=?3,revision=revision+1 WHERE id=?4 AND revision=?5",params![draft.title,serde_json::to_string(&draft)?,if accept {"accepted"}else{"draft"},id,revision])?;
                 anyhow::ensure!(n == 1, "draft changed: refresh before saving");
                 tx.commit()?;

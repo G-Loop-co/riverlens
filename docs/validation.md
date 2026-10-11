@@ -1,5 +1,7 @@
 # v0.2.0 integration validation — 2026-09-10
 
+Current unreleased MDA implementation: [separate correctness, performance and packaging record](validation/mda-population-ai.md). The historical results below describe their original sources only.
+
 - Frontend: 22 tests passed; production build passed.
 - Rust: 46 tests passed (1 unit, 18 boundaries, 15 core, 12 study).
 - Rustfmt and Clippy (`-D warnings`) passed.

@@ -84,6 +84,7 @@ pub fn backfill(c: &Connection) -> Result<()> {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(default, deny_unknown_fields)]
 pub struct Args {
+    pub dataset_id: Option<String>,
     pub filter: Filter,
     pub group: Option<String>,
     pub stat: Option<String>,
@@ -245,9 +246,35 @@ pub fn tools() -> Value {
         ("create_practice_draft","Save practice references, not answers. Questions are served by engine with future information hidden.",json!({"draft":draft,"version":{"type":"string"}}),json!(["draft","version"])),
         ("create_study_plan_draft","Save an editable evidence-linked study plan for user acceptance.",json!({"draft":draft,"version":{"type":"string"}}),json!(["draft","version"])),
     ];
-    json!(defs.into_iter().map(|(name,description,p,r)|json!({"name":name,"description":description,"inputSchema":schema(p,r)})).collect::<Vec<_>>())
+    let mut result: Vec<Value> = defs
+        .into_iter()
+        .map(|(name, description, mut p, r)| {
+            if [
+                "create_report_draft",
+                "get_learning_progress",
+                "organize_learning",
+                "search_learning",
+            ]
+            .contains(&name)
+            {
+                p["dataset_id"] = json!({"type":"string"});
+            }
+            json!({"name":name,"description":description,"inputSchema":schema(p,r)})
+        })
+        .collect();
+    result.extend(crate::mda::tools::definitions());
+    json!(result)
 }
 pub fn validate(name: &str, v: &Value) -> Result<Args> {
+    if crate::mda::tools::is_tool(name) {
+        let a = crate::mda::tools::validate(name, v)?;
+        return Ok(Args {
+            dataset_id: Some(a.dataset_id),
+            version: a.version,
+            limit: a.limit,
+            ..Args::default()
+        });
+    }
     let ts = tools();
     let tool = ts
         .as_array()
@@ -288,9 +315,18 @@ pub fn validate(name: &str, v: &Value) -> Result<Args> {
     Ok(a)
 }
 pub fn call(c: &mut Connection, name: &str, input: Value, share_notes: bool) -> Result<Value> {
+    call_scoped(c, name, input, share_notes, None)
+}
+pub fn call_scoped(
+    c: &mut Connection,
+    name: &str,
+    input: Value,
+    share_notes: bool,
+    scope_version: Option<String>,
+) -> Result<Value> {
     let a = validate(name, &input)?;
     let tx = c.transaction()?;
-    let ver = version(&tx)?;
+    let ver = scope_version.unwrap_or(version(&tx)?);
     if let Some(expected) = &a.version {
         ensure!(
             expected == &ver,
@@ -384,8 +420,18 @@ pub fn call(c: &mut Connection, name: &str, input: Value, share_notes: bool) -> 
             a.seq.unwrap(),
             a.pack.as_deref().unwrap(),
         )?,
-        "get_learning_progress" => learning(&tx)?,
+        "get_learning_progress" => learning_scoped(&tx, a.dataset_id.as_deref())?,
         "organize_learning" => {
+            let body: String = tx.query_row(
+                "SELECT body FROM ai_drafts WHERE id=?1",
+                [a.report_id.as_ref().context("report required")?],
+                |r| r.get(0),
+            )?;
+            let d: Draft = serde_json::from_str(&body)?;
+            ensure!(
+                draft_dataset(&tx, &d)?.as_deref() == a.dataset_id.as_deref(),
+                "report scope not authorized"
+            );
             organize_saved(
                 &tx,
                 &a.report_id.context("report_id required")?,
@@ -398,10 +444,15 @@ pub fn call(c: &mut Connection, name: &str, input: Value, share_notes: bool) -> 
             let q = a.query.as_deref().unwrap();
             ensure!(q.len() <= 500, "query too long");
             tx.execute("DELETE FROM ai_search", [])?;
-            tx.execute(
-                "INSERT INTO ai_search SELECT 'draft',id,title || ' ' || body FROM ai_drafts",
-                [],
-            )?;
+            for d in learning_scoped(&tx, a.dataset_id.as_deref())?["drafts"]
+                .as_array()
+                .unwrap()
+            {
+                tx.execute(
+                    "INSERT INTO ai_search VALUES('draft',?1,?2)",
+                    params![d["id"].as_str(), format!("{} {}", d["title"], d["body"])],
+                )?;
+            }
             if share_notes {
                 tx.execute(
                     "INSERT INTO ai_search SELECT 'note',CAST(hand AS TEXT),note FROM annotations",
@@ -437,15 +488,25 @@ pub fn call(c: &mut Connection, name: &str, input: Value, share_notes: bool) -> 
         }
         _ => bail!("unsupported tool"),
     };
+    let result = record_evidence(&tx, &ver, name, &input, &data)?;
+    tx.commit()?;
+    Ok(result)
+}
+pub fn record_evidence(
+    c: &Connection,
+    ver: &str,
+    name: &str,
+    input: &Value,
+    data: &Value,
+) -> Result<Value> {
     let id = format!(
         "e-{:x}",
         Sha256::digest(serde_json::to_vec(&json!([ver, name, input, data]))?)
     );
-    tx.execute(
+    c.execute(
         "INSERT OR IGNORE INTO ai_evidence VALUES(?1,?2,?3,?4,?5)",
         params![id, ver, name, input.to_string(), data.to_string()],
     )?;
-    tx.commit()?;
     Ok(json!({"evidence_id":id,"version":ver,"tool":name,"args":input,"data":data}))
 }
 pub fn wilson(k: f64, n: f64) -> Option<(f64, f64)> {
@@ -553,6 +614,42 @@ pub fn validate_draft(c: &Connection, d: &Draft, ver: &str, practice: bool) -> R
             .context("unknown evidence")?;
         ensure!(v == ver, "stale evidence");
     }
+    if ver.starts_with("mda:") {
+        ensure!(
+            [
+                "適用情境",
+                "數據與分母",
+                "調整方向",
+                "理由",
+                "例外",
+                "匿名手牌證據"
+            ]
+            .iter()
+            .all(|s| d.text.contains(s)),
+            "MDA 報告須包含六個固定段落"
+        );
+        let mut stats = false;
+        let mut hand = false;
+        let mut empty = false;
+        for id in &d.evidence {
+            let (tool, data): (String, String) =
+                c.query_row("SELECT tool,data FROM ai_evidence WHERE id=?1", [id], |r| {
+                    Ok((r.get(0)?, r.get(1)?))
+                })?;
+            stats |= ["query_mda_stats", "find_mda_candidates"].contains(&tool.as_str());
+            hand |= tool == "get_mda_hand";
+            empty |= tool == "get_mda_catalog"
+                && serde_json::from_str::<Value>(&data)?["hands"].as_u64() == Some(0);
+        }
+        ensure!(
+            stats && (hand || empty),
+            "MDA 報告需要群體統計及匿名手牌證據"
+        );
+        ensure!(
+            d.items.is_empty(),
+            "MDA population reports do not use personal Hero practice references"
+        );
+    }
     ensure!(
         !practice || !d.items.is_empty(),
         "practice needs decision references"
@@ -591,6 +688,39 @@ pub fn learning(c: &Connection) -> Result<Value> {
     let attempts=c.prepare("SELECT draft,item,answer,created_at FROM ai_attempts ORDER BY id DESC LIMIT 200")?
         .query_map([],|r|Ok(json!({"draft":r.get::<_,String>(0)?,"item":r.get::<_,i64>(1)?,"answer":r.get::<_,String>(2)?,"created_at":r.get::<_,i64>(3)?})))?.collect::<rusqlite::Result<Vec<_>>>()?;
     Ok(json!({"drafts":drafts,"attempts":attempts,"draft_limit":100,"attempt_limit":200}))
+}
+pub fn draft_dataset(c: &Connection, d: &Draft) -> Result<Option<String>> {
+    let Some(id) = d.evidence.first() else {
+        return Ok(None);
+    };
+    let v: String = c.query_row("SELECT version FROM ai_evidence WHERE id=?1", [id], |r| {
+        r.get(0)
+    })?;
+    Ok(if v.starts_with("mda:") {
+        v.split(':').nth(1).map(str::to_string)
+    } else {
+        None
+    })
+}
+pub fn learning_scoped(c: &Connection, dataset: Option<&str>) -> Result<Value> {
+    let mut result = learning(c)?;
+    let mut allowed = std::collections::HashSet::new();
+    if let Some(rows) = result["drafts"].as_array_mut() {
+        rows.retain(|r| {
+            serde_json::from_value::<Draft>(r["body"].clone())
+                .ok()
+                .and_then(|d| draft_dataset(c, &d).ok())
+                .is_some_and(|scope| scope.as_deref() == dataset)
+                && {
+                    allowed.insert(r["id"].as_str().unwrap_or("").to_string());
+                    true
+                }
+        });
+    }
+    if let Some(rows) = result["attempts"].as_array_mut() {
+        rows.retain(|r| allowed.contains(r["draft"].as_str().unwrap_or("")));
+    }
+    Ok(result)
 }
 pub fn strategy_list(c: &Connection) -> Result<Value> {
     let rows = c

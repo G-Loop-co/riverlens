@@ -7,6 +7,8 @@ RiverLens 使用鎖檔指定版本；完整 transitive dependencies 以 Cargo.lo
 | Tauri 2、tauri plugins | MIT OR Apache-2.0 | Desktop shell／dialog |
 | rusqlite | MIT | SQLite binding |
 | SQLite | Public domain | 嵌入式資料庫 |
+| DuckDB、duckdb-rs | MIT | 獨立 MDA 儲存、Appender 及情境分析 |
+| Apache Arrow Rust | Apache-2.0 | duckdb-rs 查詢資料型別與轉換 |
 | rs_poker | Apache-2.0 | Card／SevenCardAccum 排名 |
 | serde、serde_json | MIT OR Apache-2.0 | Typed serialization |
 | chrono、chrono-tz | MIT OR Apache-2.0 | 時區與時間 |

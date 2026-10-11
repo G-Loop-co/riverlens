@@ -29,6 +29,7 @@ import type {
 import { number, CUES, ACTIONS, STAT_LABELS } from "./format";
 import { ErrorBanner, Field } from "./components/UI";
 import { AiCoach } from "./components/AiCoach";
+import { MdaWorkspace } from "./components/MdaWorkspace";
 import { Overview } from "./components/Overview";
 import { HandsView } from "./components/HandsView";
 import { RangeView } from "./components/RangeView";
@@ -43,9 +44,10 @@ import { Dialog } from "./components/Dialog";
 import { normalizeFilter, readFilter, writePreference } from "./preferences";
 
 type Page =
-  "coach" | "overview" | "hands" | "ranges" | "review" | "study" | "imports" | "settings";
+  "coach" | "mda" | "overview" | "hands" | "ranges" | "review" | "study" | "imports" | "settings";
 const nav = [
   ["coach", "AI 教練", Cards],
+  ["mda", "MDA 群體分析", Database],
   ["overview", "牌局總覽", ChartLineUp],
   ["hands", "手牌資料庫", Cards],
   ["ranges", "起手牌矩陣", GridFour],
@@ -53,6 +55,7 @@ const nav = [
   ["study", "study.workspace", GraduationCap],
 ] as const;
 const titles: Record<Page, [string, string]> = {
+  mda: ["MDA 群體分析", "匯入牌池、查群體傾向，再用手牌驗證調整方向。"],
   study: ["study.workspace", "study.subtitle"],
   coach: ["AI 教練", "用資料理解局面，把建議變成練習。"],
   overview: ["牌局總覽", "從結果到決策，掌握每一手牌。"],
@@ -285,7 +288,7 @@ export default function App() {
           </div>
           <div className="version">
             <span>{t("RiverLens")}</span>
-            <span>v0.3.2</span>
+            <span>v0.4.0</span>
           </div>
         </div>
       </aside>
@@ -301,9 +304,9 @@ export default function App() {
             </strong>
           </div>
           <div className="topbar-actions">
-            <button className="button" onClick={() => navigate("coach")}>
+            {page!=="mda" && <button className="button" onClick={() => navigate("coach")}>
               {t("問 AI")}
-            </button>
+            </button>}
             <LanguageSelect />
             <span className="connection">
               <i className={`status-dot ${health.error ? "offline" : ""}`} />
@@ -338,13 +341,13 @@ export default function App() {
               <h1>{t(titles[page][0])}</h1>
               <p>{t(titles[page][1])}</p>
             </div>
-            <button
+            {page!=="mda" && <button
               className="button primary"
               onClick={() => setImportOpen(true)}
             >
               <Plus size={17} weight="bold" />
               {t("匯入牌譜")}
-            </button>
+            </button>}
           </div>
           {(globalError || profiles.error) && (
             <ErrorBanner>
@@ -363,7 +366,7 @@ export default function App() {
               </button>
             </ErrorBanner>
           )}
-          {!["imports", "settings", "study"].includes(page) && (
+          {!["imports", "settings", "study", "mda"].includes(page) && (
             <>
               <div className="filterbar">
                 <div className="filter-select">
@@ -519,6 +522,7 @@ export default function App() {
               )}
             </>
           )}
+          {page === "mda" && <MdaWorkspace />}
           {page === "coach" && (
             <AiCoach
               filter={filter}

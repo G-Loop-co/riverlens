@@ -6,7 +6,7 @@
 
 RiverLens は、Natural8／GGPoker で自分がプレイした完了済みキャッシュゲームのハンド履歴を分析するデスクトップアプリです。React／TypeScript の画面と Rust の解析・統計処理を組み合わせ、SQLite にローカル保存します。
 
-> **[v0.2.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.2.0)** — Paper（白）が既定のテーマです。 [Downloads & validation](docs/release-v0.2.0.md).
+> **[v0.4.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.4.0)** — MDA 群体分析＋AI。GG Regular USD NLH 6-max、独立 DuckDB、匿名ハンドの検証に対応。データセット共有は既定でオフ。MDA 画面は現在繁体字中国語です。 [Downloads & validation](docs/release-v0.4.0.md) · [MDA scope, GG SEP restrictions and validation](docs/mda-population.md). macOS: ad-hoc signed, not notarized.
 
 ## 機能
 
@@ -71,7 +71,7 @@ npm run desktop:build -- --target x86_64-pc-windows-msvc --bundles nsis
 
 ## 対象範囲とライセンス
 
-個人のオフライン・セッション後レビュー専用です。ゲームクライアント接続、ライブ HUD、RTA、集団データマイニング、クラウド同期、GTO 最善アクション評価はありません。Natural8／GGPoker とは提携していません。公開されていても、プロジェクト全体の再利用ライセンスは未選定です。RiverLens 自体が MIT／Apache であるとはみなさないでください。第三者コンポーネントは各自のライセンスに従います。
+オフライン・セッション後レビューと MDA 群体分析に対応します。ゲームクライアント接続、ライブ HUD、RTA、クラウド同期、GTO 最善アクション評価はありません。Natural8／GGPoker とは提携していません。公開されていても、プロジェクト全体の再利用ライセンスは未選定です。RiverLens 自体が MIT／Apache であるとはみなさないでください。第三者コンポーネントは各自のライセンスに従います。
 
 ## 資料
 

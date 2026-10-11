@@ -1,5 +1,6 @@
 pub mod equity;
 pub mod fixtures;
+pub mod mda;
 pub mod model;
 pub mod money;
 pub mod parser;
