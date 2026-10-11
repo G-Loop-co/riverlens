@@ -264,19 +264,56 @@ fn streaming_zip_resume_backup_and_sharing_version() {
         .unwrap();
     assert!(manager.permitted(&id, true).is_ok());
     assert!(manager.permitted(&id, false).is_err());
-    let backup = dir.path().join("backup.duckdb");
-    manager
-        .handle(Request::Backup {
-            dataset_id: id.clone(),
-            path: backup.to_string_lossy().into_owned(),
-        })
-        .unwrap();
+    let mut conflict = row(21);
+    conflict.hand.raw.push_str("\nconflict");
+    storage::commit_batch(&mut c, vec![conflict], vec![], &mut job, 22, "conflict").unwrap();
+    let backup = dir.path().join("backup's.duckdb");
+    for _ in 0..2 {
+        manager
+            .handle(Request::Backup {
+                dataset_id: id.clone(),
+                path: backup.to_string_lossy().into_owned(),
+            })
+            .unwrap();
+        assert!(!storage::backup_path(&ds.path).exists());
+    }
+    let forbidden = dir.path().join("unapproved.csv");
+    assert!(c
+        .execute_batch(&format!(
+            "COPY (SELECT 1) TO '{}';",
+            forbidden.to_string_lossy().replace('\'', "''")
+        ))
+        .is_err());
+    assert!(!forbidden.exists());
     let restored = manager
         .handle(Request::Restore {
             path: backup.to_string_lossy().into_owned(),
         })
         .unwrap();
     assert_eq!(restored["hands"], 21);
+    assert_eq!(restored["quarantined"], 1);
     assert_eq!(restored["dataset"]["cloud_enabled"], false);
     assert_ne!(restored["version"], manager.version(&id).unwrap());
+    let restored_id = restored["dataset"]["id"].as_str().unwrap();
+    let restored_ds = manager.dataset(restored_id).unwrap();
+    let mut restored_c = restored_ds.connection().unwrap();
+    // Sequences and retained raw conflicts are included, not only hand rows.
+    let before: i64 = restored_c
+        .query_row("SELECT max(id) FROM quarantine", [], |r| r.get(0))
+        .unwrap();
+    let mut conflict = row(21);
+    conflict.hand.raw.push_str("\nanother conflict");
+    storage::commit_batch(
+        &mut restored_c,
+        vec![conflict],
+        vec![],
+        &mut job,
+        23,
+        "restored conflict",
+    )
+    .unwrap();
+    let after: i64 = restored_c
+        .query_row("SELECT max(id) FROM quarantine", [], |r| r.get(0))
+        .unwrap();
+    assert!(after > before);
 }

@@ -21,7 +21,7 @@ MDA tests 的部分底牌缺失、多人首人 fold、短 all-in、檔案中段�
 
 ## 1,000 萬手效能
 
-狀態：RUNNING。完整重跑使用 ZIP64 合成 GG 牌譜及全新資料集；不把途中進度或 10,000 手小測試當作完整驗收。測量二進位來源為 `d5bbd2b`，JSON 保存完整核心來源 hash。後續修正本機草稿控制、UI 及回放 DTO 的 flop 人數；parser／facts／storage／統計查詢／匯入路徑和 DuckDB 配置均沒有改動，這些修正以功能測試另驗，不把本次量測稱為完整桌面程序測量。
+狀態：RUNNING。完整重跑使用 ZIP64 合成 GG 牌譜及全新資料集；不把途中進度或 10,000 手小測試當作完整驗收。測量二進位來源為 `d5bbd2b`，JSON 保存完整核心來源 hash。後續修正本機草稿控制、UI、回放 DTO 的 flop 人數及跨平台備份（私有 staging 白名單／資料庫複製）；parser／facts／Appender／統計 SQL／匯入路徑及 memory_limit／threads 均沒有改動。這些修正以功能測試另驗，本次不是完整桌面程序或 1,000 萬手備份時間測量。
 
 硬體：Apple M3 Pro、11 logical threads、18 GiB RAM、macOS aarch64。DuckDB crate `1.10506.0`；buffer memory limit `2GiB`，threads `4`。量測 parser、ZIP streaming、Appender、去重、彙總及 checkpoint，全程序 `getrusage` 峰值 RSS。每類情境各 21 次查詢，報 p50／p95／max；暖 OS cache，排除 UI／IPC 與真實供應商／AI 延遲。
 
@@ -47,3 +47,7 @@ cargo run --release -p poker-core --bin mda-bench -- 10000000 /tmp/riverlens-mda
 | Solver／node-lock | 不在首版；研究假設及 pure-bluff 算式不當作 GTO／decision EV |
 
 GG SEP 第 7／19 條限制他人牌譜收集與 MDA 分享；本機測試及功能可用不代表平台批准。功能文件保留停權、封禁與資金沒收限制。
+
+Windows 初次 CI `38119201078` 的備份整合測試失敗：開啟中的 DuckDB 有 write lock，直接 OS copy 回報 error 32。改用官方資料庫複製、detach 後原子保存，保留該次 FAIL；續傳／備份測試增加覆寫備份、特殊字元路徑、隔離原文與 sequence 還原斷言。三平台以修正後 SHA 重驗。
+
+本機 Mac 在原生介面覆核前鎖定；已完成瀏覽器對隔離 Rust core 的操作及原生 package／protocol smoke，原生視窗操作仍為 NOT VERIFIED。

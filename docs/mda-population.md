@@ -42,7 +42,7 @@ RFI、盲位面對單次 open 的 fold／call／raise、3-bet、面對 3-bet、�
 
 `get_mda_catalog` 讀指定資料集目前版本及指標；其餘 `query_mda_stats`、`find_mda_candidates`、`find_mda_spots`、`get_mda_hand` 均要求 `dataset_id`＋`version`。頁面最多 100；統計 cursor 上限 100,000 offset，手牌以 opaque hand key／seq 分頁。不接受任意 SQL、玩家姓名搜尋或原文外傳。匿名完整回放是事後證據；指定 seq 的投影清除未來牌面、底牌、結果及當刻尚未形成的 pot type。
 
-獨立備份需先停匯入，checkpoint 後原子複製檔案。還原先驗證資料庫再建立新 ID／epoch，雲端及 MCP 權限關閉；不覆蓋個人庫。各資料集 DuckDB instance 的 buffer limit 是 2 GiB，並非多資料集同時運作的全程序硬上限；1,000 萬手驗收量測單資料集全程序 RSS。
+獨立備份需先停匯入，checkpoint 後以 DuckDB [COPY FROM DATABASE](https://duckdb.org/docs/current/sql/statements/copy#copy-from-database--to) 複製完整 schema／sequence／資料到私有 staging 資料庫，detach 釋放檔案鎖，再原子保存。外部 SQL 檔案存取維持關閉，只預先允許該資料集固定的備份 staging 檔；避免 Windows 開啟中的資料庫鎖使 OS 檔案複製失敗。還原先驗證資料庫再建立新 ID／epoch，雲端及 MCP 權限關閉；不覆蓋個人庫。各資料集 DuckDB instance 的 buffer limit 是 2 GiB，並非多資料集同時運作的全程序硬上限；1,000 萬手驗收量測單資料集全程序 RSS。
 
 AI 報告必須包含：適用情境、分子／分母、調整方向及尺寸、理由、例外、匿名手牌證據。版本變更停止分析。雲端與 MCP 分別按資料集啟用；只分享彙總及有界匿名案例。來源原文不是 AI 指令。
 

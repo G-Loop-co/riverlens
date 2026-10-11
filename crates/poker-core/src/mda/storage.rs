@@ -9,7 +9,7 @@ use sha2::{Digest, Sha256};
 use std::{
     collections::{HashMap, HashSet},
     io::{Read, Write},
-    path::Path,
+    path::{Path, PathBuf},
 };
 
 pub const SCHEMA: u32 = 1;
@@ -101,8 +101,14 @@ pub fn unpack(bytes: &[u8]) -> Result<Vec<u8>> {
 }
 pub fn open(path: &Path) -> Result<Connection> {
     let c = Connection::open(path)?;
-    c.execute_batch("SET memory_limit='2GiB';SET threads=4;SET preserve_insertion_order=false;SET enable_external_access=false;")?;
+    // Only this private staging file can be attached for a native backup.
+    // Windows disallows an OS read handle while DuckDB holds its write lock.
+    let backup = backup_path(path).to_string_lossy().replace('\'', "''");
+    c.execute_batch(&format!("SET memory_limit='2GiB';SET threads=4;SET preserve_insertion_order=false;SET allowed_paths=['{backup}','{backup}.wal','{backup}.wal.checkpoint','{backup}.wal.recovery'];SET enable_external_access=false;"))?;
     Ok(c)
+}
+pub fn backup_path(path: &Path) -> PathBuf {
+    path.with_extension("backup-stage")
 }
 pub fn init(c: &Connection, info: &DatasetInfo) -> Result<()> {
     c.execute_batch("CREATE TABLE IF NOT EXISTS meta(key VARCHAR PRIMARY KEY,value VARCHAR NOT NULL);

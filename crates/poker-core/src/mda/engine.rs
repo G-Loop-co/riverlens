@@ -312,7 +312,7 @@ impl Manager {
                 c.execute_batch("CHECKPOINT;")?;
                 let dest = Path::new(&path);
                 ensure!(dest != d.path, "backup cannot replace current dataset");
-                atomic_copy(&d.path, dest)?;
+                backup_copy(&c, &d.path, dest)?;
                 Ok(json!({"saved":true,"version":storage::version(&c)?}))
             }
             Request::Restore { path } => {
@@ -397,6 +397,32 @@ impl Manager {
             d.stop.store(true, Ordering::SeqCst);
         }
     }
+}
+fn backup_copy(c: &Connection, source: &Path, dest: &Path) -> Result<()> {
+    let staging = storage::backup_path(source);
+    let files = ["", ".wal", ".wal.checkpoint", ".wal.recovery"]
+        .map(|suffix| PathBuf::from(format!("{}{suffix}", staging.to_string_lossy())));
+    for path in &files {
+        if path.exists() {
+            fs::remove_file(path).context("clean previous backup staging")?;
+        }
+    }
+    let catalog: String = c.query_row("SELECT current_database()", [], |r| r.get(0))?;
+    let catalog = catalog.replace('"', "\"\"");
+    let path = staging.to_string_lossy().replace('\'', "''");
+    c.execute_batch(&format!("ATTACH '{path}' AS mda_backup;"))?;
+    let result = c.execute_batch(&format!(
+        "COPY FROM DATABASE \"{catalog}\" TO mda_backup;CHECKPOINT mda_backup;"
+    ));
+    let detached = c.execute_batch("DETACH mda_backup;");
+    let result = result
+        .context("copy MDA backup snapshot")
+        .and_then(|_| detached.context("close MDA backup"))
+        .and_then(|_| atomic_copy(&staging, dest));
+    for path in &files {
+        let _ = fs::remove_file(path);
+    }
+    result
 }
 fn atomic_copy(source: &Path, dest: &Path) -> Result<()> {
     let parent = dest.parent().context("invalid backup destination")?;
