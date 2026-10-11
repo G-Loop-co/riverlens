@@ -1,0 +1,68 @@
+{
+  "acceptance": {
+    "aggregate_p95_le_2s": true,
+    "contextual_p95_le_5s": true,
+    "peak_rss_le_4gib": true,
+    "ten_million": true
+  },
+  "aggregate": {
+    "max_ms": 24.9075,
+    "p50_ms": 10.807083,
+    "p95_ms": 16.439542000000003,
+    "runs": 21
+  },
+  "contextual": {
+    "max_ms": 1281.215875,
+    "p50_ms": 1069.324375,
+    "p95_ms": 1198.459083,
+    "runs": 21
+  },
+  "dataset_bytes": 20694708224,
+  "duckdb": {
+    "crate": "1.10506.0",
+    "memory_limit": "2GiB",
+    "threads": 4
+  },
+  "engine_source_sha256": "50ffa14a1e2348bcfb278253f30a8eb30756beb4e1665546efb4b8b50e1f71c1",
+  "fixture_version": "gg-population/1",
+  "generation_seconds": 0.000460833,
+  "hands": 10000000,
+  "hands_per_second": 2575.2527351936683,
+  "hardware": {
+    "arch": "aarch64",
+    "hw.memsize": "19327352832",
+    "logical_threads": 11,
+    "machdep.cpu.brand_string": "Apple M3 Pro",
+    "os": "macos"
+  },
+  "import_seconds": 3883.114019583,
+  "input": "ZIP / GG native / six seats / no Hero / source UTC",
+  "input_zip_bytes": 835933892,
+  "job": {
+    "committed_hands": 0,
+    "conflicts": 0,
+    "duplicates": 0,
+    "elapsed_ms": 3883112,
+    "id": "benchmark",
+    "inserted": 10000000,
+    "message": null,
+    "quarantined": 0,
+    "scanned": 10000000,
+    "source_index": 1,
+    "sources": [
+      {
+        "crc": 1725321286,
+        "member": "population.txt",
+        "modified": 1791699786,
+        "path": "/private/tmp/riverlens-mda-bench-10m-3/synthetic-gg-regular.zip",
+        "size": 835933892
+      }
+    ],
+    "started_at": 0,
+    "state": "completed"
+  },
+  "limits": "21 in-process queries; warm OS cache; includes parser, ZIP streaming, DuckDB appender, dedup, rollups and checkpoint. Excludes UI/IPC and actual supplier/provider acceptance.",
+  "peak_process_rss_bytes": 1487405056,
+  "reused_synthetic_input": true,
+  "version": "mda:mda-18dd65e2be975ef8:73063665-e702-48e2-bd05-688e0b4396ff:4883"
+}
