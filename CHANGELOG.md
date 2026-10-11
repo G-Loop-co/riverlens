@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased — MDA population analysis
+## 0.4.0 — 2026-10-11 — MDA population analysis
 
 - Add independent local DuckDB datasets for GG Regular USD NLH 6-max, with streaming TXT/ZIP/folder imports, atomic checkpoints, resume, deduplication, conflict quarantine and independent backup/restore.
 - Count legal all-player decision opportunities using the shared exact-money GG parser. Unknown cards stay unknown; anonymous replay supports hands without a Hero.

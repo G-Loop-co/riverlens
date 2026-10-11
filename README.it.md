@@ -6,7 +6,7 @@
 
 RiverLens è un’app desktop per analizzare le tue mani di cash game concluse su Natural8 / GGPoker. L’interfaccia React / TypeScript usa un motore Rust per parsing e statistiche, con archiviazione SQLite locale.
 
-> **[v0.2.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.2.0)** — Paper (bianco) è il tema predefinito. [Downloads & validation](docs/release-v0.2.0.md).
+> **[v0.4.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.4.0)** — Analisi della popolazione MDA + IA: GG Regular USD NLH 6-max, dataset DuckDB indipendenti e prove con mani anonime. Condivisione disattivata per impostazione predefinita; interfaccia MDA attualmente in cinese tradizionale. [Downloads & validation](docs/release-v0.4.0.md) · [MDA scope, GG SEP restrictions and validation](docs/mda-population.md). macOS: ad-hoc signed, not notarized.
 
 ## Funzioni
 
@@ -71,7 +71,7 @@ I dati sono nella directory app-data Tauri (app.riverlens.desktop); le impostazi
 
 ## Ambito e licenza
 
-Per revisione personale offline dopo la sessione. Nessun collegamento al client, HUD live, RTA, analisi di dati di popolazione, sincronizzazione cloud o valutazione GTO della migliore azione. Nessuna affiliazione a Natural8 / GGPoker. Il repository è pubblico, ma non è stata scelta una licenza generale di riutilizzo. Non presumere MIT / Apache per RiverLens stesso. I componenti di terze parti mantengono le proprie licenze.
+Per revisione personale offline dopo la sessione. Nessun collegamento al client, HUD live, RTA, sincronizzazione cloud o valutazione GTO della migliore azione. Nessuna affiliazione a Natural8 / GGPoker. Il repository è pubblico, ma non è stata scelta una licenza generale di riutilizzo. Non presumere MIT / Apache per RiverLens stesso. I componenti di terze parti mantengono le proprie licenze.
 
 ## Documentazione
 

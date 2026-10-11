@@ -1,29 +1,27 @@
 # RiverLens
 
-New in v0.3.2: AI learning categories, tags and topic sections; saved evidence crash fix; verified macOS bundle signatures. Downloads are ad-hoc signed, not notarized. [Release details](docs/release-v0.3.2.md).
-
-Unreleased: independent **MDA population analysis** for GG Regular USD NLH 6-max, local DuckDB imports, anonymous replay and shared in-app Coach / MCP evidence tools. Dataset sharing is off by default. [Scope, statistical definitions and platform restrictions](docs/mda-population.md).
+New in **v0.4.0: MDA population analysis with AI evidence**. Import independent GG Regular USD NLH 6-max datasets into local DuckDB, filter population tendencies and verify Coach / MCP suggestions with anonymous hands. Dataset sharing is off by default. [Release details](docs/release-v0.4.0.md) · [Statistical definitions and platform restrictions](docs/mda-population.md).
 
 **Your hands. Your data. A local workspace for post-session poker review.**
 
 [English](README.md) · [繁體中文](README.zh-TW.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-BR.md) · [Italiano](README.it.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md) · [Türkçe](README.tr.md)
 
-RiverLens is a Tauri desktop application for reviewing your own completed Natural8 / GGPoker cash-game hand histories. React and TypeScript power the interface; a Rust core handles parsing, statistics and local SQLite storage.
+RiverLens is a Tauri desktop application for reviewing completed Natural8 / GGPoker cash-game hand histories and independent MDA population datasets. React and TypeScript power the interface; a Rust core handles parsing and statistics, with personal review in SQLite and MDA in DuckDB.
 
-> **[Download v0.3.1](https://github.com/G-Loop-co/riverlens/releases/tag/v0.3.1)** — AI coach, local MCP agent connection and offline study. Windows, Apple Silicon and Intel Mac packages. [Release notes](docs/release-v0.3.1.md).
+> **[Download v0.4.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.4.0)** — MDA + AI, local MCP and offline study. Windows, Apple Silicon and Intel Mac packages. macOS downloads are ad-hoc signed, not notarized. [Release notes](docs/release-v0.4.0.md).
 
 ![RiverLens overview in English — synthetic data](docs/screenshots/overview-en.jpg)
 
-README translations: **13 languages**. App interface: **English, Traditional Chinese and Simplified Chinese**.
+README translations: **13 languages**. Personal-review interface: **English, Traditional Chinese and Simplified Chinese**; the first MDA workspace uses **Traditional Chinese labels**.
 
-**v0.3.1** adds AI-assisted review alongside Spot Explorer → Leak Finder → Preflop reference → Trainer. User-supplied strategy packs are required for strategy comparisons; frequencies are not decision EV. [Study workflow](docs/study-workflow.md) · [Themes](docs/theme-selection.md).
+**v0.4.0** adds population research alongside AI-assisted personal review and Spot Explorer → Leak Finder → Preflop reference → Trainer. User-supplied strategy packs are required for strategy comparisons; frequencies are not decision EV. [Study workflow](docs/study-workflow.md) · [Themes](docs/theme-selection.md).
 
 ## Features
 
 | Feature | What you can do |
 | --- | --- |
 | AI coach and agent connection | Explore statistics and decision context through 23 local MCP tools; create evidence-linked review, practice and study-plan drafts for your approval. |
-| MDA population analysis (unreleased) | Import independent GG Regular datasets; filter legal all-player opportunities, inspect confidence intervals and research hypotheses, then verify anonymous hand evidence. |
+| MDA population analysis | Import independent GG Regular datasets; filter legal all-player opportunities, inspect confidence intervals and research hypotheses, then verify anonymous hand evidence. |
 | Import center | Import TXT, ZIP or folders; monitor progress, pause/resume, detect duplicates and inspect quarantined records. |
 | Results dashboard | Explore net results, bb/100, session and position breakdowns; drill into underlying hands. |
 | 13 core statistics | Review VPIP, PFR, RFI, 3-bet, blind defense and postflop/showdown frequencies with explicit opportunity denominators. |
@@ -32,7 +30,7 @@ README translations: **13 languages**. App interface: **English, Traditional Chi
 | Review workspace | Save notes, tags, reviewed status and reusable filters. |
 | Data ownership | Keep personal review in SQLite and MDA in independent DuckDB datasets; export personal CSV / hand histories and back up or restore each data store. |
 | Appearance themes | Choose Forest, Midnight or Paper (warm white); the selection persists locally. |
-| Three interface languages | Switch instantly between English, Traditional Chinese and Simplified Chinese, including offline use. |
+| Personal-review languages | Switch between English, Traditional Chinese and Simplified Chinese offline; MDA workspace labels currently use Traditional Chinese. |
 | Eligible all-in equity | Calculate supported heads-up, single-pot, known-hole-card, single-runout situations. This is not decision EV or a GTO score. |
 
 ![Observed starting hands — synthetic data](docs/screenshots/starting-hands-en.jpg)
@@ -40,6 +38,19 @@ README translations: **13 languages**. App interface: **English, Traditional Chi
 Screenshots capture the complete page at **1920px desktop width**, using the **Paper (warm white)** theme. A [1920 × 1080 overview](docs/screenshots/overview-desktop-en.jpg) is also available.
 
 Screenshots use **240 generated hands**, not private player data. The deliberately repetitive fixture is for demonstrating the interface, not realistic frequencies or strategy advice. The matrix describes observed hands, not a recommended range.
+
+## MDA + AI quick start
+
+1. Open **MDA 群體分析**, create a dataset and set its source and hand-history time zone. Import GG Regular USD NLH 6-max TXT, ZIP or a folder; use the import tab to pause/resume or inspect quarantined records.
+2. Select stakes, positions, pot type, effective stacks, board and facing-bet size. Postflop research defaults to heads-up spots. Read each rate with its legal-opportunity denominator and anonymous hand evidence.
+3. For the in-app Coach, enable this dataset's cloud sharing and the existing provider consent, then select a provider/model. For an external agent, enable this dataset's MCP access and the local connection. Both dataset permissions start off.
+4. Ask for context, counts, adjustment direction and sizing, reasons, exceptions and anonymous examples. Review the evidence-linked draft in the dataset's AI tab and replay its hands.
+
+The 10-million-hand synthetic benchmark passed on Apple M3 Pro: aggregate p95 **16.4 ms**, contextual p95 **1.20 s**, peak process RSS **1.39 GiB**. These are two documented core queries with warm OS cache, excluding desktop UI, IPC and provider latency. [Complete source, hardware, correctness and performance evidence](docs/validation/mda-population-ai.md).
+
+Missing baselines are research hypotheses. Shown-card samples expose coverage and selection bias. Pure-bluff break-even arithmetic applies only to its stated heads-up river assumptions; it is not solver or decision EV output. HHDealer PT/HM/H2N4, live provider and external model-client compatibility still require real samples or live testing.
+
+![MDA statistics — 10,000 synthetic hands, Traditional Chinese workspace](docs/validation/mda-stats.jpg)
 
 ## AI: features and quick start
 
@@ -126,9 +137,9 @@ Data lives in the Tauri app-data directory (`app.riverlens.desktop`); the settin
 
 ## Scope and release status
 
-RiverLens supports offline personal post-session review and, in this unreleased source branch, MDA population research. It does not connect to the game client and provides no live HUD, real-time assistance, cloud sync or GTO best-action scoring. It is not affiliated with Natural8 or GGPoker. GG's Security & Ecology Policy sections 7 and 19 restrict collecting other players' histories and collecting/sharing MDA; penalties can include suspension, bans and confiscation of funds. See the [MDA restrictions and validation gates](docs/mda-population.md).
+RiverLens supports offline personal post-session review and MDA population research. It does not connect to the game client and provides no live HUD, real-time assistance, cloud sync or GTO best-action scoring. It is not affiliated with Natural8 or GGPoker. GG's Security & Ecology Policy sections 7 and 19 restrict collecting other players' histories and collecting/sharing MDA; penalties can include suspension, bans and confiscation of funds. See the [MDA restrictions and validation gates](docs/mda-population.md).
 
-The v0.3.1 release includes AI/MCP integration and the offline study workflow. Private hand histories, local databases and strategy packs are excluded. See the [release notes](docs/release-v0.3.1.md) for validation limits.
+The v0.4.0 release includes MDA, AI/MCP integration and the offline study workflow. Private hand histories, local databases and strategy packs are excluded. See the [release notes](docs/release-v0.4.0.md) for validation limits.
 
 - [User guide (Traditional Chinese)](docs/user-guide.md)
 - [Architecture and statistical definitions](docs/architecture.md)

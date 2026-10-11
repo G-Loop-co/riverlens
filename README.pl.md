@@ -6,7 +6,7 @@
 
 RiverLens to aplikacja desktopowa do analizy własnych zakończonych rozdań cash game z Natural8 / GGPoker. Interfejs korzysta z React / TypeScript, silnik parsowania i statystyk z Rust, a dane są przechowywane lokalnie w SQLite.
 
-> **[v0.2.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.2.0)** — Paper (biały) jest motywem domyślnym. [Downloads & validation](docs/release-v0.2.0.md).
+> **[v0.4.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.4.0)** — Analiza populacji MDA + AI: GG Regular USD NLH 6-max, niezależne zbiory DuckDB i anonimowe rozdania jako dowody. Udostępnianie domyślnie wyłączone; interfejs MDA obecnie w tradycyjnym chińskim. [Downloads & validation](docs/release-v0.4.0.md) · [MDA scope, GG SEP restrictions and validation](docs/mda-population.md). macOS: ad-hoc signed, not notarized.
 
 ## Funkcje
 
@@ -71,7 +71,7 @@ Dane są w katalogu app-data Tauri (app.riverlens.desktop); ustawienia pokazują
 
 ## Zakres i licencja
 
-Do osobistej analizy offline po sesji. Bez połączenia z klientem gry, HUD na żywo, RTA, eksploracji danych populacji, synchronizacji chmurowej i oceny najlepszej akcji GTO. Brak powiązania z Natural8 / GGPoker. Repozytorium jest publiczne, lecz nie wybrano ogólnej licencji ponownego wykorzystania. Nie zakładaj MIT / Apache dla samego RiverLens. Komponenty zewnętrzne zachowują własne licencje.
+Do osobistej analizy offline po sesji. Bez połączenia z klientem gry, HUD na żywo, RTA, synchronizacji chmurowej i oceny najlepszej akcji GTO. Brak powiązania z Natural8 / GGPoker. Repozytorium jest publiczne, lecz nie wybrano ogólnej licencji ponownego wykorzystania. Nie zakładaj MIT / Apache dla samego RiverLens. Komponenty zewnętrzne zachowują własne licencje.
 
 ## Dokumentacja
 
