@@ -986,8 +986,14 @@ fn stream(mut reader: impl BufRead, consume: &mut impl FnMut(&str) -> Result<boo
         return crate::hand_formats::stream_xml(reader, consume);
     }
     let mut hand = String::new();
-    for line in reader.lines() {
-        let line = line?;
+    let mut line = String::new();
+    loop {
+        line.clear();
+        if reader.read_line(&mut line)? == 0 {
+            break;
+        }
+        // Retain LF/CRLF inside source text. Fingerprints already normalize
+        // CRLF, so old imports and exports with different endings still dedup.
         let line = line.trim_start_matches('\u{feff}');
         if crate::hand_formats::is_header(line) && !hand.trim().is_empty() {
             if !consume(&hand)? {
@@ -999,7 +1005,6 @@ fn stream(mut reader: impl BufRead, consume: &mut impl FnMut(&str) -> Result<boo
             return Err(anyhow!("single hand exceeds 1 MiB; source may be invalid"));
         }
         hand.push_str(line);
-        hand.push('\n');
     }
     if !hand.trim().is_empty() {
         consume(&hand)?;

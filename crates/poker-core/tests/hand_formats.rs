@@ -367,11 +367,12 @@ fn import_mixed_text_xml_zip_deduplicates_rebuilds_and_exports_original_hands() 
     let d = tempfile::tempdir().unwrap();
     let db = d.path().join("import.db");
     let source = d.path().join("mixed.zip");
+    // Exercise Windows input on every platform, independently of git checkout.
+    let stars = include_str!("fixtures/hand-formats/pokerstars.txt")
+        .replace("\r\n", "\n")
+        .replace('\n', "\r\n");
     let originals = [
-        (
-            "stars.txt",
-            include_str!("fixtures/hand-formats/pokerstars.txt"),
-        ),
+        ("stars.txt", stars.as_str()),
         (
             "ipoker.xml",
             include_str!("fixtures/hand-formats/ipoker.xml"),
@@ -431,8 +432,30 @@ fn import_mixed_text_xml_zip_deduplicates_rebuilds_and_exports_original_hands() 
             .unwrap();
         assert_eq!(job["state"], "complete", "{job}");
         assert_eq!(job["quarantined"], 0);
+        assert_eq!(job["conflicts"], 0);
         assert_eq!(job[if duplicate { "duplicates" } else { "inserted" }], 4);
     }
+    // An LF export of the same hand must dedup against the retained CRLF raw.
+    let lf = d.path().join("same-stars-lf.txt");
+    std::fs::write(&lf, stars.replace("\r\n", "\n")).unwrap();
+    let j = s
+        .handle(Request::StartImport {
+            paths: vec![lf.to_string_lossy().into()],
+            profile: profile("mixed export"),
+        })
+        .unwrap();
+    wait();
+    let jobs = s.handle(Request::Jobs).unwrap();
+    let job = jobs
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|job| job["id"] == j["id"])
+        .unwrap();
+    assert_eq!(job["state"], "complete", "{job}");
+    assert_eq!(job["inserted"], 0);
+    assert_eq!(job["duplicates"], 1);
+    assert_eq!(job["conflicts"], 0);
     s.handle(Request::Rebuild).unwrap();
     let c = store::open(&db).unwrap();
     let count: i64 = c

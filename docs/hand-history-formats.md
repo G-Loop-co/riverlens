@@ -79,6 +79,7 @@ RiverLens 的匯入範圍由 GG 擴至 **15 個原生格式家族**。目錄記�
 - USD、EUR、GBP、CAD、USDT、CHIPS 分別保存；報表及矩陣禁止混合幣別／籌碼加總。介面預設 USD，可切換；CSV 每列帶單位。沒有自動匯率轉換。
 - 明確 ET／UTC／EST／EDT／CET／CEST／MSK tag 優先；沒有時區 tag 時使用來源設定的 fallback。來源設定不是「香港顯示時區」。日期篩選以指定時區的 played_at 計算，避免來源 tag 與 profile 不同而錯用 local-date rollup。
 - 原 TXT 內容保留於每手 raw。XML 多手檔拆成獨立 game envelope，保留必要 session／description metadata；rebuild 及 HH 匯出使用此可解析原文。來源檔案本身不變。XML 的外層 envelope 可能重組，並非逐 byte 複製整個 session。
+- TXT 串流保留來源內部的 LF／CRLF；去重 fingerprint 沿用 CRLF→LF 正規化，換行不同的同一手不會新增或誤報衝突。Git fixtures 固定 LF，測試另生成 CRLF ZIP 及 LF 重匯檔，避免依賴 runner checkout 設定。
 - 無獨立 cash rake 明細時，把 ledger 與 payout 差額標成 `Unspecified fee`，不猜成 rake；相應 all-in adjusted EV 仍依既有排除規則處理。
 - XML DTD／外部 entity 拒絕；metadata 上限 64 KiB，單手 1 MiB。未知 XML action type、MPN endbalance 或 iPoker source bet 不符一律拒絕。
 - Native format support 不代表 native app 驗收、牌室現行政策驗證、部署或正式發行。
@@ -102,6 +103,7 @@ FPDB 為 AGPL，僅研究公開語法，未將其 parser 程式或 fixture 納�
 - `cargo test -p poker-core -p riverlens-ai`：107 個測試通過；包含 17 個 Cash／MTT 格式測試、4 個 MDA 整合測試、資料集分享權限及 100k index／resume／cursor 測試。100k 所在測試套件耗時 206.14 秒，不代表吞吐量驗收。
 - `npm test`：45 個測試通過；新增匿名 MDA 回放只讀群體資料、不讀取／編輯個人筆記及訓練佇列的回歸。`npm run build` 通過，保留原有 Vite 提示。
 - `cargo clippy -p poker-core -p riverlens-ai -p riverlens --all-targets -- -D warnings`、`cargo fmt --all -- --check`、`git diff --check` 及 2 個簽章環境測試：通過。
+- 首輪 Windows CI 發現 TXT 原文 CRLF 被既有 `lines()` 串流改為 LF；修正成保留換行的 `read_line()`，並補強 ZIP 原文、LF／CRLF 去重及重建／匯出回歸。修正後本機 39 個格式／MTT／MDA／匯入邊界測試及 clippy 通過；初次失敗保留於 CI 紀錄。
 - 上述為整合後原始碼測試；沒有重跑 1,000 萬手效能或全部原生 UI 驗收，也沒有把先前原生 App 證據視作新整合 binary 的驗收。
 
 ### v0.3.2 基底的牌譜擴充測試
