@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.1 — 2026-10-12 — Multi-room Cash / MTT hand histories
 
 - Support seven English NLHE tournament grammars (GG, PokerStars, modern WPN, Winamax, 888, iPoker XML and archived Full Tilt); use CHIPS, indexed tournament-ID filters and optional source metadata. Cash and chips cannot be summed. All-in chip EV does not represent ROI, prize money, ICM or bounty EV.
 
@@ -9,7 +9,7 @@
 - Support XML files inside ZIPs; retain per-hand session metadata and reject DTDs or unknown actions.
 - Keep USD, EUR, GBP, CAD and USDT separate in reports and matrices; label replay/results and CSV exports with the actual currency.
 - Respect explicit source timezone tags and use requested timezone boundaries for date filters.
-- See [format/export research and limits](docs/hand-history-formats.md). No release package or room-client certification yet.
+- See [format/export research and limits](docs/hand-history-formats.md). Release packaging is validated separately; this does not establish current room-client certification.
 
 ## 0.4.0 — 2026-10-11 — MDA population analysis
 
