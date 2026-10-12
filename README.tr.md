@@ -6,7 +6,7 @@
 
 RiverLens, Natural8 / GGPoker üzerinde oynadığınız tamamlanmış nakit oyun ellerini inceleyen bir masaüstü uygulamasıdır. Arayüz React / TypeScript, ayrıştırma ve istatistik motoru Rust, yerel veri deposu SQLite kullanır.
 
-> **[v0.4.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.4.0)** — MDA popülasyon analizi + AI: GG Regular USD NLH 6-max, bağımsız DuckDB veri kümeleri ve anonim el kanıtları. Paylaşım varsayılan olarak kapalıdır; MDA arayüzü şu anda geleneksel Çincedir. [Downloads & validation](docs/release-v0.4.0.md) · [MDA scope, GG SEP restrictions and validation](docs/mda-population.md). macOS: ad-hoc signed, not notarized.
+> **[v0.4.1](https://github.com/G-Loop-co/riverlens/releases/tag/v0.4.1)** — MDA popülasyon analizi + AI: GG Regular USD NLH 6-max, bağımsız DuckDB veri kümeleri ve anonim el kanıtları. Paylaşım varsayılan olarak kapalıdır; MDA arayüzü şu anda geleneksel Çincedir. [Downloads & validation](docs/release-v0.4.1.md) · [MDA scope, GG SEP restrictions and validation](docs/mda-population.md). macOS: ad-hoc signed, not notarized.
 
 ## Özellikler
 
