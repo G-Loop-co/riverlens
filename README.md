@@ -70,6 +70,35 @@ Screenshots capture the complete page at **1920px desktop width**, using the **P
 
 Screenshots use **240 generated hands**, not private player data. The deliberately repetitive fixture is for demonstrating the interface, not realistic frequencies or strategy advice. The matrix describes observed hands, not a recommended range.
 
+## Roadmap
+
+Planned directions, not commitments; no dates. Scope discipline stays the same: local-first, no live HUD / real-time assistance / cloud sync, and frequencies are never decision EV.
+
+### Near term (v0.5.x)
+
+- Adaptive Trainer scheduling (FSRS) with the existing 1/3/7/14/30-day intervals as the starting point.
+- Leak trend snapshots: saved benchmarks tracked over time so improvement per context is visible instead of a single snapshot.
+- Postflop drill question types from user-supplied packs or MDA population baselines, always labelled as tendencies, never GTO.
+- Practice and drill history export (CSV) for self-analysis.
+- MDA workspace labels in English and Simplified Chinese.
+
+### Mid term
+
+- Stake- and rake-aware strategy comparisons beyond NL10 100bb manifests.
+- HHDealer PT / HM / H2N4 imports once real samples validate them; PHH / OHH / ACPC research formats.
+- Live provider call validation and broader packaged-client smoke coverage.
+- Deeper AI ↔ Trainer loop: study-plan drafts that schedule themselves into the practice deck.
+
+### Exploring
+
+- Tournament-aware equity context (ICM / bounty are prize-money EV and out of scope today).
+- Saved MDA research templates and a shared hypothesis library.
+- In-app statistics education with worked examples per metric.
+
+### Not planned
+
+Live HUD / real-time assistance, cloud sync of private histories, solver licensing, or decision-EV claims.
+
 ## MDA + AI quick start
 
 1. Open **MDA 群體分析**, create a dataset and set its source and hand-history time zone. Import GG Regular USD NLH 6-max TXT, ZIP or a folder; use the import tab to pause/resume or inspect quarantined records.
