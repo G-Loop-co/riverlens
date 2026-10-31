@@ -366,7 +366,8 @@ export function RangeDrill({
                   {new Date(item.data.created * 1000).toLocaleDateString()} ·{" "}
                   {item.data.name} · {number(item.data.count)}{" "}
                   {t("study.rangeQuestionCount")} ·{" "}
-                  {t("study.rangeScore")}: {decimal(item.data.avg, 1)}
+                  {t("study.rangeScore")}:{" "}
+                  <span>{decimal(item.data.avg, 1)}</span>
                 </li>
               ))}
           </ul>

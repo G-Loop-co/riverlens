@@ -9,7 +9,7 @@ import type {
 import { decimal, number } from "../format";
 import { ErrorBanner, Field } from "./UI";
 import { Card } from "./Replayer";
-import { StudySelect } from "./StudyWorkspace";
+import { StudyRecentPractice, StudySelect } from "./StudyWorkspace";
 
 export function Trainer({
   revision,
@@ -389,22 +389,7 @@ export function Trainer({
         )
       )}
       {!!state.data?.recent.length && (
-        <section className="panel study-recent">
-          <h3>{t("study.recentPractice")}</h3>
-          <ul>
-            {state.data.recent.map((r, i) => (
-              <li key={`${r.created}-${i}`}>
-                <span>{r.reference?.hand_id || t("study.gtoExercise")}</span>
-                <span>
-                  {t(r.rating === "repeat" ? "study.repeat" : "study.advance")}
-                </span>
-                {r.feedback.max_gap !== undefined && (
-                  <span>{decimal(r.feedback.max_gap, 1)} pp</span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
+        <StudyRecentPractice recent={state.data.recent.slice(0, 8)} />
       )}
       <p className="study-footnote">{t("study.trainerCaveat")}</p>
     </div>

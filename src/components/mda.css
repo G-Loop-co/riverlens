@@ -60,6 +60,25 @@
 .mda-workspace .ai-panel {
   margin: 0;
 }
+.mda-wizard-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 16px;
+}
+.mda-wizard-steps li {
+  color: var(--muted, #777);
+  font-size: 0.85rem;
+}
+.mda-wizard-steps li.active {
+  color: var(--accent, #2f6f4f);
+  font-weight: 600;
+}
+.mda-wizard-steps li.done {
+  color: var(--text, #222);
+}
 @media (max-width: 900px) {
   .mda-controls {
     align-items: stretch;

@@ -941,5 +941,22 @@
   "study.rangeBandExcellent": "Well mastered (≥95)",
   "study.rangeBandNeedsWork": "Needs work (<85)",
   "study.addToTrainer": "Add to Trainer",
-  "study.addedTrainer": "Added {{added}} cards; {{duplicates}} already exist; {{missing}} have stale indexes."
+  "study.addedTrainer": "Added {{added}} cards; {{duplicates}} already exist; {{missing}} have stale indexes.",
+  "study.progress": "Learning progress",
+  "study.progressTitle": "Learning progress",
+  "study.progressHelp": "Practice, range drills and leak targets on one page.",
+  "study.progressGoTrainer": "Start practice",
+  "study.progressLeaks": "Leak target status",
+  "study.progressActual": "Actual",
+  "study.progressTarget": "Target",
+  "study.progressStatus": "Status",
+  "study.progressStatus.onTrack": "On target",
+  "study.progressStatus.tooFew": "Too few samples",
+  "study.progressStatus.offTarget": "Off target",
+  "study.progressOnTrack": "On target",
+  "study.progressTooFew": "Too few samples",
+  "study.progressOffTarget": "Off target",
+  "study.progressNoLeaks": "No leak targets yet; add some in Leak Finder first.",
+  "study.progressRangeTrend": "Range drill records",
+  "study.progressCaveat": "All figures are descriptive observations; small samples are not strategy conclusions, and frequencies are not EV."
 }

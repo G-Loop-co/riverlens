@@ -941,5 +941,22 @@
   "study.rangeBandExcellent": "掌握良好（≥95）",
   "study.rangeBandNeedsWork": "差距较大（<85）",
   "study.addToTrainer": "加入 Trainer",
-  "study.addedTrainer": "已加入 {{added}} 题；{{duplicates}} 题已存在；{{missing}} 题索引失效。"
+  "study.addedTrainer": "已加入 {{added}} 题；{{duplicates}} 题已存在；{{missing}} 题索引失效。",
+  "study.progress": "学习进度",
+  "study.progressTitle": "学习进度",
+  "study.progressHelp": "练习、Range 操练与 leak 目标集中一页检视。",
+  "study.progressGoTrainer": "开始练习",
+  "study.progressLeaks": "Leak 目标状态",
+  "study.progressActual": "实际",
+  "study.progressTarget": "目标",
+  "study.progressStatus": "状态",
+  "study.progressStatus.onTrack": "已达标",
+  "study.progressStatus.tooFew": "样本不足",
+  "study.progressStatus.offTarget": "超出目标",
+  "study.progressOnTrack": "已达标",
+  "study.progressTooFew": "样本不足",
+  "study.progressOffTarget": "超出目标",
+  "study.progressNoLeaks": "尚未建立 leak 目标；先到 Leak Finder 加入。",
+  "study.progressRangeTrend": "Range 操练记录",
+  "study.progressCaveat": "以上均为描述性观察；低样本不是策略结论，频率不代表 EV。"
 }
