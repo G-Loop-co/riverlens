@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 — 2026-10-31 — Study loop, range drill, research wizard, progress dashboard
 
 - Connect AI practice drafts to the Trainer: enqueue a draft's decision references as self-review training cards with stale-index accounting; add an "Add to Trainer" action in the AI learning library.
 - Add a Range drill study tab: quiz action frequencies per starting-hand combo from a strategy pack node, scored by total variation distance (similarity = 100 − TVD); records persist as `range_quiz` study items. Similarity is not EV or a GTO score.

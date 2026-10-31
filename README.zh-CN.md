@@ -8,7 +8,7 @@
 
 RiverLens 是 多牌室个人现金桌及指定锦标赛牌谱与独立 MDA 群体资料分析桌面工具。介面使用 React／TypeScript，Rust core 负责解析及统计；个人资料存 SQLite，MDA 资料集存 DuckDB。
 
-> **[下载 v0.4.1](https://github.com/G-Loop-co/riverlens/releases/tag/v0.4.1)** — MDA＋AI、本机 MCP 及离线学习。提供 Windows、Apple Silicon、Intel Mac 套件。macOS 为 ad-hoc 签章，未经 Apple notarization。[发布说明](docs/release-v0.4.1.md)。
+> **[下载 v0.5.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.5.0)** — MDA＋AI、本机 MCP 及离线学习。提供 Windows、Apple Silicon、Intel Mac 套件。macOS 为 ad-hoc 签章，未经 Apple notarization。[发布说明](docs/release-v0.5.0.md)。
 
 ![RiverLens 繁体中文总览：合成资料](docs/screenshots/overview-zh-CN.jpg)
 
@@ -16,7 +16,9 @@ README 共 **13 种语言**；个人复盘介面支援 **English／繁中／简�
 
 **v0.4.0** 新增群体研究，保留 AI 个人复盘及 Spot Explorer → Leak Finder → 翻前策略对照 → Trainer。策略包需自行提供；频率对照不是 decision EV。[学习工作台](docs/study-workflow.md) · [主题](docs/theme-selection.md)。
 
-## 个人复盘牌谱格式（v0.4.1）
+**v0.5.0** 打通学习闭环：AI 练习草稿可整批转为 Trainer 自行复盘题卡；新增 Range 操练对照策略包节点频率；MDA 研究向导按假设 → Wilson 区间 → 匿名手牌验证 → AI 剥削分析逐步引导；学习进度仪表板集中练习、操练与 leak 目标状态。均为描述性观察，频率不是 EV。
+
+## 个人复盘牌谱格式（v0.5.0）
 
 英文 NLHE、2–10 席、UTF-8；以下格式适用于个人复盘，MDA 维持 GG 一般桌 USD NLH 6-max 范围；可导入 TXT、XML、ZIP 或文件夹。“原生”表示已实现牌室语法，不代表每个现行客户端版本均已验收。[导出指南、公开来源及完整限制](docs/hand-history-formats.md)。
 
@@ -43,7 +45,7 @@ README 共 **13 种语言**；个人复盘介面支援 **English／繁中／简�
 
 “—”表示该行未实现锦标赛解析。转换牌室须先持有完整 PokerStars cash 导出文件；RiverLens 没有实现其原生 capture 或 converter。WPN modern Cash 与 CoinPoker 原生 Cash 仍缺本次原生真实样本验证。历史名称不表示牌室仍在运营。其他研究中的牌室及 PHH／OHH／ACPC 尚未实现。
 
-MTT 以 CHIPS 保存筹码；可用时保留赛事编号、级别及 Buy-in 原文，现金币种与筹码分开。All-in chip EV 不代表奖金、ROI、ICM 或 bounty EV。v0.3.2 基底的测试 App 原生验证涵盖 13 份公开 Cash 样本、7 种锦标赛语法及原有 Cash／Rush 原文；4 手不兼容锦标赛样本仍拒收。v0.4.0 整合的源代码回归另列于上述指南。v0.4.1 包含此功能；打包验证及尚未完成的验收见发布说明。
+MTT 以 CHIPS 保存筹码；可用时保留赛事编号、级别及 Buy-in 原文，现金币种与筹码分开。All-in chip EV 不代表奖金、ROI、ICM 或 bounty EV。v0.3.2 基底的测试 App 原生验证涵盖 13 份公开 Cash 样本、7 种锦标赛语法及原有 Cash／Rush 原文；4 手不兼容锦标赛样本仍拒收。v0.4.0 整合的源代码回归另列于上述指南。v0.5.0 包含此功能；打包验证及尚未完成的验收见发布说明。
 
 ## 功能
 
