@@ -3,13 +3,16 @@ import "../study.css";
 import { useTranslation } from "react-i18next";
 import {
   ArrowRight,
+  Gauge,
   Crosshair,
   GraduationCap,
   MagnifyingGlass,
+  Target,
   TrendUp,
 } from "@phosphor-icons/react";
 import { api } from "../api";
 import { useStudy, useStudyMutation } from "../study-api";
+import { decimal } from "../format";
 import { readPreference, writePreference } from "../preferences";
 import type { Filter, Health, Profile } from "../types";
 import type { DecisionRef, PackSummary, SpotDefinition } from "../study-types";
@@ -18,8 +21,17 @@ import { SpotExplorer } from "./StudySpots";
 import { LeakFinder } from "./StudyLeaks";
 import { StrategyCompare } from "./StudyStrategy";
 import { Trainer } from "./StudyTrainer";
+import { RangeDrill } from "./StudyRange";
+import { StudyProgress } from "./StudyProgress";
+import type { TrainingFeedback } from "../study-types";
 
-export type StudyTab = "spots" | "leaks" | "strategy" | "trainer";
+export type StudyTab =
+  | "progress"
+  | "spots"
+  | "leaks"
+  | "strategy"
+  | "range"
+  | "trainer";
 export const emptySpot = (): SpotDefinition => ({ line: [] });
 export function StudySelect({
   label,
@@ -65,6 +77,42 @@ export const streets = ["preflop", "flop", "turn", "river"].map(
 export const actions = ["fold", "check", "call", "bet", "raise"].map(
   (a) => [a, `study.${a}`] as const,
 );
+
+export function StudyRecentPractice({
+  recent,
+  openReplay,
+}: {
+  recent: TrainingFeedback[];
+  openReplay?: (hand: number, seq: number) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <section className="panel study-recent">
+      <h3>{t("study.recentPractice")}</h3>
+      <ul>
+        {recent.map((r, i) => (
+          <li key={`${r.created}-${i}`}>
+            <span>{r.reference?.hand_id || t("study.gtoExercise")}</span>
+            <span>
+              {t(r.rating === "repeat" ? "study.repeat" : "study.advance")}
+            </span>
+            {r.feedback.max_gap !== undefined && (
+              <span>{decimal(r.feedback.max_gap, 1)} pp</span>
+            )}
+            {openReplay && r.replay_hand !== null && (
+              <button
+                className="text-button"
+                onClick={() => openReplay(r.replay_hand!, r.reference?.seq ?? 0)}
+              >
+                {t("study.replay")}
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 export function StudyWorkspace({
   profiles,
@@ -112,9 +160,11 @@ export function StudyWorkspace({
       <nav className="study-steps" aria-label={t("study.flow")}>
         {(
           [
+            ["progress", Gauge],
             ["spots", MagnifyingGlass],
             ["leaks", TrendUp],
             ["strategy", Crosshair],
+            ["range", Target],
             ["trainer", GraduationCap],
           ] as const
         ).map(([key, Icon], i) => (
@@ -127,7 +177,7 @@ export function StudyWorkspace({
             <span className="step-number">0{i + 1}</span>
             <Icon size={20} />
             <span>{t(`study.${key}`)}</span>
-            {i < 3 && <ArrowRight size={14} />}
+            {i < 5 && <ArrowRight size={14} />}
           </button>
         ))}
       </nav>
@@ -247,6 +297,15 @@ export function StudyWorkspace({
           />
         </section>
       )}
+      {tab === "progress" && (
+        <StudyProgress
+          filter={filter}
+          pack={pack}
+          revision={revision}
+          open={open}
+          goTrainer={() => setTab("trainer")}
+        />
+      )}
       {tab === "spots" && (
         <SpotExplorer
           filter={filter}
@@ -289,6 +348,16 @@ export function StudyWorkspace({
           notify={notify}
           open={open}
           trainer={() => setTab("trainer")}
+        />
+      )}
+      {tab === "range" && (
+        <RangeDrill
+          pack={pack}
+          node={node}
+          revision={revision}
+          refresh={refresh}
+          notify={notify}
+          goTrainer={() => setTab("trainer")}
         />
       )}
       {tab === "trainer" && (

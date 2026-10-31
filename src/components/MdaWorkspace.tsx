@@ -20,6 +20,7 @@ import { number } from "../format";
 import { ErrorBanner, Field, Skeleton } from "./UI";
 import { AiCoach } from "./AiCoach";
 import { Replayer } from "./Replayer";
+import { MdaWizard } from "./MdaWizard";
 import "./mda.css";
 const mda = <T,>(request: MdaRequest) => api<T>({ op: "mda", request });
 type Result<T> = {
@@ -366,6 +367,7 @@ export function MdaWorkspace() {
         <>
           <nav className="ai-tabs" aria-label="MDA 工作區">
             {[
+              ["wizard", "研究嚮導"],
               ["stats", "群體統計"],
               ["candidates", "研究候選"],
               ["spots", "手牌回查"],
@@ -382,7 +384,7 @@ export function MdaWorkspace() {
               </button>
             ))}
           </nav>
-          {tab !== "imports" && (
+          {!["imports", "wizard"].includes(tab) && (
             <div className="ai-panel mda-filters">
               <div className="mda-controls">
                 <Field label="級別（BB）">
@@ -701,6 +703,17 @@ export function MdaWorkspace() {
                 </p>
               )}
             </div>
+          )}
+          {tab === "wizard" && (
+            <MdaWizard
+              catalog={catalog}
+              datasetId={selected}
+              startReplay={(hand_key, seq) => setReplay({ hand_key, seq })}
+              goCoach={(question) => {
+                setQuestion(question);
+                setTab("coach");
+              }}
+            />
           )}
           {tab === "imports" && (
             <div className="ai-panel">

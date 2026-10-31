@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.0 — 2026-10-31 — Study loop, range drill, research wizard, progress dashboard
+
+- Connect AI practice drafts to the Trainer: enqueue a draft's decision references as self-review training cards with stale-index accounting; add an "Add to Trainer" action in the AI learning library.
+- Add a Range drill study tab: quiz action frequencies per starting-hand combo from a strategy pack node, scored by total variation distance (similarity = 100 − TVD); records persist as `range_quiz` study items. Similarity is not EV or a GTO score.
+- Add an MDA research wizard: guided hypothesis → filters → Wilson-interval stats → anonymous hand verification → AI exploitation analysis, with a sub-200-opportunity caution; it only orchestrates existing scoped queries.
+- Add a one-page learning progress dashboard: trainer totals/due/completed, recent practice with replay links, leak-target status counts and top-priority details, and range drill history.
+
 ## 0.4.1 — 2026-10-12 — Multi-room Cash / MTT hand histories
 
 - Support seven English NLHE tournament grammars (GG, PokerStars, modern WPN, Winamax, 888, iPoker XML and archived Full Tilt); use CHIPS, indexed tournament-ID filters and optional source metadata. Cash and chips cannot be summed. All-in chip EV does not represent ROI, prize money, ICM or bounty EV.
