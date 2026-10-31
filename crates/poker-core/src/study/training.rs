@@ -124,6 +124,56 @@ pub fn enqueue(
     insert_cards(c, &cards)
 }
 
+/// Enqueue Trainer cards from an AI practice draft's decision references.
+/// Cards use the existing self-review path (no strategy pack); drafts are
+/// untrusted data, so references are resolved through the indexed ledger only.
+pub fn enqueue_draft(c: &Connection, draft_id: &str) -> Result<Value> {
+    anyhow::ensure!(
+        !draft_id.trim().is_empty() && draft_id.len() <= 200,
+        "Invalid draft identifier"
+    );
+    let body: String = c
+        .query_row(
+            "SELECT body FROM ai_drafts WHERE id=?1 AND kind='practice'",
+            [draft_id],
+            |r| r.get(0),
+        )
+        .optional()?
+        .context("Practice draft not found")?;
+    let items = serde_json::from_str::<Value>(&body)?["items"]
+        .as_array()
+        .context("This draft has no practice items")?
+        .clone();
+    anyhow::ensure!(!items.is_empty(), "This draft has no practice items");
+    let mut refs = vec![];
+    let mut missing = 0u64;
+    for item in items {
+        let hand = item["hand"].as_i64().context("Invalid practice hand")?;
+        let seq = item["seq"].as_u64().context("Invalid practice seq")?;
+        let data: Option<String> = c
+            .query_row(
+                "SELECT data FROM study_decisions WHERE hand=?1 AND seq=?2",
+                params![hand, seq],
+                |r| r.get(0),
+            )
+            .optional()?;
+        match data {
+            Some(data) => {
+                let d: decision::Decision = serde_json::from_str(&data)?;
+                refs.push(d.reference);
+            }
+            None => missing += 1,
+        }
+    }
+    anyhow::ensure!(
+        !refs.is_empty(),
+        "No indexed decisions remain for this draft; re-add items from the replayer"
+    );
+    let mut result = enqueue(c, &refs, None, None, None)?;
+    result["missing"] = json!(missing);
+    Ok(result)
+}
+
 fn insert_cards(c: &Connection, cards: &[(String, TrainingCard)]) -> Result<Value> {
     let tx = c.unchecked_transaction()?;
     let mut added = 0;
@@ -413,4 +463,125 @@ pub fn rate(c: &mut Connection, id: &str, card_id: &str, rating: &str) -> Result
     )?;
     tx.commit()?;
     current(c, id)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rusqlite::Connection;
+    use serde_json::json;
+
+    fn decision_json(profile: &str, hand_id: &str, seq: u64) -> Value {
+        json!({
+            "reference": {"profile": profile, "hand_id": hand_id, "seq": seq, "version": decision::VERSION},
+            "street": "preflop",
+            "position": "BB",
+            "opponent": "BTN",
+            "role": "oop",
+            "facing": "open",
+            "pot_type": "2bet",
+            "effective_bb": 100.0,
+            "action": "call",
+            "size_bb": 1.0,
+            "bet_pct": null,
+            "facing_pct": 200.0,
+            "preflop_path": "RF",
+            "line": [],
+            "legal": ["fold", "call", "raise"],
+            "board": [],
+            "hand_class": "AKo",
+            "cards": ["Ah", "Ks"],
+            "player_count": 6,
+            "stacks_bb": {"hero": 99.0},
+            "sb_bb": 0.5,
+            "bb": "0.02",
+            "currency": "USD",
+            "game": "Cash",
+            "special": false,
+            "pot_before": "1.5",
+            "to_call": "1.0"
+        })
+    }
+
+    fn setup() -> Connection {
+        let c = Connection::open_in_memory().unwrap();
+        c.execute_batch(
+            "CREATE TABLE metadata(key TEXT PRIMARY KEY,value TEXT NOT NULL);
+             CREATE TABLE hands(id INTEGER PRIMARY KEY, profile TEXT NOT NULL, hand_id TEXT NOT NULL);
+             CREATE TABLE annotations(hand INTEGER PRIMARY KEY REFERENCES hands(id) ON DELETE CASCADE, note TEXT NOT NULL DEFAULT '', reviewed INTEGER NOT NULL DEFAULT 0);
+             CREATE TABLE tags(hand INTEGER NOT NULL REFERENCES hands(id) ON DELETE CASCADE, tag TEXT NOT NULL, PRIMARY KEY(hand,tag));",
+        )
+        .unwrap();
+        super::init(&c).unwrap();
+        crate::agent::init(&c).unwrap();
+        c.execute(
+            "INSERT INTO hands(id,profile,hand_id) VALUES(1,'p1','SYN1')",
+            [],
+        )
+        .unwrap();
+        let d = decision_json("p1", "SYN1", 0).to_string();
+        c.execute(
+            "INSERT INTO study_decisions(hand,seq,street,position,opponent,role,facing,pot_type,effective_bb,facing_pct,action,line_flop,line_turn,line_river,preflop_path,data,strategy_data) VALUES(1,0,'preflop','BB','BTN','oop','open','2bet',100,200,'call','','','','RF',?1,'')",
+            [&d],
+        )
+        .unwrap();
+        c.execute(
+            "INSERT INTO study_indexed VALUES(1,?1)",
+            [decision::INDEX_VERSION],
+        )
+        .unwrap();
+        c
+    }
+
+    fn save_draft(c: &Connection, id: &str, items: Value) {
+        c.execute(
+            "INSERT INTO ai_drafts(id,kind,title,body,status,revision,created_at) VALUES(?1,'practice','t',?2,'draft',1,0)",
+            rusqlite::params![id, json!({"id":id,"title":"t","text":"x","evidence":["e"],"items":items}).to_string()],
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn enqueue_draft_adds_self_review_cards() {
+        let c = setup();
+        save_draft(
+            &c,
+            "d1",
+            json!([{"hand": 1, "seq": 0, "prompt": "What is your action?"}]),
+        );
+        let result = enqueue_draft(&c, "d1").unwrap();
+        assert_eq!(result["added"], json!(1));
+        assert_eq!(result["duplicates"], json!(0));
+        assert_eq!(result["missing"], json!(0));
+        // Idempotent: the same draft maps to the same card fingerprint.
+        let again = enqueue_draft(&c, "d1").unwrap();
+        assert_eq!(again["added"], json!(0));
+        assert_eq!(again["duplicates"], json!(1));
+    }
+
+    #[test]
+    fn enqueue_draft_counts_unindexed_items() {
+        let c = setup();
+        save_draft(
+            &c,
+            "d2",
+            json!([
+                {"hand": 1, "seq": 0, "prompt": "a"},
+                {"hand": 99, "seq": 0, "prompt": "b"}
+            ]),
+        );
+        let result = enqueue_draft(&c, "d2").unwrap();
+        assert_eq!(result["added"], json!(1));
+        assert_eq!(result["missing"], json!(1));
+    }
+
+    #[test]
+    fn enqueue_draft_rejects_empty_and_all_missing() {
+        let c = setup();
+        save_draft(&c, "d3", json!([]));
+        assert!(enqueue_draft(&c, "d3").is_err());
+        save_draft(&c, "d4", json!([{"hand": 99, "seq": 5, "prompt": "x"}]));
+        assert!(enqueue_draft(&c, "d4").is_err());
+        assert!(enqueue_draft(&c, "missing-id").is_err());
+    }
 }

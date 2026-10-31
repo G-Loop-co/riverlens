@@ -6,6 +6,7 @@ import {
   Crosshair,
   GraduationCap,
   MagnifyingGlass,
+  Target,
   TrendUp,
 } from "@phosphor-icons/react";
 import { api } from "../api";
@@ -18,8 +19,9 @@ import { SpotExplorer } from "./StudySpots";
 import { LeakFinder } from "./StudyLeaks";
 import { StrategyCompare } from "./StudyStrategy";
 import { Trainer } from "./StudyTrainer";
+import { RangeDrill } from "./StudyRange";
 
-export type StudyTab = "spots" | "leaks" | "strategy" | "trainer";
+export type StudyTab = "spots" | "leaks" | "strategy" | "range" | "trainer";
 export const emptySpot = (): SpotDefinition => ({ line: [] });
 export function StudySelect({
   label,
@@ -115,6 +117,7 @@ export function StudyWorkspace({
             ["spots", MagnifyingGlass],
             ["leaks", TrendUp],
             ["strategy", Crosshair],
+            ["range", Target],
             ["trainer", GraduationCap],
           ] as const
         ).map(([key, Icon], i) => (
@@ -289,6 +292,16 @@ export function StudyWorkspace({
           notify={notify}
           open={open}
           trainer={() => setTab("trainer")}
+        />
+      )}
+      {tab === "range" && (
+        <RangeDrill
+          pack={pack}
+          node={node}
+          revision={revision}
+          refresh={refresh}
+          notify={notify}
+          goTrainer={() => setTab("trainer")}
         />
       )}
       {tab === "trainer" && (

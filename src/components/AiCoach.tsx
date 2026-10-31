@@ -4,6 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { open } from "@tauri-apps/plugin-dialog";
 import { api, desktop, errorText } from "../api";
+import { study } from "../study-api";
 import type { Filter, Profile } from "../types";
 import type { MdaContext } from "../mda-types";
 import { Card } from "./Replayer";
@@ -83,6 +84,7 @@ export function AiCoach({
   const [category, setCategory] = useState("");
   const [tag, setTag] = useState("");
   const [organizing, setOrganizing] = useState("");
+  const [trainerNotes, setTrainerNotes] = useState<Record<string, string>>({});
   const sessionId = useRef(crypto.randomUUID());
   const id = useRef(""),
     text = useRef(""),
@@ -96,6 +98,17 @@ export function AiCoach({
       setError(errorText(e));
     }
   };
+  async function addToTrainer(draftId: string) {
+    const result = await study<{
+      added: number;
+      duplicates: number;
+      missing: number;
+    }>({ op: "enqueue_draft", draft: draftId });
+    setTrainerNotes((s) => ({
+      ...s,
+      [draftId]: t("study.addedTrainer", result as unknown as Record<string, unknown>),
+    }));
+  }
   const refresh = async () => {
     if (mda) {
       setLearning(
@@ -670,6 +683,20 @@ export function AiCoach({
                     {d.status === "accepted" ? t("已接受") : t("草稿")} ·{" "}
                     {d.body.items.length} {t("練習題")}
                   </p>
+                  {!mda && d.body.items.length > 0 && (
+                    <div className="ai-row">
+                      <button
+                        className="button"
+                        disabled={busy}
+                        onClick={() =>
+                          void run(async () => addToTrainer(d.id))
+                        }
+                      >
+                        {t("study.addToTrainer")}
+                      </button>
+                      {trainerNotes[d.id] && <small>{trainerNotes[d.id]}</small>}
+                    </div>
+                  )}
                   <div className="ai-row">
                     <strong>
                       {d.body.organization?.category || t("未分類")}

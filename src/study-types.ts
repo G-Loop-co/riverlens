@@ -242,16 +242,24 @@ export interface TrainingState {
   active: string | null;
   recent: TrainingFeedback[];
 }
+export interface RangeQuizRecord {
+  name: string;
+  pack: string;
+  node: string;
+  count: number;
+  avg: number;
+  created: number;
+}
 export type StudyRequest =
   | { op: "explore"; query: StudyQuery }
-  | { op: "items"; kind: "spot" | "benchmark" }
+  | { op: "items"; kind: "spot" | "benchmark" | "range_quiz" }
   | {
       op: "save_item";
-      kind: "spot" | "benchmark";
+      kind: "spot" | "benchmark" | "range_quiz";
       id?: string;
-      data: SavedSpot | Benchmark;
+      data: SavedSpot | Benchmark | RangeQuizRecord;
     }
-  | { op: "delete_item"; kind: "spot" | "benchmark"; id: string }
+  | { op: "delete_item"; kind: "spot" | "benchmark" | "range_quiz"; id: string }
   | { op: "presets" }
   | { op: "hand_decisions"; hand: number }
   | { op: "packs" }
@@ -267,6 +275,7 @@ export type StudyRequest =
       node?: string;
       hand_class?: string;
     }
+  | { op: "enqueue_draft"; draft: string }
   | { op: "training_state" }
   | { op: "training_start"; limit: number }
   | { op: "training_current"; session: string }

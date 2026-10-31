@@ -121,6 +121,9 @@ pub enum StudyRequest {
         node: Option<String>,
         hand_class: Option<String>,
     },
+    EnqueueDraft {
+        draft: String,
+    },
     TrainingState,
     TrainingStart {
         limit: u32,
@@ -151,6 +154,7 @@ impl StudyRequest {
                 | Self::DeleteItem { .. }
                 | Self::ImportPack { .. }
                 | Self::Enqueue { .. }
+                | Self::EnqueueDraft { .. }
                 | Self::TrainingStart { .. }
                 | Self::TrainingAnswer { .. }
                 | Self::TrainingRate { .. }
@@ -161,7 +165,7 @@ impl StudyRequest {
             Self::SaveItem { kind, id, data } => save_item(c, &kind, id.as_deref(), data),
             Self::DeleteItem { kind, id } => {
                 anyhow::ensure!(
-                    matches!(kind.as_str(), "spot" | "benchmark"),
+                    matches!(kind.as_str(), "spot" | "benchmark" | "range_quiz"),
                     "Invalid study item kind"
                 );
                 c.execute(
@@ -183,6 +187,7 @@ impl StudyRequest {
                 node.as_deref(),
                 hand_class.as_deref(),
             ),
+            Self::EnqueueDraft { draft } => training::enqueue_draft(c, &draft),
             Self::TrainingStart { limit } => training::start(c, limit),
             Self::TrainingAnswer {
                 session,
@@ -590,6 +595,17 @@ pub fn save_item(c: &Connection, kind: &str, id: Option<&str>, data: Value) -> R
                     && (1..=1_000_000).contains(&b.min_samples)
                     && b.note.chars().count() <= 4000,
                 "Invalid benchmark"
+            );
+        }
+        "range_quiz" => {
+            let name = data["name"].as_str().context("Missing name")?;
+            check_name(name)?;
+            anyhow::ensure!(
+                (1..=200).contains(&data["count"].as_u64().unwrap_or(0))
+                    && data["avg"].as_f64().is_some_and(|v| v.is_finite())
+                    && data["pack"].as_str().is_some_and(|v| !v.is_empty())
+                    && data["node"].as_str().is_some_and(|v| !v.is_empty()),
+                "Invalid range quiz record"
             );
         }
         _ => bail!("Invalid study item kind"),
