@@ -1078,5 +1078,6 @@
   "（有選擇偏差）。": " (selection bias).",
   "在「平台限制及資料分享」啟用此資料集的雲端 AI Coach 後才可分析。本機學習草稿可在分享關閉時檢視、編輯及回查。": "Enable cloud AI Coach for this dataset under \"Platform limits and data sharing\" before analysis. Local learning drafts stay viewable, editable and verifiable while sharing is off.",
   "在「平台限制及資料分享」明確啟用此資料集的雲端 AI Coach，然後選擇既有 provider／model。": "Explicitly enable cloud AI Coach for this dataset under \"Platform limits and data sharing\", then choose an existing provider / model.",
-  "最新隔離記錄": "Latest quarantine records"
+  "最新隔離記錄": "Latest quarantine records",
+  "MDA 群體分析": "MDA population analysis"
 }

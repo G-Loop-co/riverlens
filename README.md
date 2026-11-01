@@ -8,7 +8,7 @@ New in **v0.4.0: MDA population analysis with AI evidence**. Import independent 
 
 RiverLens is a Tauri desktop application for reviewing your own completed cash-game and supported tournament hand histories from multiple rooms, alongside independent MDA population datasets. React and TypeScript power the interface; a Rust core handles parsing and statistics, with personal review in SQLite and MDA in DuckDB.
 
-> **[Download v0.5.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.5.0)** — MDA + AI, local MCP and offline study. Windows, Apple Silicon and Intel Mac packages. macOS downloads are ad-hoc signed, not notarized. [Release notes](docs/release-v0.5.0.md).
+> **[Download v0.6.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.6.0)** — MDA + AI, local MCP and offline study. Windows, Apple Silicon and Intel Mac packages. macOS downloads are ad-hoc signed, not notarized. [Release notes](docs/release-v0.6.0.md).
 
 ![RiverLens overview in English — synthetic data](docs/screenshots/overview-en.jpg)
 
@@ -18,7 +18,9 @@ README translations: **13 languages**. Personal-review interface: **English, Tra
 
 **v0.5.0** closes the study loop: AI practice drafts convert into Trainer self-review cards, a range drill quizzes action frequencies against strategy-pack nodes, the MDA research wizard walks hypothesis → Wilson-interval stats → anonymous hand verification → AI exploitation analysis, and a one-page progress dashboard collects practice, drill and leak-target status. Descriptive observations only; frequencies are not EV.
 
-## Personal-review hand-history formats (v0.5.0)
+**v0.6.0** adds leak trend snapshots: snapshots are recomputed by the engine from the indexed ledger, visualised against the target range in Leak Finder, and exportable to CSV together with practice and range-drill history. The MDA workspace and research wizard are fully localised to English, Traditional Chinese and Simplified Chinese.
+
+## Personal-review hand-history formats (v0.6.0)
 
 English NLHE, 2–10 seats, UTF-8. These formats apply to personal review; MDA remains GG Regular USD NLH 6-max. Import TXT, XML, ZIP or folders. “Native” means an implemented room grammar; it does not certify every current client version. [Export guides, sources and exact limitations](docs/hand-history-formats.md).
 
@@ -45,7 +47,7 @@ English NLHE, 2–10 seats, UTF-8. These formats apply to personal review; MDA r
 
 “—” means tournament parsing is not implemented for that row. Converted rooms require an existing complete PokerStars cash export; RiverLens does not capture or convert their native histories. WPN modern Cash and CoinPoker native Cash still lack real-sample native-app validation in this run. Historical names do not imply that a room still operates. Other researched rooms and PHH / OHH / ACPC are not implemented.
 
-MTT amounts are stored as CHIPS, with tournament ID, level and source buy-in text when available. Chips and cash currencies stay separate. All-in chip EV is not prize money, ROI, ICM or bounty EV. Native validation on a v0.3.2-based test app covers 13 public Cash samples, seven tournament grammars and preserved own Cash/Rush histories; four incompatible tournament samples remain rejected. The v0.4.0 integration has separate source regression results in the linked guide. These changes are included in v0.5.0; see the release notes for packaging validation and remaining acceptance limits.
+MTT amounts are stored as CHIPS, with tournament ID, level and source buy-in text when available. Chips and cash currencies stay separate. All-in chip EV is not prize money, ROI, ICM or bounty EV. Native validation on a v0.3.2-based test app covers 13 public Cash samples, seven tournament grammars and preserved own Cash/Rush histories; four incompatible tournament samples remain rejected. The v0.4.0 integration has separate source regression results in the linked guide. These changes are included in v0.6.0; see the release notes for packaging validation and remaining acceptance limits.
 
 ## Features
 
