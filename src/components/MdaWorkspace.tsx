@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { open } from "@tauri-apps/plugin-dialog";
 import {
   api,
@@ -33,6 +34,7 @@ type Result<T> = {
 };
 const POSITIONS = ["UTG", "HJ", "CO", "BTN", "SB", "BB", "BTN/SB"];
 export function MdaWorkspace() {
+  const { t } = useTranslation();
   const [revision, setRevision] = useState(0),
     [selected, setSelected] = useState("");
   const [name, setName] = useState("GG 一般桌牌池"),
@@ -177,11 +179,11 @@ export function MdaWorkspace() {
       )}
       <div className="ai-panel mda-datasets">
         <div className="section-title">
-          <h2>群體資料集</h2>
+          <h2>{t("群體資料集")}</h2>
           <span>GG Regular · NLH 6-max · USD</span>
         </div>
         <div className="mda-controls">
-          <Field label="資料集">
+          <Field label={t("資料集")}>
             <select
               aria-label="MDA 資料集"
               value={selected}
@@ -190,10 +192,11 @@ export function MdaWorkspace() {
                 setReplay(null);
               }}
             >
-              <option value="">選擇資料集</option>
+              <option value="">{t("選擇資料集")}</option>
               {list.data?.datasets.map((c) => (
                 <option key={c.dataset.id} value={c.dataset.id}>
-                  {c.dataset.name} · {number(c.hands)} 手
+                  {c.dataset.name} ·{" "}
+                  {t("{{n}} 手", { n: number(c.hands) })}
                 </option>
               ))}
             </select>
@@ -203,14 +206,14 @@ export function MdaWorkspace() {
             disabled={!selected || busy || !desktop || jobs.data?.running}
             onClick={() => void run(() => importFiles())}
           >
-            匯入 TXT／ZIP
+            {t("匯入 TXT／ZIP")}
           </button>
           <button
             className="button"
             disabled={!selected || busy || !desktop || jobs.data?.running}
             onClick={() => void run(() => importFiles(true))}
           >
-            匯入資料夾
+            {t("匯入資料夾")}
           </button>
           <button
             className="button"
@@ -226,7 +229,7 @@ export function MdaWorkspace() {
               })
             }
           >
-            備份資料集
+            {t("備份資料集")}
           </button>
           <button
             className="button"
@@ -244,28 +247,28 @@ export function MdaWorkspace() {
               })
             }
           >
-            還原為新資料集
+            {t("還原為新資料集")}
           </button>
         </div>
         <details>
-          <summary>新增獨立資料集</summary>
+          <summary>{t("新增獨立資料集")}</summary>
           <div className="mda-controls">
-            <Field label="名稱">
+            <Field label={t("名稱")}>
               <input
                 value={name}
                 maxLength={200}
                 onChange={(e) => setName(e.target.value)}
               />
             </Field>
-            <Field label="來源／牌池">
+            <Field label={t("來源／牌池")}>
               <input
                 value={source}
                 maxLength={500}
                 onChange={(e) => setSource(e.target.value)}
-                placeholder="例如：自有研究資料，NL25"
+                placeholder={t("範例：自有研究資料，NL25")}
               />
             </Field>
-            <Field label="牌譜來源時區">
+            <Field label={t("牌譜來源時區")}>
               <input
                 value={timezone}
                 onChange={(e) => setTimezone(e.target.value)}
@@ -291,37 +294,38 @@ export function MdaWorkspace() {
                 })
               }
             >
-              建立資料集
+              {t("建立資料集")}
             </button>
           </div>
           <p>
-            時區用於解析來源時間。各級別獨立統計；未知底牌保持未知。HHDealer
-            相容性待真實樣本驗收。
+            {t("時區用於解析來源時間。各級別獨立統計；未知底牌保持未知。HHDealer 相容性待真實樣本驗收。")}
           </p>
         </details>
         {catalog && (
           <p>
-            {number(catalog.hands)} 有效手牌 · {number(catalog.quarantined)}{" "}
-            隔離 · {catalog.dataset.timezone} ·{" "}
+            {t("{{hands}} 有效手牌 · {{quarantined}} 隔離 ·", {
+              hands: number(catalog.hands),
+              quarantined: number(catalog.quarantined),
+            })}{" "}
+            {catalog.dataset.timezone} ·{" "}
             <small className="mono">{catalog.version}</small>
           </p>
         )}
       </div>
       <details className="ai-panel">
-        <summary>平台限制及資料分享</summary>
+        <summary>{t("平台限制及資料分享")}</summary>
         <p>
-          GG SEP 第 7／19 條限制收集他人牌譜與系統化收集／分享
-          MDA，可能導致停權、封禁或資金沒收。
+          {t("GG SEP 第 7／19 條限制收集他人牌譜與系統化收集／分享 MDA，可能導致停權、封禁或資金沒收。")}
           <a
             href="https://ggpoker.com/network/security-ecology-policy/"
             target="_blank"
             rel="noreferrer"
           >
-            官方政策
+            {t("官方政策")}
           </a>
         </p>
         <p>
-          分享只包含群體彙總及少量匿名案例。資料版本改變時，當次 AI 分析停止。
+          {t("分享只包含群體彙總及少量匿名案例。資料版本改變時，當次 AI 分析停止。")}
         </p>
         {catalog && (
           <div className="mda-controls">
@@ -353,14 +357,14 @@ export function MdaWorkspace() {
                     })
                   }
                 />
-                {label}
+                {t(label)}
               </label>
             ))}
           </div>
         )}
         <p>
-          外部 MCP 另需在 AI 連接頁啟用本機連接。資料集 ID：
-          <code>{selected || "尚未選擇"}</code>
+          {t("外部 MCP 另需在 AI 連接頁啟用本機連接。資料集 ID：")}
+          <code>{selected || t("尚未選擇")}</code>
         </p>
       </details>
       {catalog && (
@@ -380,14 +384,14 @@ export function MdaWorkspace() {
                 aria-pressed={tab === id}
                 onClick={() => setTab(id)}
               >
-                {label}
+                {t(label)}
               </button>
             ))}
           </nav>
           {!["imports", "wizard"].includes(tab) && (
             <div className="ai-panel mda-filters">
               <div className="mda-controls">
-                <Field label="級別（BB）">
+                <Field label={t("級別（BB）")}>
                   <select
                     value={filter.bb_units || ""}
                     onChange={(e) =>
@@ -398,7 +402,7 @@ export function MdaWorkspace() {
                       })
                     }
                   >
-                    <option value="">各級別分開顯示</option>
+                    <option value="">{t("各級別分開顯示")}</option>
                     {catalog.stakes.map((s) => (
                       <option key={s.bb_units} value={s.bb_units}>
                         ${s.bb_units / 1_000_000}
@@ -423,28 +427,28 @@ export function MdaWorkspace() {
                     ],
                   ] as const
                 ).map(([key, label, options]) => (
-                  <Field key={key} label={label}>
+                  <Field key={key} label={t(label)}>
                     <select
                       value={filter[key] || ""}
                       onChange={(e) =>
                         update({ [key]: e.target.value || undefined })
                       }
                     >
-                      <option value="">全部</option>
+                      <option value="">{t("全部")}</option>
                       {options.map((o) => (
                         <option key={o}>{o}</option>
                       ))}
                     </select>
                   </Field>
                 ))}
-                <Field label="指標">
+                <Field label={t("指標")}>
                   <select
                     value={filter.metric || ""}
                     onChange={(e) =>
                       update({ metric: e.target.value || undefined })
                     }
                   >
-                    <option value="">全部指標</option>
+                    <option value="">{t("全部指標")}</option>
                     {catalog.metrics.map((m) => (
                       <option key={m.key} value={m.key}>
                         {m.key}
@@ -452,7 +456,7 @@ export function MdaWorkspace() {
                     ))}
                   </select>
                 </Field>
-                <Field label="分組">
+                <Field label={t("分組")}>
                   <select
                     value={group}
                     onChange={(e) => setGroup(e.target.value)}
@@ -471,7 +475,7 @@ export function MdaWorkspace() {
                 </Field>
               </div>
               <details>
-                <summary>日期、有效籌碼及下注尺寸</summary>
+                <summary>{t("日期、有效籌碼及下注尺寸")}</summary>
                 <div className="mda-controls">
                   {(
                     [
@@ -497,7 +501,7 @@ export function MdaWorkspace() {
                       ["bet_max", "面對 Bet/P % ≤"],
                     ] as const
                   ).map(([key, label]) => (
-                    <Field key={key} label={label}>
+                    <Field key={key} label={t(label)}>
                       <input
                         type="number"
                         min="0"
@@ -512,7 +516,7 @@ export function MdaWorkspace() {
                       />
                     </Field>
                   ))}
-                  <Field label="當刻完整牌面">
+                  <Field label={t("當刻完整牌面")}>
                     <input
                       value={filter.board || ""}
                       onChange={(e) =>
@@ -521,7 +525,7 @@ export function MdaWorkspace() {
                       placeholder="Ks 7d 2c"
                     />
                   </Field>
-                  <Field label="人數">
+                  <Field label={t("人數")}>
                     <select
                       value={filter.players || ""}
                       onChange={(e) =>
@@ -532,7 +536,7 @@ export function MdaWorkspace() {
                         })
                       }
                     >
-                      <option value="">預設 HU 翻後</option>
+                      <option value="">{t("預設 HU 翻後")}</option>
                       {[2, 3, 4, 5, 6].map((n) => (
                         <option key={n}>{n}</option>
                       ))}
@@ -546,13 +550,13 @@ export function MdaWorkspace() {
                         update({ hu_postflop: e.target.checked })
                       }
                     />
-                    翻後只看 HU
+                    {t("翻後只看 HU")}
                   </label>
                   <button
                     className="text-button"
                     onClick={() => setFilter({ hu_postflop: true })}
                   >
-                    重設情境
+                    {t("重設情境")}
                   </button>
                 </div>
               </details>
@@ -562,8 +566,7 @@ export function MdaWorkspace() {
           {query.data && (
             <div className="ai-panel">
               <p>
-                百分比按總分子／合法機會計算。Wilson 95%
-                為描述性區間；同玩家的決策不獨立。前後期區間重疊僅表示描述性一致性。
+                {t("百分比按總分子／合法機會計算。Wilson 95%為描述性區間；同玩家的決策不獨立。前後期區間重疊僅表示描述性一致性。")}
               </p>
               <div className="table-scroll">
                 <table className="mda-table">
@@ -571,18 +574,18 @@ export function MdaWorkspace() {
                     <tr>
                       {tab === "spots" ? (
                         <>
-                          <th>匿名手牌</th>
-                          <th>情境</th>
-                          <th>當刻牌面</th>
-                          <th>行動／尺寸</th>
+                          <th>{t("匿名手牌")}</th>
+                          <th>{t("情境")}</th>
+                          <th>{t("當刻牌面")}</th>
+                          <th>{t("行動／尺寸")}</th>
                         </>
                       ) : (
                         <>
-                          <th>情境／指標</th>
-                          <th>分子／機會</th>
-                          <th>%／Wilson 95%</th>
-                          <th>分時段／底牌覆蓋</th>
-                          <th>驗證</th>
+                          <th>{t("情境／指標")}</th>
+                          <th>{t("分子／機會")}</th>
+                          <th>{t("%／Wilson 95%")}</th>
+                          <th>{t("分時段／底牌覆蓋")}</th>
+                          <th>{t("驗證")}</th>
                         </>
                       )}
                     </tr>
@@ -603,7 +606,7 @@ export function MdaWorkspace() {
                           </td>
                           <td>
                             {r.position} vs {r.opponent} · {r.street} ·{" "}
-                            {r.pot_type} · {r.players}人
+                            {r.pot_type} · {t("{{n}} 人", { n: r.players })}
                           </td>
                           <td>{r.board || "—"}</td>
                           <td>
@@ -655,19 +658,19 @@ export function MdaWorkspace() {
                                 setTab("spots");
                               }}
                             >
-                              回查
+                              {t("回查")}
                             </button>
                             <button
                               className="text-button"
                               onClick={() => {
                                 setQuestion(
-                                  `分析 ${r.metric}，${r.street}，${r.context}，BB $${r.bb_units / 1_000_000}；說明 sizing、bluff/value/防守方向、例外與匿名證據。`,
+                                  t("分析 {{metric}}，{{street}}，{{context}}，BB ${{bb}}；說明 sizing、bluff/value/防守方向、例外與匿名證據。", { metric: r.metric, street: r.street, context: r.context, bb: r.bb_units / 1_000_000 }),
                                 );
                                 update(rowContext(r));
                                 setTab("coach");
                               }}
                             >
-                              問 AI
+                              {t("問 AI")}
                             </button>
                           </td>
                         </tr>
@@ -678,9 +681,11 @@ export function MdaWorkspace() {
               </div>
               {!query.data.data.rows.length && (
                 <p>
-                  {tab === "candidates"
-                    ? "此情境未有至少 200 個合法機會。"
-                    : "此情境暫無合法機會。"}
+                  {t(
+                    tab === "candidates"
+                      ? "此情境未有至少 200 個合法機會。"
+                      : "此情境暫無合法機會。",
+                  )}
                 </p>
               )}
               {query.data.data.next_cursor && (
@@ -688,13 +693,13 @@ export function MdaWorkspace() {
                   className="button"
                   onClick={() => setCursor(query.data!.data.next_cursor!)}
                 >
-                  下一頁
+                  {t("下一頁")}
                 </button>
               )}
-              <p>攤牌樣本有選擇偏差，底牌覆蓋不能代表完整 range。</p>
+              <p>{t("攤牌樣本有選擇偏差，底牌覆蓋不能代表完整 range。")}</p>
               {query.data.data.river_bluff_model && (
                 <p>
-                  固定尺寸 HU river pure-bluff 門檻：
+                  {t("固定尺寸 HU river pure-bluff 門檻：")}
                   {query.data.data.river_bluff_model.pure_bluff_break_even_fold_pct.toFixed(
                     1,
                   )}
@@ -717,14 +722,11 @@ export function MdaWorkspace() {
           )}
           {tab === "imports" && (
             <div className="ai-panel">
-              <h2>匯入進度</h2>
+              <h2>{t("匯入進度")}</h2>
               {jobs.data?.jobs.map((j) => (
                 <article key={j.id} className="mda-job">
-                  <strong>{j.state}</strong> · {j.source_index}/
-                  {j.sources.length} 來源 · {number(j.scanned)} 已讀 ·{" "}
-                  {number(j.inserted)} 新增 · {number(j.duplicates)} 重複 ·{" "}
-                  {number(j.quarantined)} 隔離 · {number(j.conflicts)} 衝突 ·{" "}
-                  {(j.elapsed_ms / 1000).toFixed(1)}秒
+                  <strong>{j.state}</strong> ·{" "}
+                  {t("{{index}}/{{total}} 來源 · {{scanned}} 已讀 · {{inserted}} 新增 · {{duplicates}} 重複 · {{quarantined}} 隔離 · {{conflicts}} 衝突 · {{secs}}秒", { index: j.source_index, total: j.sources.length, scanned: number(j.scanned), inserted: number(j.inserted), duplicates: number(j.duplicates), quarantined: number(j.quarantined), conflicts: number(j.conflicts), secs: (j.elapsed_ms / 1000).toFixed(1) })}
                   {j.message && <p>{j.message}</p>}
                   {j.state === "running" ? (
                     <button
@@ -735,7 +737,7 @@ export function MdaWorkspace() {
                         })
                       }
                     >
-                      暫停
+                      {t("暫停")}
                     </button>
                   ) : (
                     ["paused", "interrupted", "failed"].includes(j.state) && (
@@ -752,13 +754,13 @@ export function MdaWorkspace() {
                           })
                         }
                       >
-                        從 checkpoint 續傳
+                        {t("從 checkpoint 續傳")}
                       </button>
                     )
                   )}
                 </article>
               ))}
-              <h3>隔離及內容衝突</h3>
+              <h3>{t("隔離及內容衝突")}</h3>
               {issues.data?.rows.map((i) => (
                 <p key={i.id}>
                   {i.hand_id} · {i.code}{" "}
@@ -778,7 +780,7 @@ export function MdaWorkspace() {
                       })
                     }
                   >
-                    本機原文
+                    {t("本機原文")}
                   </button>
                 </p>
               ))}
@@ -791,7 +793,7 @@ export function MdaWorkspace() {
                       setIssueRaw("");
                     }}
                   >
-                    下一頁隔離記錄
+                    {t("下一頁隔離記錄")}
                   </button>
                 )}
               {issueBefore !== undefined && (
@@ -799,7 +801,7 @@ export function MdaWorkspace() {
                   className="button"
                   onClick={() => setIssueBefore(undefined)}
                 >
-                  最新隔離記錄
+                  {t("最新隔離記錄")}
                 </button>
               )}
               {issueRaw && <pre className="raw-hand">{issueRaw}</pre>}
@@ -811,8 +813,7 @@ export function MdaWorkspace() {
                 {!catalog.dataset.cloud_enabled && (
                   <div className="ai-panel">
                     <p>
-                      在「平台限制及資料分享」啟用此資料集的雲端 AI Coach
-                      後才可分析。 本機學習草稿可在分享關閉時檢視、編輯及回查。
+                      {t("在「平台限制及資料分享」啟用此資料集的雲端 AI Coach 後才可分析。本機學習草稿可在分享關閉時檢視、編輯及回查。")}
                     </p>
                   </div>
                 )}
@@ -824,15 +825,14 @@ export function MdaWorkspace() {
                   openMdaHand={(hand_key, seq) => setReplay({ hand_key, seq })}
                   question={
                     question ||
-                    "請找這個情境的群體研究候選，說明如何調整下注尺寸、bluff/value 與防守，附分母、例外及匿名手牌證據。"
+                    t("請找這個情境的群體研究候選，說明如何調整下注尺寸、bluff/value 與防守，附分母、例外及匿名手牌證據。")
                   }
                 />
               </>
             ) : (
               <div className="ai-panel">
                 <p>
-                  在「平台限制及資料分享」明確啟用此資料集的雲端 AI
-                  Coach，然後選擇既有 provider／model。
+                  {t("在「平台限制及資料分享」明確啟用此資料集的雲端 AI Coach，然後選擇既有 provider／model。")}
                 </p>
               </div>
             ))}

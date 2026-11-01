@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.0 — 2026-11-01 — Leak trend snapshots, study CSV export, full MDA localisation
+
+- Leak trend snapshots: record per-benchmark snapshots recomputed by the engine from the indexed ledger (the client never supplies numbers); review actual-frequency trends against target-range guides in Leak Finder, and export snapshots / practice / range-drill history as brand-new CSV files. Snapshots are append-only with a 1,000-per-target cap and refuse silent file overwrites on export.
+- MDA workspace and research wizard labels fully localised to English, Traditional Chinese and Simplified Chinese.
+- No database migration: the new `study_leak_trend` table is created additively on first open of an existing store.
+
 ## 0.5.0 — 2026-10-31 — Study loop, range drill, research wizard, progress dashboard
 
 - Connect AI practice drafts to the Trainer: enqueue a draft's decision references as self-review training cards with stale-index accounting; add an "Add to Trainer" action in the AI learning library.

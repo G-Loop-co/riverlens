@@ -250,6 +250,17 @@ export interface RangeQuizRecord {
   avg: number;
   created: number;
 }
+export interface LeakSnapshot {
+  benchmark: string;
+  created: number;
+  actual: number | null;
+  opportunities: number;
+  hits: number;
+  low: number | null;
+  high: number | null;
+  interval_low: number | null;
+  interval_high: number | null;
+}
 export type StudyRequest =
   | { op: "explore"; query: StudyQuery }
   | { op: "items"; kind: "spot" | "benchmark" | "range_quiz" }
@@ -268,6 +279,8 @@ export type StudyRequest =
   | { op: "matrix"; pack: string; node: string; filter: Filter }
   | { op: "compare"; pack: string; reference: DecisionRef; node?: string }
   | { op: "leaks"; filter: Filter; pack?: string }
+  | { op: "snapshot_leak"; filter: Filter; pack?: string; benchmark: string }
+  | { op: "leak_trend"; benchmark: string }
   | {
       op: "enqueue";
       references: DecisionRef[];

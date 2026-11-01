@@ -297,4 +297,5 @@ export type Request =
       filter: Filter;
       selected: number[];
     }
+  | { op: "export_study"; kind: string; path: string }
   | { op: "equity_control"; paused: boolean };

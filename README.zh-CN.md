@@ -8,15 +8,17 @@
 
 RiverLens 是 多牌室个人现金桌及指定锦标赛牌谱与独立 MDA 群体资料分析桌面工具。介面使用 React／TypeScript，Rust core 负责解析及统计；个人资料存 SQLite，MDA 资料集存 DuckDB。
 
-> **[下载 v0.5.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.5.0)** — MDA＋AI、本机 MCP 及离线学习。提供 Windows、Apple Silicon、Intel Mac 套件。macOS 为 ad-hoc 签章，未经 Apple notarization。[发布说明](docs/release-v0.5.0.md)。
+> **[下载 v0.6.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.6.0)** — MDA＋AI、本机 MCP 及离线学习。提供 Windows、Apple Silicon、Intel Mac 套件。macOS 为 ad-hoc 签章，未经 Apple notarization。[发布说明](docs/release-v0.6.0.md)。
 
 ![RiverLens 繁体中文总览：合成资料](docs/screenshots/overview-zh-CN.jpg)
 
-README 共 **13 种语言**；个人复盘介面支援 **English／繁中／简中**，首版 **MDA 工作区标签使用繁体中文**。
+README 共 **13 种语言**；个人复盘介面支援 **English／繁中／简中**，MDA 工作区标签同样支援三语。
 
 **v0.4.0** 新增群体研究，保留 AI 个人复盘及 Spot Explorer → Leak Finder → 翻前策略对照 → Trainer。策略包需自行提供；频率对照不是 decision EV。[学习工作台](docs/study-workflow.md) · [主题](docs/theme-selection.md)。
 
 **v0.5.0** 打通学习闭环：AI 练习草稿可整批转为 Trainer 自行复盘题卡；新增 Range 操练对照策略包节点频率；MDA 研究向导按假设 → Wilson 区间 → 匿名手牌验证 → AI 剥削分析逐步引导；学习进度仪表板集中练习、操练与 leak 目标状态。均为描述性观察，频率不是 EV。
+
+**v0.6.0** 新增 Leak 趋势快照：快照由引擎以索引账本重算，Leak Finder 内对照目标区间呈现趋势，并可将快照、练习与操练记录导出 CSV。MDA 工作台与研究向导完整支持 English／繁中／简中。
 
 ## Roadmap 路线图
 
@@ -25,10 +27,8 @@ README 共 **13 种语言**；个人复盘介面支援 **English／繁中／简�
 ### 近期（v0.5.x）
 
 - Trainer 自适应排程（FSRS），以现有 1/3/7/14/30 天间隔为起点。
-- Leak 趋势快照：已保存目标按时间追踪，让每个情境的改善趋势可见。
 - 翻后操练题型：来自用户策略包或 MDA 群体基线，一律标示为倾向、非 GTO。
 - 练习与操练记录 CSV 导出，供自我分析。
-- MDA 工作台标签支持英文与简体中文。
 
 ### 中期
 
@@ -47,7 +47,7 @@ README 共 **13 种语言**；个人复盘介面支援 **English／繁中／简�
 
 Live HUD／实时协助、私人牌谱云端同步、solver 授权或 decision EV 主张。
 
-## 个人复盘牌谱格式（v0.5.0）
+## 个人复盘牌谱格式（v0.6.0）
 
 英文 NLHE、2–10 席、UTF-8；以下格式适用于个人复盘，MDA 维持 GG 一般桌 USD NLH 6-max 范围；可导入 TXT、XML、ZIP 或文件夹。“原生”表示已实现牌室语法，不代表每个现行客户端版本均已验收。[导出指南、公开来源及完整限制](docs/hand-history-formats.md)。
 
@@ -74,7 +74,7 @@ Live HUD／实时协助、私人牌谱云端同步、solver 授权或 decision E
 
 “—”表示该行未实现锦标赛解析。转换牌室须先持有完整 PokerStars cash 导出文件；RiverLens 没有实现其原生 capture 或 converter。WPN modern Cash 与 CoinPoker 原生 Cash 仍缺本次原生真实样本验证。历史名称不表示牌室仍在运营。其他研究中的牌室及 PHH／OHH／ACPC 尚未实现。
 
-MTT 以 CHIPS 保存筹码；可用时保留赛事编号、级别及 Buy-in 原文，现金币种与筹码分开。All-in chip EV 不代表奖金、ROI、ICM 或 bounty EV。v0.3.2 基底的测试 App 原生验证涵盖 13 份公开 Cash 样本、7 种锦标赛语法及原有 Cash／Rush 原文；4 手不兼容锦标赛样本仍拒收。v0.4.0 整合的源代码回归另列于上述指南。v0.5.0 包含此功能；打包验证及尚未完成的验收见发布说明。
+MTT 以 CHIPS 保存筹码；可用时保留赛事编号、级别及 Buy-in 原文，现金币种与筹码分开。All-in chip EV 不代表奖金、ROI、ICM 或 bounty EV。v0.3.2 基底的测试 App 原生验证涵盖 13 份公开 Cash 样本、7 种锦标赛语法及原有 Cash／Rush 原文；4 手不兼容锦标赛样本仍拒收。v0.4.0 整合的源代码回归另列于上述指南。v0.6.0 包含此功能；打包验证及尚未完成的验收见发布说明。
 
 ## 功能
 
@@ -90,7 +90,7 @@ MTT 以 CHIPS 保存筹码；可用时保留赛事编号、级别及 Buy-in 原�
 | 复盘工作台 | 保存笔记、标签、已复盘状态及常用筛选。 |
 | 本机资料管理 | 个人 SQLite、独立 MDA DuckDB；个人 CSV／牌谱汇出，各资料库独立备份还原。 |
 | 外观主题 | 森林绿、午夜蓝、暖白；选择储存于本机。 |
-| 个人复盘三语介面 | 繁中、简中及 English，离线可用；MDA 工作区目前使用繁体中文标签。 |
+| 个人复盘三语介面 | 繁中、简中及 English，离线可用；MDA 工作区标签同样支援三语。 |
 | 适用 All-in equity | 支援单挑、单底池、已知底牌、单 runout 的适用情况；不是 decision EV 或 GTO 评分。 |
 
 ![起手牌矩阵：合成资料](docs/screenshots/starting-hands-en.jpg)
