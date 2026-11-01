@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Leak trend snapshots: record per-benchmark snapshots recomputed by the engine from the indexed ledger, review actual-frequency trends with target-range guides, and export snapshots / practice / range-drill history as new CSV files. Snapshots are append-only with a 1,000-per-target cap.
+- MDA workspace labels fully localized to English, Traditional Chinese and Simplified Chinese.
+
 ## 0.5.0 — 2026-10-31 — Study loop, range drill, research wizard, progress dashboard
 
 - Connect AI practice drafts to the Trainer: enqueue a draft's decision references as self-review training cards with stale-index accounting; add an "Add to Trainer" action in the AI learning library.

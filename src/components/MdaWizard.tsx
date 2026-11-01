@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useRpc } from "../api";
 import type { MdaCatalog, MdaFilter, MdaStat, MdaSpot } from "../mda-types";
 import { number } from "../format";
@@ -72,11 +73,11 @@ export function composeCoachQuestion(
 }
 
 const STEP_TITLES = [
-  "定義假設",
-  "設定情境",
-  "檢視統計",
-  "手牌驗證",
-  "下一步",
+  "wizard.stepDefine",
+  "wizard.stepContext",
+  "wizard.stepStats",
+  "wizard.stepHands",
+  "wizard.stepNext",
 ];
 
 /** Documented research-guidance threshold for candidate hypotheses. */
@@ -93,6 +94,7 @@ export function MdaWizard({
   startReplay: (hand_key: string, seq?: number) => void;
   goCoach: (question: string) => void;
 }) {
+  const { t } = useTranslation();
   const [step, setStep] = useState(0);
   const [hypothesis, setHypothesis] = useState("");
   const [metric, setMetric] = useState("");
@@ -139,20 +141,18 @@ export function MdaWizard({
     setFilter((f) => ({ ...f, ...p }));
   return (
     <section className="ai-panel">
-      <h2>MDA 研究嚮導</h2>
+      <h2>{t("MDA 研究嚮導")}</h2>
       <p>
-        按統計紀律逐步完成一次群體研究：定義假設 →
-        設定情境 → 檢視 Wilson 區間 → 匿名手牌驗證 →
-        帶到 AI 剝削分析。缺基線只是研究假設，不是結論。
+        {t("按統計紀律逐步完成一次群體研究：定義假設 → 設定情境 → 檢視 Wilson 區間 → 匿名手牌驗證 → 帶到 AI 剝削分析。缺基線只是研究假設，不是結論。")}
       </p>
-      <ol className="mda-wizard-steps" aria-label="研究步驟">
-        {STEP_TITLES.map((title, i) => (
+      <ol className="mda-wizard-steps" aria-label={t("MDA 研究嚮導")}>
+        {STEP_TITLES.map((key, i) => (
           <li
-            key={title}
+            key={key}
             className={step === i ? "active" : step > i ? "done" : ""}
             aria-current={step === i ? "step" : undefined}
           >
-            {i + 1}. {title}
+            {i + 1}. {t(key)}
           </li>
         ))}
       </ol>
@@ -169,28 +169,28 @@ export function MdaWizard({
                 setFilter({ hu_postflop: true, ...preset.filter });
               }}
             >
-              <option value="">選擇預設假設…</option>
+              <option value="">{t("選擇預設假設…")}</option>
               {PRESETS.map((p) => (
                 <option key={p.label} value={p.label}>
-                  {p.label}
+                  {t(p.label)}
                 </option>
               ))}
             </select>
           </Field>
-          <Field label="研究假設（可自行修改）">
+          <Field label={t("研究假設（可自行修改）")}>
             <textarea
               value={hypothesis}
               rows={2}
               onChange={(e) => setHypothesis(e.target.value)}
-              placeholder="例如：這個牌池的 BB 面對 open 棄牌率高於合理防守頻率"
+              placeholder={t("例如：這個牌池的 BB 面對 open 棄牌率高於合理防守頻率")}
             />
           </Field>
-          <Field label="指標">
+          <Field label={t("指標")}>
             <select
               value={metric}
               onChange={(e) => setMetric(e.target.value)}
             >
-              <option value="">選擇指標…</option>
+              <option value="">{t("選擇指標…")}</option>
               {catalog.metrics.map((m) => (
                 <option key={m.key} value={m.key}>
                   {m.key} · {m.definition}
@@ -202,14 +202,14 @@ export function MdaWizard({
       )}
       {step === 1 && (
         <div className="mda-controls">
-          <Field label="街道">
+          <Field label={t("街道")}>
             <select
               value={filter.street || ""}
               onChange={(e) =>
                 patch({ street: e.target.value || undefined })
               }
             >
-              <option value="">全部</option>
+              <option value="">{t("全部")}</option>
               {["preflop", "flop", "turn", "river"].map((s) => (
                 <option key={s} value={s}>
                   {s}
@@ -217,7 +217,7 @@ export function MdaWizard({
               ))}
             </select>
           </Field>
-          <Field label="級別（BB）">
+          <Field label={t("級別（BB）")}>
             <select
               value={filter.bb_units || ""}
               onChange={(e) =>
@@ -228,7 +228,7 @@ export function MdaWizard({
                 })
               }
             >
-              <option value="">各級別分開顯示</option>
+              <option value="">{t("各級別分開顯示")}</option>
               {catalog.stakes.map((s) => (
                 <option key={s.bb_units} value={s.bb_units}>
                   ${s.bb_units / 1_000_000}
@@ -236,14 +236,14 @@ export function MdaWizard({
               ))}
             </select>
           </Field>
-          <Field label="日期由">
+          <Field label={t("日期由")}>
             <input
               type="date"
               value={filter.date_from || ""}
               onChange={(e) => patch({ date_from: e.target.value || undefined })}
             />
           </Field>
-          <Field label="至">
+          <Field label={t("至")}>
             <input
               type="date"
               value={filter.date_to || ""}
@@ -256,7 +256,7 @@ export function MdaWizard({
               checked={filter.hu_postflop !== false}
               onChange={(e) => patch({ hu_postflop: e.target.checked })}
             />
-            翻後只看 HU
+            {t("翻後只看 HU")}
           </label>
         </div>
       )}
@@ -273,54 +273,54 @@ export function MdaWizard({
               )}
               <div className="mda-controls">
                 <div>
-                  <small>分子／合法機會</small>
+                  <small>{t("分子／合法機會")}</small>
                   <strong>
                     {number(row.numerator)} / {number(row.opportunities)}
                   </strong>
                 </div>
                 <div>
-                  <small>百分比／Wilson 95%</small>
+                  <small>{t("百分比／Wilson 95%")}</small>
                   <strong>
                     {row.pct.toFixed(1)}%（{row.wilson95[0].toFixed(1)}–
                     {row.wilson95[1].toFixed(1)}%）
                   </strong>
                 </div>
                 <div>
-                  <small>情境</small>
+                  <small>{t("情境")}</small>
                   <strong>
-                    {row.metric} · {row.context || "全部位置"} · {row.street}{" "}
+                    {row.metric} ·{" "}
+                    {row.context ? row.context : t("全部位置")} · {row.street}{" "}
                     · BB $
                     {row.bb_units / 1_000_000}
                   </strong>
                 </div>
               </div>
               <p>
-                分時段：
+                {t("分時段：")}
                 {row.period_interval_overlap === null
-                  ? "分時段證據不足"
+                  ? t("分時段證據不足")
                   : row.period_interval_overlap
-                    ? "前後期區間重疊（描述性一致）"
-                    : "前後期區間不一致，先檢查資料組成"}
-                ；攤牌底牌覆蓋{" "}
-                {row.showdown_coverage_pct?.toFixed(1) ?? "—"}%（有選擇偏差）。
+                    ? t("前後期區間重疊（描述性一致）")
+                    : t("前後期區間不一致，先檢查資料組成")}
+                ；{t("攤牌底牌覆蓋")}{" "}
+                {row.showdown_coverage_pct?.toFixed(1) ?? "—"}%
+                {t("（有選擇偏差）。")}
               </p>
-              {row.opportunities < 200 && (
+              {row.opportunities < MIN_RESEARCH_OPPORTUNITIES && (
                 <p className="study-warning">
-                機會數 {number(row.opportunities)} 低於{" "}
-                {MIN_RESEARCH_OPPORTUNITIES}
-                  的建議門檻；先擴大情境或累積資料，再下結論。
+                  {t("機會數 {{n}} 低於 {{min}} 的建議門檻；先擴大情境或累積資料，再下結論。", { n: number(row.opportunities), min: MIN_RESEARCH_OPPORTUNITIES })}
                 </p>
               )}
             </>
           ) : (
             !stat.loading && (
               <p>
-                此指標在目前情境沒有合法機會。回到上一步放寬街道或級別。
+                {t("此指標在目前情境沒有合法機會。回到上一步放寬街道或級別。")}
               </p>
             )
           )}
           <p className="muted">
-            Wilson 95% 為描述性區間；同玩家決策不獨立，不是顯著性檢定。
+            {t("Wilson 95% 為描述性區間；同玩家決策不獨立，不是顯著性檢定。")}
           </p>
         </div>
       )}
@@ -332,10 +332,10 @@ export function MdaWizard({
               <table className="mda-table">
                 <thead>
                   <tr>
-                    <th>匿名手牌</th>
-                    <th>情境</th>
-                    <th>當刻牌面</th>
-                    <th>行動／尺寸</th>
+                    <th>{t("匿名手牌")}</th>
+                    <th>{t("情境")}</th>
+                    <th>{t("當刻牌面")}</th>
+                    <th>{t("行動／尺寸")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -351,7 +351,7 @@ export function MdaWizard({
                       </td>
                       <td>
                         {r.position} vs {r.opponent} · {r.street} ·{" "}
-                        {r.pot_type} · {r.players}人
+                        {r.pot_type} · {t("{{n}} 人", { n: r.players })}
                       </td>
                       <td>{r.board || "—"}</td>
                       <td>
@@ -366,11 +366,11 @@ export function MdaWizard({
             </div>
           ) : (
             !spots.loading && (
-              <p>此情境沒有可回查的匿名手牌；可回上一步調整情境。</p>
+              <p>{t("此情境沒有可回查的匿名手牌；可回上一步調整情境。")}</p>
             )
           )}
           <p className="muted">
-            顯示底牌只代表有選擇偏差的可見樣本，不是完整 range。
+            {t("顯示底牌只代表有選擇偏差的可見樣本，不是完整 range。")}
           </p>
         </div>
       )}
@@ -379,25 +379,21 @@ export function MdaWizard({
           {row ? (
             <>
               <p>
-                假設「{hypothesis.trim() || "未命名"}」已核對：指標 {row.metric}，{" "}
-                {number(row.numerator)}/{number(row.opportunities)}（
-                {row.pct.toFixed(1)}%）。請在 AI
-                剝削分析中評估調整方向，草稿會保存於學習資料。
+                {t("假設「{{h}}」已核對：指標 {{metric}}，{{num}}/{{opp}}（{{pct}}%）。請在 AI 剝削分析中評估調整方向，草稿會保存於學習資料。", { h: hypothesis.trim() || t("wizard.untitled"), metric: row.metric, num: number(row.numerator), opp: number(row.opportunities), pct: row.pct.toFixed(1) })}
               </p>
               <button
                 className="button primary"
                 onClick={() => goCoach(composeCoachQuestion(hypothesis, row))}
               >
-                帶到 AI 剝削分析
+                {t("帶到 AI 剝削分析")}
               </button>
             </>
           ) : (
-            <p>尚未取得統計；回到「檢視統計」確認情境後再繼續。</p>
+            <p>{t("尚未取得統計；回到「檢視統計」確認情境後再繼續。")}</p>
           )}
           {!catalog.dataset.cloud_enabled && (
             <p className="study-warning">
-              此資料集尚未啟用雲端 AI
-              Coach；請先在上方「平台限制及資料分享」開啟分享，或改用外部 MCP 代理。
+              {t("此資料集尚未啟用雲端 AI Coach；請先在上方「平台限制及資料分享」開啟分享，或改用外部 MCP 代理。")}
             </p>
           )}
         </div>
@@ -408,14 +404,14 @@ export function MdaWizard({
           disabled={step === 0}
           onClick={() => setStep((s) => Math.max(0, s - 1))}
         >
-          上一步
+          {t("wizard.back")}
         </button>
         <button
           className="button primary"
           disabled={!canNext || step >= 4}
           onClick={() => setStep((s) => Math.min(4, s + 1))}
         >
-          下一步
+          {t("wizard.next")}
         </button>
         <button
           className="text-button"
@@ -426,7 +422,7 @@ export function MdaWizard({
             setFilter({ hu_postflop: true });
           }}
         >
-          重新開始
+          {t("wizard.restart")}
         </button>
       </div>
     </section>

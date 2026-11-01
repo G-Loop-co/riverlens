@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { api, chooseOutput, desktop } from "../api";
 import { useStudy } from "../study-api";
 import type { Filter } from "../types";
 import type {
@@ -61,6 +62,15 @@ export function StudyProgress({
     if (r.source !== "observation") counts[leakStatus(r)] += 1;
   }
   const recent = state.data?.recent.slice(0, 8) || [];
+  async function exportCsv(kind: string, filename: string) {
+    const path = await chooseOutput("csv", filename);
+    if (!path) return;
+    await api({
+      op: "export_study",
+      kind,
+      path,
+    });
+  }
   return (
     <div className="study-progress">
       <section className="panel study-intro">
@@ -73,6 +83,32 @@ export function StudyProgress({
           {t("study.progressGoTrainer")}
         </button>
       </section>
+      {desktop && (
+        <div className="study-row-actions">
+          <button
+            className="button subtle"
+            onClick={() => void exportCsv("attempts", "riverlens-practice.csv")}
+          >
+            {t("study.exportAttempts")}
+          </button>
+          <button
+            className="button subtle"
+            onClick={() =>
+              void exportCsv("range_quiz", "riverlens-range-drills.csv")
+            }
+          >
+            {t("study.exportDrills")}
+          </button>
+          <button
+            className="button subtle"
+            onClick={() =>
+              void exportCsv("leak_snapshots", "riverlens-leak-snapshots.csv")
+            }
+          >
+            {t("study.exportSnapshots")}
+          </button>
+        </div>
+      )}
       {(state.error || quizzes.error || leaks.error) && (
         <ErrorBanner>
           {state.error || quizzes.error || leaks.error}

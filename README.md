@@ -61,7 +61,7 @@ MTT amounts are stored as CHIPS, with tournament ID, level and source buy-in tex
 | Review workspace | Save notes, tags, reviewed status and reusable filters. |
 | Data ownership | Keep personal review in SQLite and MDA in independent DuckDB datasets; export personal CSV / hand histories and back up or restore each data store. |
 | Appearance themes | Choose Forest, Midnight or Paper (warm white); the selection persists locally. |
-| Personal-review languages | Switch between English, Traditional Chinese and Simplified Chinese offline; MDA workspace labels currently use Traditional Chinese. |
+| Personal-review languages | Switch between English, Traditional Chinese and Simplified Chinese offline; MDA workspace labels support all three languages. |
 | Eligible all-in equity | Calculate supported heads-up, single-pot, known-hole-card, single-runout situations. This is not decision EV or a GTO score. |
 
 ![Observed starting hands — synthetic data](docs/screenshots/starting-hands-en.jpg)
@@ -77,10 +77,8 @@ Planned directions, not commitments; no dates. Scope discipline stays the same: 
 ### Near term (v0.5.x)
 
 - Adaptive Trainer scheduling (FSRS) with the existing 1/3/7/14/30-day intervals as the starting point.
-- Leak trend snapshots: saved benchmarks tracked over time so improvement per context is visible instead of a single snapshot.
 - Postflop drill question types from user-supplied packs or MDA population baselines, always labelled as tendencies, never GTO.
 - Practice and drill history export (CSV) for self-analysis.
-- MDA workspace labels in English and Simplified Chinese.
 
 ### Mid term
 

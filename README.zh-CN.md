@@ -12,7 +12,7 @@ RiverLens 是 多牌室个人现金桌及指定锦标赛牌谱与独立 MDA 群�
 
 ![RiverLens 繁体中文总览：合成资料](docs/screenshots/overview-zh-CN.jpg)
 
-README 共 **13 种语言**；个人复盘介面支援 **English／繁中／简中**，首版 **MDA 工作区标签使用繁体中文**。
+README 共 **13 种语言**；个人复盘介面支援 **English／繁中／简中**，MDA 工作区标签同样支援三语。
 
 **v0.4.0** 新增群体研究，保留 AI 个人复盘及 Spot Explorer → Leak Finder → 翻前策略对照 → Trainer。策略包需自行提供；频率对照不是 decision EV。[学习工作台](docs/study-workflow.md) · [主题](docs/theme-selection.md)。
 
@@ -25,10 +25,8 @@ README 共 **13 种语言**；个人复盘介面支援 **English／繁中／简�
 ### 近期（v0.5.x）
 
 - Trainer 自适应排程（FSRS），以现有 1/3/7/14/30 天间隔为起点。
-- Leak 趋势快照：已保存目标按时间追踪，让每个情境的改善趋势可见。
 - 翻后操练题型：来自用户策略包或 MDA 群体基线，一律标示为倾向、非 GTO。
 - 练习与操练记录 CSV 导出，供自我分析。
-- MDA 工作台标签支持英文与简体中文。
 
 ### 中期
 
@@ -90,7 +88,7 @@ MTT 以 CHIPS 保存筹码；可用时保留赛事编号、级别及 Buy-in 原�
 | 复盘工作台 | 保存笔记、标签、已复盘状态及常用筛选。 |
 | 本机资料管理 | 个人 SQLite、独立 MDA DuckDB；个人 CSV／牌谱汇出，各资料库独立备份还原。 |
 | 外观主题 | 森林绿、午夜蓝、暖白；选择储存于本机。 |
-| 个人复盘三语介面 | 繁中、简中及 English，离线可用；MDA 工作区目前使用繁体中文标签。 |
+| 个人复盘三语介面 | 繁中、简中及 English，离线可用；MDA 工作区标签同样支援三语。 |
 | 适用 All-in equity | 支援单挑、单底池、已知底牌、单 runout 的适用情况；不是 decision EV 或 GTO 评分。 |
 
 ![起手牌矩阵：合成资料](docs/screenshots/starting-hands-en.jpg)

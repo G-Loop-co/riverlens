@@ -1,8 +1,18 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import {
+  Line,
+  LineChart,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 import type { Filter } from "../types";
 import type {
   Benchmark,
+  LeakSnapshot,
   LeakReport,
   SpotDefinition,
   StudyItem,
@@ -41,6 +51,7 @@ export function LeakFinder({
   );
   const [editing, setEditing] = useState(false),
     [id, setId] = useState<string | undefined>();
+  const [trendFor, setTrendFor] = useState<string | null>(null);
   const [target, setTarget] = useState<Benchmark>({
     name: "",
     spot,
@@ -53,6 +64,10 @@ export function LeakFinder({
   const [conditions, setConditions] = useState(false);
   const operation = useStudyMutation();
   const patch = (p: Partial<Benchmark>) => setTarget((s) => ({ ...s, ...p }));
+  const trend = useStudy<LeakSnapshot[]>(
+    trendFor ? { op: "leak_trend", benchmark: trendFor } : null,
+    revision,
+  );
   return (
     <div className="study-leaks">
       <section className="panel study-intro">
@@ -259,6 +274,34 @@ export function LeakFinder({
                       : "study.viewDecisions",
                   )}
                 </button>
+                {row.source !== "observation" && (
+                  <>
+                    <button
+                      className="text-button"
+                      disabled={operation.busy}
+                      onClick={() =>
+                        void operation.run(async () => {
+                          await study({
+                            op: "snapshot_leak",
+                            filter,
+                            ...(pack ? { pack } : {}),
+                            benchmark: row.id,
+                          });
+                          refresh();
+                        })
+                      }
+                    >
+                      {t("study.snapshot")}
+                    </button>
+                    <button
+                      className="text-button"
+                      aria-expanded={trendFor === row.id}
+                      onClick={() => setTrendFor(trendFor === row.id ? null : row.id)}
+                    >
+                      {t("study.trend")}
+                    </button>
+                  </>
+                )}
                 {row.source === "custom" && (
                   <>
                     <button
@@ -293,6 +336,66 @@ export function LeakFinder({
                   </>
                 )}
               </div>
+              {trendFor === row.id && (
+                <div className="study-leak-trend">
+                  {trend.loading ? (
+                    <Skeleton rows={2} />
+                  ) : trend.data && trend.data.length > 0 ? (
+                    <>
+                      <ResponsiveContainer width="100%" height={140}>
+                        <LineChart
+                          data={trend.data.map((s) => ({
+                            t: s.created,
+                            label: new Date(s.created * 1000).toLocaleDateString(),
+                            actual: s.actual,
+                          }))}
+                          margin={{ top: 6, right: 12, bottom: 0, left: 0 }}
+                        >
+                          <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                          <YAxis
+                            domain={[0, 100]}
+                            tick={{ fontSize: 11 }}
+                            width={38}
+                            unit="%"
+                          />
+                          <Tooltip
+                            formatter={(v) =>
+                              typeof v === "number" ? `${decimal(v, 1)}%` : ""
+                            }
+                          />
+                          {trend.data[0].low !== null && (
+                            <ReferenceLine
+                              y={trend.data[0].low}
+                              strokeDasharray="4 4"
+                              stroke="#8a8a8a"
+                            />
+                          )}
+                          {trend.data[0].high !== null && (
+                            <ReferenceLine
+                              y={trend.data[0].high}
+                              strokeDasharray="4 4"
+                              stroke="#8a8a8a"
+                            />
+                          )}
+                          <Line
+                            type="monotone"
+                            dataKey="actual"
+                            stroke="#2f6f4f"
+                            dot
+                            connectNulls
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                      <p className="muted">
+                        {t("study.snapshotHistory", { n: trend.data.length })} ·{" "}
+                        {t("study.trendNote")}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="muted">{t("study.trendEmpty")}</p>
+                  )}
+                </div>
+              )}
             </article>
           ))}
         </div>

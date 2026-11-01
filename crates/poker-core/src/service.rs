@@ -126,6 +126,10 @@ pub enum Request {
         filter: Filter,
         selected: Vec<i64>,
     },
+    ExportStudy {
+        kind: String,
+        path: String,
+    },
     EquityControl {
         paused: bool,
     },
@@ -527,6 +531,9 @@ impl Service {
                 selected,
             } => Ok(
                 json!({"hands":store::export(&c,&filter,Path::new(&path),&format,&selected)?,"path":path}),
+            ),
+            Request::ExportStudy { kind, path } => Ok(
+                json!({"rows":crate::study::export_csv(&c,&kind,Path::new(&path))?,"path":path,"kind":kind}),
             ),
             Request::EquityControl { paused } => {
                 self.equity_pause.store(paused, Ordering::Relaxed);

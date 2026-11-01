@@ -1148,7 +1148,7 @@ pub fn export(
     }
     Ok(n)
 }
-fn csv(s: &str) -> String {
+pub(crate) fn csv(s: &str) -> String {
     let s = if s.starts_with(['=', '+', '-', '@']) {
         format!("'{s}")
     } else {

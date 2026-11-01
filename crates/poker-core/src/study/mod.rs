@@ -11,6 +11,8 @@ use rusqlite::{params, params_from_iter, types::Value as Sql, Connection, Option
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::collections::BTreeMap;
+use std::io::Write;
+use std::path::Path;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(default, deny_unknown_fields)]
@@ -115,6 +117,14 @@ pub enum StudyRequest {
         filter: Filter,
         pack: Option<String>,
     },
+    SnapshotLeak {
+        filter: Filter,
+        pack: Option<String>,
+        benchmark: String,
+    },
+    LeakTrend {
+        benchmark: String,
+    },
     Enqueue {
         references: Vec<decision::DecisionRef>,
         pack: Option<String>,
@@ -155,6 +165,7 @@ impl StudyRequest {
                 | Self::ImportPack { .. }
                 | Self::Enqueue { .. }
                 | Self::EnqueueDraft { .. }
+                | Self::SnapshotLeak { .. }
                 | Self::TrainingStart { .. }
                 | Self::TrainingAnswer { .. }
                 | Self::TrainingRate { .. }
@@ -188,6 +199,11 @@ impl StudyRequest {
                 hand_class.as_deref(),
             ),
             Self::EnqueueDraft { draft } => training::enqueue_draft(c, &draft),
+            Self::SnapshotLeak {
+                filter,
+                pack,
+                benchmark,
+            } => snapshot_leak(c, &filter, pack.as_deref(), &benchmark),
             Self::TrainingStart { limit } => training::start(c, limit),
             Self::TrainingAnswer {
                 session,
@@ -226,6 +242,7 @@ impl StudyRequest {
                         node,
                     } => strategy::compare_decision(&tx, &pack, &reference, node.as_deref()),
                     Self::Leaks { filter, pack } => leaks(&tx, &filter, pack.as_deref()),
+                    Self::LeakTrend { benchmark } => leak_trend(&tx, &benchmark),
                     Self::TrainingState => training::state(&tx),
                     Self::TrainingCurrent { session } => training::current(&tx, &session),
                     Self::Resolve { reference } => {
@@ -260,13 +277,17 @@ pub fn init(c: &Connection) -> Result<()> {
       CREATE INDEX IF NOT EXISTS study_due ON study_cards(due,id);
       CREATE TABLE IF NOT EXISTS study_sessions(id TEXT PRIMARY KEY,data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS study_attempts(id TEXT PRIMARY KEY,card TEXT NOT NULL,session TEXT NOT NULL,created INTEGER NOT NULL,data TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS study_leak_trend(
+        id INTEGER PRIMARY KEY, benchmark TEXT NOT NULL, created INTEGER NOT NULL,
+        actual REAL, opportunities INTEGER NOT NULL, hits INTEGER NOT NULL,
+        low REAL, high REAL, interval_low REAL, interval_high REAL);
       UPDATE metadata SET value='3' WHERE key='schema_version';
       COMMIT;")?;
     let has_facts:bool=c.query_row("SELECT EXISTS(SELECT 1 FROM pragma_table_info('study_decisions') WHERE name='strategy_data')",[],|r|r.get(0))?;
     if !has_facts {
         c.execute_batch("BEGIN IMMEDIATE; ALTER TABLE study_decisions ADD COLUMN strategy_data TEXT NOT NULL DEFAULT ''; DELETE FROM study_indexed; COMMIT;")?;
     }
-    c.execute_batch("CREATE INDEX IF NOT EXISTS study_hand_actions ON study_decisions(hand,action); CREATE INDEX IF NOT EXISTS study_strategy_group ON study_decisions(street,position,preflop_path,strategy_data,hand);")?;
+    c.execute_batch("CREATE INDEX IF NOT EXISTS study_hand_actions ON study_decisions(hand,action); CREATE INDEX IF NOT EXISTS study_strategy_group ON study_decisions(street,position,preflop_path,strategy_data,hand); CREATE INDEX IF NOT EXISTS study_leak_trend_b ON study_leak_trend(benchmark,created);")?;
     Ok(())
 }
 
@@ -647,6 +668,222 @@ pub fn wilson(hits: u64, n: u64) -> Option<(f64, f64)> {
     ))
 }
 
+/// Record a trend snapshot for one saved benchmark, recomputing the current
+/// measurement from the indexed ledger through the same leaks path. The
+/// client never supplies the numbers; the backend is the only writer.
+pub fn snapshot_leak(
+    c: &mut Connection,
+    filter: &Filter,
+    pack: Option<&str>,
+    benchmark_id: &str,
+) -> Result<Value> {
+    anyhow::ensure!(
+        !benchmark_id.trim().is_empty() && benchmark_id.len() <= 200,
+        "Invalid benchmark identifier"
+    );
+    let report = leaks(c, filter, pack)?;
+    let row = report["rows"]
+        .as_array()
+        .context("Invalid leaks report")?
+        .iter()
+        .find(|r| r["id"].as_str() == Some(benchmark_id))
+        .context(
+            "Benchmark not found in current leaks report; adjust the analysis filter or pack",
+        )?;
+    anyhow::ensure!(
+        row["source"].as_str() != Some("observation"),
+        "Observation presets have no target; snapshot saved benchmarks only"
+    );
+    let opportunities = row["opportunities"].as_u64().unwrap_or(0);
+    anyhow::ensure!(
+        opportunities > 0,
+        "No legal opportunities in the current context; nothing to snapshot"
+    );
+    let count: i64 = c.query_row(
+        "SELECT COUNT(*) FROM study_leak_trend WHERE benchmark=?1",
+        [benchmark_id],
+        |r| r.get(0),
+    )?;
+    anyhow::ensure!(
+        count < 1000,
+        "Snapshot history is full for this benchmark (1000); export the CSV before adding more"
+    );
+    let created = chrono::Utc::now().timestamp();
+    let actual = row["actual"].as_f64();
+    let hits = row["hits"].as_u64().unwrap_or(0);
+    let low = row["low"].as_f64();
+    let high = row["high"].as_f64();
+    let (interval_low, interval_high) = match row["interval"].as_array() {
+        Some(a) => (
+            a.first().and_then(|v| v.as_f64()),
+            a.get(1).and_then(|v| v.as_f64()),
+        ),
+        None => (None, None),
+    };
+    c.execute(
+        "INSERT INTO study_leak_trend(benchmark,created,actual,opportunities,hits,low,high,interval_low,interval_high) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9)",
+        params![
+            benchmark_id,
+            created,
+            actual,
+            opportunities as i64,
+            hits as i64,
+            low,
+            high,
+            interval_low,
+            interval_high
+        ],
+    )?;
+    Ok(
+        json!({"snapshot":{"benchmark":benchmark_id,"created":created,"actual":actual,"opportunities":opportunities,"hits":hits,"low":low,"high":high,"interval_low":interval_low,"interval_high":interval_high}}),
+    )
+}
+
+pub fn leak_trend(c: &Connection, benchmark_id: &str) -> Result<Value> {
+    anyhow::ensure!(
+        !benchmark_id.trim().is_empty() && benchmark_id.len() <= 200,
+        "Invalid benchmark identifier"
+    );
+    let mut s = c.prepare(
+        "SELECT created,actual,opportunities,hits,low,high,interval_low,interval_high FROM study_leak_trend WHERE benchmark=?1 ORDER BY created ASC,id ASC",
+    )?;
+    let rows = s
+        .query_map([benchmark_id], |r| {
+            let created: i64 = r.get(0)?;
+            let actual: Option<f64> = r.get(1)?;
+            let opportunities: i64 = r.get(2)?;
+            let hits: i64 = r.get(3)?;
+            let low: Option<f64> = r.get(4)?;
+            let high: Option<f64> = r.get(5)?;
+            let interval_low: Option<f64> = r.get(6)?;
+            let interval_high: Option<f64> = r.get(7)?;
+            Ok(json!({
+                "created": created,
+                "actual": actual,
+                "opportunities": opportunities,
+                "hits": hits,
+                "low": low,
+                "high": high,
+                "interval": match (interval_low, interval_high) {
+                    (Some(lo), Some(hi)) => json!([lo, hi]),
+                    _ => json!(null),
+                },
+            }))
+        })?
+        .collect::<std::result::Result<Vec<_>, _>>()?;
+    Ok(json!(rows))
+}
+
+/// Stream one study-history CSV. Files must be new; silent overwrites are refused.
+pub fn export_csv(c: &Connection, kind: &str, path: &Path) -> Result<u64> {
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(path)
+        .map_err(|e| anyhow::anyhow!("Export file must be new; choose a new filename ({e})"))?;
+    let mut n = 0u64;
+    match kind {
+        "attempts" => {
+            writeln!(
+                file,
+                "created,rating,source,pack,observed,hand_id,seq,card,session"
+            )?;
+            let mut s =
+                c.prepare("SELECT created,card,session,data FROM study_attempts ORDER BY id")?;
+            let rows = s.query_map([], |r| {
+                Ok((
+                    r.get::<_, i64>(0)?,
+                    r.get::<_, String>(1)?,
+                    r.get::<_, String>(2)?,
+                    r.get::<_, String>(3)?,
+                ))
+            })?;
+            for row in rows {
+                let (created, card, session, data) = row?;
+                let d: Value = serde_json::from_str(&data).context("Invalid attempt record")?;
+                let reference = &d["reference"];
+                writeln!(
+                    file,
+                    "{},{},{},{},{},{},{},{},{}",
+                    created,
+                    store::csv(d["rating"].as_str().unwrap_or("")),
+                    store::csv(d["source"].as_str().unwrap_or("")),
+                    store::csv(d["pack"].as_str().unwrap_or("")),
+                    store::csv(d["observed"].as_str().unwrap_or("")),
+                    store::csv(reference["hand_id"].as_str().unwrap_or("")),
+                    reference["seq"].as_u64().unwrap_or(0),
+                    store::csv(&card),
+                    store::csv(&session)
+                )?;
+                n += 1;
+            }
+        }
+        "range_quiz" => {
+            writeln!(file, "created,name,pack,node,count,avg_score")?;
+            let rows: Vec<(String, String)> = {
+                let mut s = c.prepare(
+                    "SELECT id,data FROM study_items WHERE kind='range_quiz' ORDER BY id",
+                )?;
+                let rows = s
+                    .query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))?
+                    .collect::<std::result::Result<Vec<_>, _>>()?;
+                rows
+            };
+            for (_, data) in rows {
+                let d: Value = serde_json::from_str(&data).context("Invalid range quiz record")?;
+                writeln!(
+                    file,
+                    "{},{},{},{},{},{}",
+                    d["created"].as_i64().unwrap_or(0),
+                    store::csv(d["name"].as_str().unwrap_or("")),
+                    store::csv(d["pack"].as_str().unwrap_or("")),
+                    store::csv(d["node"].as_str().unwrap_or("")),
+                    d["count"].as_u64().unwrap_or(0),
+                    d["avg"].as_f64().unwrap_or(0.)
+                )?;
+                n += 1;
+            }
+        }
+        "leak_snapshots" => {
+            writeln!(file, "created,benchmark,actual_pct,opportunities,hits,target_low,target_high,interval_low,interval_high")?;
+            let mut s = c.prepare("SELECT created,benchmark,actual,opportunities,hits,low,high,interval_low,interval_high FROM study_leak_trend ORDER BY benchmark,created,id")?;
+            let rows = s
+                .query_map([], |r| {
+                    Ok((
+                        r.get::<_, i64>(0)?,
+                        r.get::<_, String>(1)?,
+                        r.get::<_, Option<f64>>(2)?,
+                        r.get::<_, i64>(3)?,
+                        r.get::<_, i64>(4)?,
+                        r.get::<_, Option<f64>>(5)?,
+                        r.get::<_, Option<f64>>(6)?,
+                        r.get::<_, Option<f64>>(7)?,
+                        r.get::<_, Option<f64>>(8)?,
+                    ))
+                })?
+                .collect::<std::result::Result<Vec<_>, _>>()?;
+            for (created, benchmark, actual, opp, hits, low, high, ilo, ihi) in rows {
+                writeln!(
+                    file,
+                    "{},{},{},{},{},{},{},{},{}",
+                    created,
+                    store::csv(&benchmark),
+                    actual.map(|v| format!("{v}")).unwrap_or_default(),
+                    opp,
+                    hits,
+                    low.map(|v| format!("{v}")).unwrap_or_default(),
+                    high.map(|v| format!("{v}")).unwrap_or_default(),
+                    ilo.map(|v| format!("{v}")).unwrap_or_default(),
+                    ihi.map(|v| format!("{v}")).unwrap_or_default()
+                )?;
+                n += 1;
+            }
+        }
+        _ => bail!("Invalid study export kind"),
+    }
+    Ok(n)
+}
+
 pub fn leaks(c: &Connection, filter: &Filter, pack: Option<&str>) -> Result<Value> {
     let mut rows = vec![];
     for row in items(c, "benchmark")?
@@ -782,4 +1019,135 @@ pub fn copy_user_data(source: &Connection, dest: &Connection) -> Result<()> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rusqlite::Connection;
+    use serde_json::json;
+
+    fn setup() -> Connection {
+        let c = Connection::open_in_memory().unwrap();
+        c.execute_batch(
+            "CREATE TABLE metadata(key TEXT PRIMARY KEY,value TEXT NOT NULL);
+             CREATE TABLE hands(id INTEGER PRIMARY KEY, profile TEXT NOT NULL, hand_id TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'valid');
+             CREATE TABLE annotations(hand INTEGER PRIMARY KEY REFERENCES hands(id) ON DELETE CASCADE, note TEXT NOT NULL DEFAULT '', reviewed INTEGER NOT NULL DEFAULT 0);
+             CREATE TABLE tags(hand INTEGER NOT NULL REFERENCES hands(id) ON DELETE CASCADE, tag TEXT NOT NULL, PRIMARY KEY(hand,tag));",
+        )
+        .unwrap();
+        super::init(&c).unwrap();
+        crate::agent::init(&c).unwrap();
+        c.execute(
+            "INSERT INTO hands(id,profile,hand_id) VALUES(1,'p1','SYN1')",
+            [],
+        )
+        .unwrap();
+        let d = json!({
+            "reference": {"profile": "p1", "hand_id": "SYN1", "seq": 0, "version": decision::VERSION},
+            "street": "preflop", "position": "BB", "opponent": "BTN", "role": "oop",
+            "facing": "open", "pot_type": "2bet", "effective_bb": 100.0,
+            "action": "call", "size_bb": 1.0, "bet_pct": null, "facing_pct": 200.0,
+            "preflop_path": "RF", "line": [], "legal": ["fold", "call", "raise"],
+            "board": [], "hand_class": "AKo", "cards": ["Ah", "Ks"],
+            "player_count": 6, "stacks_bb": {"hero": 99.0}, "sb_bb": 0.5,
+            "bb": "0.02", "currency": "USD", "game": "Cash", "special": false,
+            "pot_before": "1.5", "to_call": "1.0"
+        })
+        .to_string();
+        c.execute(
+            "INSERT INTO study_decisions(hand,seq,street,position,opponent,role,facing,pot_type,effective_bb,facing_pct,action,line_flop,line_turn,line_river,preflop_path,data,strategy_data) VALUES(1,0,'preflop','BB','BTN','oop','open','2bet',100,200,'call','','','','RF',?1,'')",
+            [&d],
+        )
+        .unwrap();
+        c.execute(
+            "INSERT INTO study_indexed VALUES(1,?1)",
+            [decision::INDEX_VERSION],
+        )
+        .unwrap();
+        c
+    }
+
+    fn save_benchmark(c: &Connection) -> String {
+        let saved = save_item(
+            c,
+            "benchmark",
+            None,
+            json!({
+                "name": "BB fold vs open",
+                "spot": {"street": "preflop", "position": "BB", "facing": "open", "line": []},
+                "action": "fold",
+                "low": 50.0,
+                "high": 60.0,
+                "min_samples": 1,
+                "note": ""
+            }),
+        )
+        .unwrap();
+        saved["id"].as_str().unwrap().to_string()
+    }
+
+    #[test]
+    fn snapshot_recomputes_from_ledger_and_trend_sorts_by_time() {
+        let mut c = setup();
+        let id = save_benchmark(&c);
+        c.execute(
+            "INSERT INTO study_leak_trend(benchmark,created,actual,opportunities,hits,low,high,interval_low,interval_high) VALUES(?1,100,10.0,1,0,50,60,null,null)",
+            [&id],
+        )
+        .unwrap();
+        let snap = snapshot_leak(&mut c, &Filter::default(), None, &id).unwrap();
+        assert_eq!(snap["snapshot"]["opportunities"], json!(1));
+        assert_eq!(snap["snapshot"]["actual"], json!(0.0));
+        let trend = leak_trend(&c, &id).unwrap();
+        let rows = trend.as_array().unwrap();
+        assert_eq!(rows.len(), 2);
+        assert_eq!(rows[0]["created"], json!(100));
+        assert!(rows[0]["created"].as_i64().unwrap() < rows[1]["created"].as_i64().unwrap());
+        assert!(snapshot_leak(&mut c, &Filter::default(), None, "missing-id").is_err());
+    }
+
+    #[test]
+    fn export_csv_writes_all_three_kinds_without_overwrite() {
+        let c = setup();
+        let id = save_benchmark(&c);
+        c.execute(
+            "INSERT INTO study_leak_trend(benchmark,created,actual,opportunities,hits,low,high,interval_low,interval_high) VALUES(?1,100,55.0,300,165,50,60,50.1,59.9)",
+            [&id],
+        )
+        .unwrap();
+        c.execute(
+            "INSERT INTO study_attempts(id,card,session,created,data) VALUES('a1','c1','s1',1234,'{\"rating\":\"advance\",\"source\":\"self\",\"pack\":null,\"observed\":\"bet 5bb\",\"reference\":{\"hand_id\":\"SYN1\",\"seq\":0}}')",
+            [],
+        )
+        .unwrap();
+        save_item(
+            &c,
+            "range_quiz",
+            None,
+            json!({"name":"p:n","pack":"p","node":"n","count":10,"avg":88.5,"created":1793500000i64}),
+        )
+        .unwrap();
+
+        let dir = std::env::temp_dir().join(format!(
+            "riverlens-study-export-test-{}",
+            std::process::id()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        for kind in ["attempts", "range_quiz", "leak_snapshots"] {
+            let path = dir.join(format!("{kind}.csv"));
+            let n = export_csv(&c, kind, &path).unwrap();
+            assert_eq!(n, 1, "{kind} row count");
+            let body = std::fs::read_to_string(&path).unwrap();
+            assert_eq!(body.lines().count(), 2, "{kind} header + row");
+            std::fs::remove_file(&path).unwrap();
+        }
+        // create_new refuses silent overwrite.
+        let path = dir.join("attempts.csv");
+        std::fs::write(&path, "x").unwrap();
+        assert!(export_csv(&c, "attempts", &path).is_err());
+        std::fs::remove_file(&path).unwrap();
+        std::fs::remove_dir(&dir).unwrap();
+        assert!(export_csv(&c, "nope", &dir.join("x.csv")).is_err());
+    }
 }

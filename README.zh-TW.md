@@ -12,7 +12,7 @@ RiverLens 是支援多牌室個人現金桌、指定錦標賽牌譜及獨立 MDA
 
 ![RiverLens 繁體中文總覽：合成資料](docs/screenshots/overview-zh-TW.jpg)
 
-README 共 **13 種語言**；個人複盤介面支援 **English／繁中／簡中**，首版 **MDA 工作區標籤使用繁體中文**。
+README 共 **13 種語言**；個人複盤介面支援 **English／繁中／簡中**，MDA 工作區標籤同樣支援三語。
 
 **v0.4.0** 新增群體研究，保留 AI 個人複盤及 Spot Explorer → Leak Finder → 翻前策略對照 → Trainer。策略包需自行提供；頻率對照不是 decision EV。[學習工作台](docs/study-workflow.md) · [主題](docs/theme-selection.md)。
 
@@ -25,10 +25,8 @@ README 共 **13 種語言**；個人複盤介面支援 **English／繁中／簡�
 ### 近期（v0.5.x）
 
 - Trainer 自適應排程（FSRS），以現有 1/3/7/14/30 天間隔為起點。
-- Leak 趨勢快照：已儲存目標按時間追蹤，讓每個情境的改善趨勢可見。
 - 翻後操練題型：來自使用者策略包或 MDA 群體基線，一律標示為傾向、非 GTO。
 - 練習與操練記錄 CSV 匯出，供自我分析。
-- MDA 工作台標籤支援英文與簡體中文。
 
 ### 中期
 
@@ -90,7 +88,7 @@ MTT 以 CHIPS 保存籌碼；可用時保留賽事編號、級別及 Buy-in 原�
 | 複盤工作台 | 保存筆記、標籤、已複盤狀態及常用篩選。 |
 | 本機資料管理 | 個人 SQLite、獨立 MDA DuckDB；個人 CSV／牌譜匯出，各資料庫獨立備份還原。 |
 | 外觀主題 | 森林綠、午夜藍、暖白；選擇儲存於本機。 |
-| 個人複盤三語介面 | 繁中、簡中及 English，離線可用；MDA 工作區目前使用繁體中文標籤。 |
+| 個人複盤三語介面 | 繁中、簡中及 English，離線可用；MDA 工作區標籤同樣支援三語。 |
 | 適用 All-in equity | 支援單挑、單底池、已知底牌、單 runout 的適用情況；不是 decision EV 或 GTO 評分。 |
 
 ![起手牌矩陣：合成資料](docs/screenshots/starting-hands-en.jpg)

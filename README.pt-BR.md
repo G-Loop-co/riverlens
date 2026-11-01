@@ -6,7 +6,7 @@
 
 RiverLens é um aplicativo de desktop para analisar seus próprios históricos de mãos de cash game já encerradas no Natural8 / GGPoker. Usa React / TypeScript na interface, Rust no processamento e nas estatísticas e SQLite local no armazenamento.
 
-> **[v0.5.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.5.0)** — Análise de população MDA + IA: GG Regular USD NLH 6-max, conjuntos DuckDB independentes e evidências de mãos anônimas. Compartilhamento desativado por padrão; interface MDA atualmente em chinês tradicional. [Downloads & validation](docs/release-v0.5.0.md) · [MDA scope, GG SEP restrictions and validation](docs/mda-population.md). macOS: ad-hoc signed, not notarized.
+> **[v0.5.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.5.0)** — Análise de população MDA + IA: GG Regular USD NLH 6-max, conjuntos DuckDB independentes e evidências de mãos anônimas. Compartilhamento desativado por padrão; rótulos do MDA em inglês, chinês tradicional e chinês simplificado. [Downloads & validation](docs/release-v0.5.0.md) · [MDA scope, GG SEP restrictions and validation](docs/mda-population.md). macOS: ad-hoc signed, not notarized.
 
 ## Recursos
 
