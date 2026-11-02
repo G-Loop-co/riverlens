@@ -1,12 +1,28 @@
+<div align="center">
+
 # RiverLens
 
-**自分のハンドを、自分の手元で。オフラインのポーカー振り返りワークスペース。**
+**あなたのハンド、あなたのデータ。ローカル完結のポーカー復習ワークスペース。**
+
+自分の完成したハンド履歴を20以上の部屋からインポートし、集団傾向を研究、証拠に基づいてリークを見つけ、練習で定着——すべてオフラインで動作します。
+
+[![Release](https://img.shields.io/github/v/release/G-Loop-co/riverlens)](https://github.com/G-Loop-co/riverlens/releases/latest)
+[![Desktop CI](https://github.com/G-Loop-co/riverlens/actions/workflows/desktop.yml/badge.svg)](https://github.com/G-Loop-co/riverlens/actions/workflows/desktop.yml)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%28Apple%20Silicon%20%26%20Intel%29-blue)
+![Runtime](https://img.shields.io/badge/runtime-offline%20first-2f6f4f)
+
+**[⬇️ RiverLens v0.6.0 をダウンロード](https://github.com/G-Loop-co/riverlens/releases/latest)**
+
+<sub>macOS ビルドは ad-hoc 署名です（notarized ではありません）。</sub>
+
+![RiverLens overview — synthetic data](docs/screenshots/overview-en.jpg)
+
+</div>
+
 
 [English](README.md) · [繁體中文](README.zh-TW.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-BR.md) · [Italiano](README.it.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md) · [Türkçe](README.tr.md)
 
-RiverLens は、Natural8／GGPoker で自分がプレイした完了済みキャッシュゲームのハンド履歴を分析するデスクトップアプリです。React／TypeScript の画面と Rust の解析・統計処理を組み合わせ、SQLite にローカル保存します。
-
-> **[v0.6.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.6.0)** — MDA 群体分析＋AI。GG Regular USD NLH 6-max、独立 DuckDB、匿名ハンドの検証に対応。データセット共有は既定でオフ。MDA 画面は英語・繁体字中国語・簡体字中国語に対応。 [Downloads & validation](docs/release-v0.6.0.md) · [MDA scope, GG SEP restrictions and validation](docs/mda-population.md). macOS: ad-hoc signed, not notarized.
+---
 
 ## 機能
 

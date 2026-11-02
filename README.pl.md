@@ -1,12 +1,28 @@
+<div align="center">
+
 # RiverLens
 
-**Twoje rozdania. Twoje dane. Lokalna przestrzeń do analizy pokera po sesji.**
+**Twoje rozdania. Twoje dane. Lokalne środowisko do analizy po sesji.**
+
+Importuj własne historie rozdań z ponad 20 pokoi, badaj tendencje populacji, znajduj przecieki na podstawie dowodów i utrwalaj je treningiem — w pełni lokalnie, na twojej maszynie.
+
+[![Release](https://img.shields.io/github/v/release/G-Loop-co/riverlens)](https://github.com/G-Loop-co/riverlens/releases/latest)
+[![Desktop CI](https://github.com/G-Loop-co/riverlens/actions/workflows/desktop.yml/badge.svg)](https://github.com/G-Loop-co/riverlens/actions/workflows/desktop.yml)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%28Apple%20Silicon%20%26%20Intel%29-blue)
+![Runtime](https://img.shields.io/badge/runtime-offline%20first-2f6f4f)
+
+**[⬇️ Pobierz RiverLens v0.6.0](https://github.com/G-Loop-co/riverlens/releases/latest)**
+
+<sub>Buildy macOS są podpisane ad-hoc, bez notaryzacji.</sub>
+
+![RiverLens overview — synthetic data](docs/screenshots/overview-en.jpg)
+
+</div>
+
 
 [English](README.md) · [繁體中文](README.zh-TW.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-BR.md) · [Italiano](README.it.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md) · [Türkçe](README.tr.md)
 
-RiverLens to aplikacja desktopowa do analizy własnych zakończonych rozdań cash game z Natural8 / GGPoker. Interfejs korzysta z React / TypeScript, silnik parsowania i statystyk z Rust, a dane są przechowywane lokalnie w SQLite.
-
-> **[v0.6.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.6.0)** — Analiza populacji MDA + AI: GG Regular USD NLH 6-max, niezależne zbiory DuckDB i anonimowe rozdania jako dowody. Udostępnianie domyślnie wyłączone; etykiety MDA w językach angielskim, tradycyjnym chińskim i uproszczonym chińskim. [Downloads & validation](docs/release-v0.6.0.md) · [MDA scope, GG SEP restrictions and validation](docs/mda-population.md). macOS: ad-hoc signed, not notarized.
+---
 
 ## Funkcje
 

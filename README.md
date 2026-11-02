@@ -1,28 +1,88 @@
-# RiverLens
+<div align="center">
 
-New in **v0.4.0: MDA population analysis with AI evidence**. Import independent GG Regular USD NLH 6-max datasets into local DuckDB, filter population tendencies and verify Coach / MCP suggestions with anonymous hands. Dataset sharing is off by default. [Release details](docs/release-v0.4.0.md) · [Statistical definitions and platform restrictions](docs/mda-population.md).
+# RiverLens
 
 **Your hands. Your data. A local workspace for post-session poker review.**
 
+Import your own hand histories from 20+ rooms, study population tendencies,
+find leaks with real evidence, and drill them into memory — all offline,
+on your machine, with nothing sent anywhere unless you switch it on.
+
+[![Release](https://img.shields.io/github/v/release/G-Loop-co/riverlens)](https://github.com/G-Loop-co/riverlens/releases/latest)
+[![Desktop CI](https://github.com/G-Loop-co/riverlens/actions/workflows/desktop.yml/badge.svg)](https://github.com/G-Loop-co/riverlens/actions/workflows/desktop.yml)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%28Apple%20Silicon%20%26%20Intel%29-blue)
+![Runtime](https://img.shields.io/badge/runtime-offline%20first-2f6f4f)
+
+**[⬇️ Download RiverLens v0.6.0](https://github.com/G-Loop-co/riverlens/releases/latest)** ·
+Windows installer · macOS Apple Silicon · macOS Intel
+
+<sub>macOS builds are ad-hoc signed, not notarized. [Release notes](docs/release-v0.6.0.md).</sub>
+
+![RiverLens overview — synthetic data](docs/screenshots/overview-en.jpg)
+
+</div>
+
 [English](README.md) · [繁體中文](README.zh-TW.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-BR.md) · [Italiano](README.it.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md) · [Türkçe](README.tr.md)
 
-RiverLens is a Tauri desktop application for reviewing your own completed cash-game and supported tournament hand histories from multiple rooms, alongside independent MDA population datasets. React and TypeScript power the interface; a Rust core handles parsing and statistics, with personal review in SQLite and MDA in DuckDB.
+---
 
-> **[Download v0.6.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.6.0)** — MDA + AI, local MCP and offline study. Windows, Apple Silicon and Intel Mac packages. macOS downloads are ad-hoc signed, not notarized. [Release notes](docs/release-v0.6.0.md).
+## Why RiverLens
 
-![RiverLens overview in English — synthetic data](docs/screenshots/overview-en.jpg)
+| | |
+| --- | --- |
+| 🔒 **Local-first, by design** | Personal review lives in SQLite, population research in independent DuckDB datasets. No account, no cloud sync, no telemetry. AI and dataset sharing are opt-in and off by default. |
+| 🧪 **Evidence, not vibes** | Every rate ships with its legal-opportunity denominator, Wilson 95% interval and drill-down to anonymous hands. Missing baselines are called research hypotheses — never "you leak X". |
+| 🌍 **20+ rooms and networks** | Native parsers for GG/Natural8, PokerStars, WPN, 888, partypoker, Winamax, iPoker and more, cash and tournaments — see the [full table](#supported-rooms). |
+| 🤖 **AI that shows receipts** | 23 local MCP tools for your own agent, or an in-app coach (OpenAI / Anthropic / Gemini / DeepSeek / OpenCode Go). Every AI claim links back to hand evidence and requires your approval. |
+| 🧠 **A study loop that closes** | Spot Explorer → Leak Finder → GTO reference → Range drill → Trainer with spaced review — and now leak trend snapshots so you can see a leak shrinking. |
+| 📊 **Serious numbers, honest labels** | 13 core statistics, 13×13 matrix, all-in equity with exact enumeration. What is not decision EV is labelled as not decision EV. |
 
-README translations: **13 languages**. Personal-review interface: **English, Traditional Chinese and Simplified Chinese**; the first MDA workspace uses **Traditional Chinese labels**.
+## The study loop
 
-**v0.4.0** adds population research alongside AI-assisted personal review and Spot Explorer → Leak Finder → Preflop reference → Trainer. User-supplied strategy packs are required for strategy comparisons; frequencies are not decision EV. [Study workflow](docs/study-workflow.md) · [Themes](docs/theme-selection.md).
+```text
+Import  →  Explore spots  →  Find leaks  →  Compare with GTO  →  Drill & review  →  Track trends
+```
 
-**v0.5.0** closes the study loop: AI practice drafts convert into Trainer self-review cards, a range drill quizzes action frequencies against strategy-pack nodes, the MDA research wizard walks hypothesis → Wilson-interval stats → anonymous hand verification → AI exploitation analysis, and a one-page progress dashboard collects practice, drill and leak-target status. Descriptive observations only; frequencies are not EV.
+1. **Import** completed hands (TXT / XML / ZIP / folders) in the Import center — pause, resume, dedupe, quarantine.
+2. **Explore** any decision context: position, pot type, stacks, bet sizes, board, exact action path.
+3. **Find leaks** against your own targets or a GTO strategy pack, with Wilson-interval honesty about sample size.
+4. **Drill**: assign action frequencies combo by combo in the Range drill, or review spaced Trainer cards built from your own decisions and AI drafts.
+5. **Track**: leak trend snapshots chart whether the frequency is actually converging — and everything exports to CSV.
 
-**v0.6.0** adds leak trend snapshots: snapshots are recomputed by the engine from the indexed ledger, visualised against the target range in Leak Finder, and exportable to CSV together with practice and range-drill history. The MDA workspace and research wizard are fully localised to English, Traditional Chinese and Simplified Chinese.
+<details>
+<summary><strong>📸 More screenshots</strong></summary>
 
-## Personal-review hand-history formats (v0.6.0)
+![Observed starting hands — synthetic data](docs/screenshots/starting-hands-en.jpg)
 
-English NLHE, 2–10 seats, UTF-8. These formats apply to personal review; MDA remains GG Regular USD NLH 6-max. Import TXT, XML, ZIP or folders. “Native” means an implemented room grammar; it does not certify every current client version. [Export guides, sources and exact limitations](docs/hand-history-formats.md).
+![MDA statistics — 10,000 synthetic hands, Traditional Chinese workspace](docs/validation/mda-stats.jpg)
+
+Screenshots capture full pages at 1920px desktop width with the Paper (warm white) theme, using **240 generated hands** — not private player data. A [1920 × 1080 overview](docs/screenshots/overview-desktop-en.jpg) is also available.
+
+</details>
+
+## What's new in v0.6.0
+
+- 📈 **Leak trend snapshots** — record a benchmark any time; the engine recomputes numerator, opportunities and Wilson interval from the indexed ledger (the app never trusts numbers from the page), then charts your actual frequency against the target range.
+- 📤 **Study history export** — practice attempts, range-drill records and leak snapshots export to brand-new CSV files.
+- 🌏 **Full MDA localisation** — the MDA workspace and research wizard now speak English, Traditional Chinese and Simplified Chinese.
+- 🤖 **AI drafts → Trainer** — practice drafts from your AI coach convert into spaced self-review cards; the research wizard walks hypothesis → Wilson-interval stats → anonymous hand verification → AI exploitation analysis.
+
+<details>
+<summary><strong>Previous releases</strong></summary>
+
+- **v0.5.0** — AI practice drafts → Trainer self-review cards; range drill against strategy-pack nodes; MDA research wizard; one-page progress dashboard.
+- **v0.4.x** — MDA population analysis on independent DuckDB datasets, AI / MCP integration, multi-room cash and tournament hand histories.
+
+[All release notes](https://github.com/G-Loop-co/riverlens/releases)
+
+</details>
+
+## Supported rooms
+
+English NLHE personal review, 2–10 seats, UTF-8; cash and supported tournaments. MDA population research remains GG Regular USD NLH 6-max. Import TXT, XML, ZIP or folders — no live client connection, ever.
+
+<details>
+<summary><strong>Full room / network table</strong></summary>
 
 | Room / network | Cash input | MTT / tournament | Support scope |
 | --- | --- | --- | --- |
@@ -45,42 +105,52 @@ English NLHE, 2–10 seats, UTF-8. These formats apply to personal review; MDA r
 | PPPoker / PokerBros / UPoker / ClubGG / X-Poker / QQPK | PokerStars TXT | — | Existing complete conversion only |
 | WPT Global | PokerStars TXT | — | Existing complete conversion only |
 
-“—” means tournament parsing is not implemented for that row. Converted rooms require an existing complete PokerStars cash export; RiverLens does not capture or convert their native histories. WPN modern Cash and CoinPoker native Cash still lack real-sample native-app validation in this run. Historical names do not imply that a room still operates. Other researched rooms and PHH / OHH / ACPC are not implemented.
+</details>
 
-MTT amounts are stored as CHIPS, with tournament ID, level and source buy-in text when available. Chips and cash currencies stay separate. All-in chip EV is not prize money, ROI, ICM or bounty EV. Native validation on a v0.3.2-based test app covers 13 public Cash samples, seven tournament grammars and preserved own Cash/Rush histories; four incompatible tournament samples remain rejected. The v0.4.0 integration has separate source regression results in the linked guide. These changes are included in v0.6.0; see the release notes for packaging validation and remaining acceptance limits.
+"—" means tournament parsing is not implemented for that row. Converted rooms require an existing complete PokerStars cash export. MTT amounts are stored as CHIPS and never mixed with cash currencies; all-in chip EV is not prize money, ROI, ICM or bounty EV. [Export guides and exact limitations](docs/hand-history-formats.md).
 
-## Features
+## AI that shows its work
 
-| Feature | What you can do |
-| --- | --- |
-| AI coach and agent connection | Explore statistics and decision context through 23 local MCP tools; create evidence-linked review, practice and study-plan drafts for your approval. |
-| MDA population analysis | Import independent GG Regular datasets; filter legal all-player opportunities, inspect confidence intervals and research hypotheses, then verify anonymous hand evidence. |
-| Import center | Import TXT, XML, ZIP or folders; monitor progress, pause/resume, detect duplicates and inspect quarantined records. |
-| Results dashboard | Explore net results, bb/100, session and position breakdowns; drill into underlying hands. |
-| 13 core statistics | Review VPIP, PFR, RFI, 3-bet, blind defense and postflop/showdown frequencies with explicit opportunity denominators. |
-| 13 × 13 starting-hand matrix | Inspect observed hand counts, net bb, bb/100 and action frequency; open the matching hand list. |
-| Hand replayer | Step through actions, jump streets and replay known cards. |
-| Review workspace | Save notes, tags, reviewed status and reusable filters. |
-| Data ownership | Keep personal review in SQLite and MDA in independent DuckDB datasets; export personal CSV / hand histories and back up or restore each data store. |
-| Appearance themes | Choose Forest, Midnight or Paper (warm white); the selection persists locally. |
-| Personal-review languages | Switch between English, Traditional Chinese and Simplified Chinese offline; MDA workspace labels support all three languages. |
-| Eligible all-in equity | Calculate supported heads-up, single-pot, known-hole-card, single-runout situations. This is not decision EV or a GTO score. |
+Two ways to bring AI in — both evidence-linked, both requiring your approval before anything is saved:
 
-![Observed starting hands — synthetic data](docs/screenshots/starting-hands-en.jpg)
+| | In-app coach | External agent (MCP) |
+| --- | --- | --- |
+| **Setup** | Save an API key (OpenAI, Anthropic, Gemini, DeepSeek, OpenCode Go) in AI Connections | Enable the local connection and point any stdio-MCP client (e.g. Codex) at it |
+| **Key storage** | OS credential store | Your agent's own login — RiverLens holds no provider key |
+| **Tools** | 5 scoped population tools + full study tools | 23 local MCP tools |
+| **Output** | Evidence-linked drafts in the Learning Library | Same drafts, driven by your agent |
 
-Screenshots capture the complete page at **1920px desktop width**, using the **Paper (warm white)** theme. A [1920 × 1080 overview](docs/screenshots/overview-desktop-en.jpg) is also available.
+Live provider calls remain unverified; offline study works without any key. [Full setup and limitations](docs/ai-agent-coach.md).
 
-Screenshots use **240 generated hands**, not private player data. The deliberately repetitive fixture is for demonstrating the interface, not realistic frequencies or strategy advice. The matrix describes observed hands, not a recommended range.
+<details>
+<summary><strong>MDA population research in 4 steps</strong></summary>
+
+1. Create an independent dataset and set the hand-history time zone; import GG Regular USD NLH 6-max TXT / ZIP / folders.
+2. Filter stakes, positions, pot type, stacks, board and facing-bet size; postflop defaults to heads-up.
+3. Read rates with legal-opportunity denominators, Wilson 95% intervals and period splits; verify with anonymous hand evidence.
+4. Enable cloud AI or MCP access per dataset (off by default) and ask for adjustment directions with receipts.
+
+The 10-million-hand synthetic benchmark passed on Apple M3 Pro: aggregate p95 **16.4 ms**, contextual p95 **1.20 s**, peak RSS **1.39 GiB**. [Complete evidence](docs/validation/mda-population-ai.md).
+
+</details>
+
+## What RiverLens is not
+
+This is a trust product, so the boundaries are a feature:
+
+- ❌ No live HUD, real-time assistance or game-client connection
+- ❌ No cloud sync, accounts or telemetry — deletion means deletion
+- ❌ No decision EV, GTO best-action scores or "confidence" theatre
+- ❌ Not affiliated with Natural8 or GGPoker; GG's Security & Ecology Policy restricts collecting others' histories and systematic MDA sharing — RiverLens imports **your own** completed hands only, and dataset sharing stays off unless you switch it on. [Details](docs/mda-population.md).
 
 ## Roadmap
 
-Planned directions, not commitments; no dates. Scope discipline stays the same: local-first, no live HUD / real-time assistance / cloud sync, and frequencies are never decision EV.
+Planned directions, not commitments; no dates. Scope discipline stays the same.
 
-### Near term (v0.5.x)
+### Near term (v0.6.x)
 
 - Adaptive Trainer scheduling (FSRS) with the existing 1/3/7/14/30-day intervals as the starting point.
 - Postflop drill question types from user-supplied packs or MDA population baselines, always labelled as tendencies, never GTO.
-- Practice and drill history export (CSV) for self-analysis.
 
 ### Mid term
 
@@ -99,65 +169,9 @@ Planned directions, not commitments; no dates. Scope discipline stays the same: 
 
 Live HUD / real-time assistance, cloud sync of private histories, solver licensing, or decision-EV claims.
 
-## MDA + AI quick start
+## Build from source
 
-1. Open **MDA 群體分析**, create a dataset and set its source and hand-history time zone. Import GG Regular USD NLH 6-max TXT, ZIP or a folder; use the import tab to pause/resume or inspect quarantined records.
-2. Select stakes, positions, pot type, effective stacks, board and facing-bet size. Postflop research defaults to heads-up spots. Read each rate with its legal-opportunity denominator and anonymous hand evidence.
-3. For the in-app Coach, enable this dataset's cloud sharing and the existing provider consent, then select a provider/model. For an external agent, enable this dataset's MCP access and the local connection. Both dataset permissions start off.
-4. Ask for context, counts, adjustment direction and sizing, reasons, exceptions and anonymous examples. Review the evidence-linked draft in the dataset's AI tab and replay its hands.
-
-The 10-million-hand synthetic benchmark passed on Apple M3 Pro: aggregate p95 **16.4 ms**, contextual p95 **1.20 s**, peak process RSS **1.39 GiB**. These are two documented core queries with warm OS cache, excluding desktop UI, IPC and provider latency. [Complete source, hardware, correctness and performance evidence](docs/validation/mda-population-ai.md).
-
-Missing baselines are research hypotheses. Shown-card samples expose coverage and selection bias. Pure-bluff break-even arithmetic applies only to its stated heads-up river assumptions; it is not solver or decision EV output. HHDealer PT/HM/H2N4, live provider and external model-client compatibility still require real samples or live testing.
-
-![MDA statistics — 10,000 synthetic hands, Traditional Chinese workspace](docs/validation/mda-stats.jpg)
-
-## AI: features and quick start
-
-Ask about your statistics, inspect a specific decision, find spots worth reviewing, and create practice or study-plan drafts linked to hand evidence. Drafts require your approval; AI and offline study libraries currently remain separate.
-
-**Use an external agent — no provider API key in RiverLens:**
-
-1. Import completed hands and keep RiverLens open.
-2. Open **AI Coach → AI Connections → Enable local connection**. Copy the displayed configuration into a client supporting **stdio MCP**, such as Codex.
-3. Ask: “Review my biggest leak candidates, show sample sizes and supporting hands, then create a practice draft.” Review and accept drafts in **Learning Library**.
-
-Your agent may need its own login/subscription. Update the connection configuration after restarting RiverLens; **Revoke connection** disables access.
-
-**Use the in-app coach — API key required:** save an OpenAI, Anthropic, Gemini, DeepSeek or OpenCode Go key in **AI Connections**, then choose a compatible model and sharing scope in **AI Coach**. Ask a question, or use **Ask AI** from the hand replayer.
-
-Selected context can be sent to the model provider, including through an external agent. Keys stay in the OS credential store. Live provider calls remain unverified; offline study works without a key. [Full setup and limitations](docs/ai-agent-coach.md).
-
-### Supported AI connections
-
-These are the five implemented in-app providers. Choose an account-accessible model with tool calling; integration support does not mean every model has been live-tested.
-
-| Provider | Models / API | Setup |
-| --- | --- | --- |
-| OpenAI | Tool-capable GPT models using Chat Completions | OpenAI API key |
-| Anthropic | Tool-capable Claude models using Messages | Anthropic API key |
-| Google Gemini | Tool-capable Gemini models using streamGenerateContent | Gemini API key |
-| DeepSeek | `deepseek-flash`, `deepseek-v4-pro`; accepted legacy aliases depend on the provider | DeepSeek API key |
-| OpenCode Go | GLM, Kimi, LongCat, DeepSeek, MiMo, Hy, MiniMax, Qwen, Grok, GPT and Muse; routed by model family | Go subscription and API key |
-
-**External agents:** clients supporting local **stdio MCP**, such as Codex, can use RiverLens tools through the displayed connection configuration. This is a protocol connection, not a built-in provider or a guarantee that every client has been tested. The client supplies its own model/login; RiverLens needs no provider key for this path.
-
-<details>
-<summary>OpenCode Go model IDs and automatic API routing</summary>
-
-| API | Model IDs |
-| --- | --- |
-| Chat Completions | `glm-5.3-flash`, `glm-5.3`, `glm-5.2`, `glm-5.1`, `kimi-k3`, `kimi-k2.7-code`, `kimi-k2.6`, `longcat-2.0`, `deepseek-v4.1-flash`, `deepseek-v4-pro`, `deepseek-v4-flash`, `deepseek-v4-flash-vision-exp`, `mimo-v2.5`, `mimo-v2.5-pro`, `hy4-preview`, `hy3` |
-| Messages | `minimax-m3`, `minimax-m2.7`, `minimax-m2.5`, `qwen3.8-max`, `qwen3.8-flash`, `qwen3.7-max`, `qwen3.7-plus`, `qwen3.6-plus` |
-| Responses | `grok-4.6`, `gpt-5.6-luna`, `muse-spark-1.3-contributor`, `muse-spark-1.2-contributor` |
-
-</details>
-
-Model catalogs change: check [DeepSeek](https://api-docs.deepseek.com/quick_start/pricing/) and [OpenCode Go](https://opencode.ai/docs/go/#endpoints) for current access and IDs. Enter the bare ID, without `opencode-go/`. Go is intended for coding-agent traffic; RiverLens poker coaching eligibility and live compatibility are unverified. Vision-capable models receive text only.
-
-## Quick start
-
-Requires Node.js 22+, Rust stable and the [Tauri platform prerequisites](https://v2.tauri.app/start/prerequisites/) (Xcode Command Line Tools on macOS; MSVC C++ Build Tools and WebView2 on Windows).
+Requires Node.js 22+, Rust stable and the [Tauri platform prerequisites](https://v2.tauri.app/start/prerequisites/).
 
 ```sh
 git clone https://github.com/G-Loop-co/riverlens.git
@@ -166,48 +180,28 @@ npm ci
 npm run desktop
 ```
 
-1. Export your own completed hand histories from PokerCraft as TXT or ZIP.
-2. In **Data & settings**, confirm the brand, Hero name and the time zone used inside the hand-history text.
-3. Import files in **Import center**.
-4. Review results, inspect the starting-hand matrix and replay individual hands.
-5. Save notes and back up your database.
-
-## Development
+1. Export your own completed hand histories (e.g. PokerCraft TXT / ZIP).
+2. In **Data & settings**, confirm brand, Hero name and the hand-history time zone.
+3. Import in the **Import center**, then review results, the 13×13 matrix and individual hands.
 
 ```sh
-# Terminal 1: local Rust HTTP core, bound to 127.0.0.1
-npm run serve:core
-# Terminal 2: browser preview at http://127.0.0.1:1420
-npm run dev
+npm test          # frontend tests
+npm run core:test # Rust core tests
+npm run build     # strict production build
 ```
 
-The desktop app uses Tauri IPC and native file dialogs. The browser preview uses the same Rust core with development-only file path entry.
+Data lives in the Tauri app-data directory (`app.riverlens.desktop`); the settings page shows the actual location. Use the built-in backup for an active database so SQLite WAL is handled correctly.
 
-```sh
-npm test
-npm run core:test
-npm run build
-node scripts/cargo.mjs clippy -p poker-core --all-targets -- -D warnings
-npm run desktop:build -- --bundles app
-# On a Windows native runner:
-npm run desktop:build -- --target x86_64-pc-windows-msvc --bundles nsis
-```
-
-Data lives in the Tauri app-data directory (`app.riverlens.desktop`); the settings page shows the actual location. Browser development uses `.local/riverlens.db`. Use the built-in backup operation for an active database so SQLite WAL data is handled correctly.
-
-## Scope and release status
-
-RiverLens supports offline personal post-session review and MDA population research. It does not connect to the game client and provides no live HUD, real-time assistance, cloud sync or GTO best-action scoring. It is not affiliated with Natural8 or GGPoker. GG's Security & Ecology Policy sections 7 and 19 restrict collecting other players' histories and collecting/sharing MDA; penalties can include suspension, bans and confiscation of funds. See the [MDA restrictions and validation gates](docs/mda-population.md).
-
-The v0.4.0 release includes MDA, AI/MCP integration and the offline study workflow. Private hand histories, local databases and strategy packs are excluded. See the [release notes](docs/release-v0.4.0.md) for validation limits.
+## Documentation
 
 - [User guide (Traditional Chinese)](docs/user-guide.md)
 - [Architecture and statistical definitions](docs/architecture.md)
-- [Research and existing components](docs/research-matrix.md)
+- [Study workflow](docs/study-workflow.md)
+- [Hand-history formats and export guides](docs/hand-history-formats.md)
+- [AI coach and MCP setup](docs/ai-agent-coach.md)
+- [MDA restrictions and validation gates](docs/mda-population.md)
 - [Validation and limitations](docs/validation.md)
-- [Changelog](CHANGELOG.md)
-- [Third-party components](THIRD_PARTY.md)
-- [Releases](https://github.com/G-Loop-co/riverlens/releases)
+- [Changelog](CHANGELOG.md) · [Third-party components](THIRD_PARTY.md) · [All releases](https://github.com/G-Loop-co/riverlens/releases)
 
 ## Licensing
 

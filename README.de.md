@@ -1,12 +1,28 @@
+<div align="center">
+
 # RiverLens
 
-**Deine Hände. Deine Daten. Ein lokaler Arbeitsplatz für die Poker-Nachanalyse.**
+**Deine Hände. Deine Daten. Ein lokaler Workspace für Poker-Review nach der Session.**
+
+Importiere eigene Hand-Histories aus 20+ Räumen, studiere Populationstendenzen, finde Leaks mit echten Belegen und verankere sie im Training — komplett offline, auf deinem Rechner.
+
+[![Release](https://img.shields.io/github/v/release/G-Loop-co/riverlens)](https://github.com/G-Loop-co/riverlens/releases/latest)
+[![Desktop CI](https://github.com/G-Loop-co/riverlens/actions/workflows/desktop.yml/badge.svg)](https://github.com/G-Loop-co/riverlens/actions/workflows/desktop.yml)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%28Apple%20Silicon%20%26%20Intel%29-blue)
+![Runtime](https://img.shields.io/badge/runtime-offline%20first-2f6f4f)
+
+**[⬇️ RiverLens v0.6.0 herunterladen](https://github.com/G-Loop-co/riverlens/releases/latest)**
+
+<sub>macOS-Builds sind ad-hoc signiert, nicht notarized.</sub>
+
+![RiverLens overview — synthetic data](docs/screenshots/overview-en.jpg)
+
+</div>
+
 
 [English](README.md) · [繁體中文](README.zh-TW.md) · [简体中文](README.zh-CN.md) · [日本語](README.ja.md) · [한국어](README.ko.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-BR.md) · [Italiano](README.it.md) · [Nederlands](README.nl.md) · [Polski](README.pl.md) · [Türkçe](README.tr.md)
 
-RiverLens ist eine Desktop-App zur Analyse deiner eigenen abgeschlossenen Cashgame-Handverläufe von Natural8 / GGPoker. React / TypeScript bilden die Oberfläche, Rust übernimmt Parsing und Statistik, SQLite speichert die Daten lokal.
-
-> **[v0.6.0](https://github.com/G-Loop-co/riverlens/releases/tag/v0.6.0)** — MDA-Populationsanalyse + KI: GG Regular USD NLH 6-max, unabhängige DuckDB-Datensätze und anonyme Handbelege. Teilen standardmäßig deaktiviert; MDA-Oberfläche auf Englisch, traditionellem und vereinfachtem Chinesisch. [Downloads & validation](docs/release-v0.6.0.md) · [MDA scope, GG SEP restrictions and validation](docs/mda-population.md). macOS: ad-hoc signed, not notarized.
+---
 
 ## Funktionen
 
