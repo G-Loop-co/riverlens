@@ -8,6 +8,9 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { MdaWorkspace } from "./components/MdaWorkspace";
+import type { MdaTab } from "./components/MdaWorkspace";
+import { MemoryRouter } from "react-router";
+import { useState } from "react";
 import { AiCoach, EvidenceCard } from "./components/AiCoach";
 import { Replayer } from "./components/Replayer";
 import type { ReactNode } from "react";
@@ -64,7 +67,15 @@ it("keeps datasets separate, pins queries and requires dataset cloud consent", a
       result: await backend.api(JSON.parse(init.body as string)),
     }),
   }));
-  render(<MdaWorkspace />);
+  function Harness(): ReactNode {
+    const [tab, setTab] = useState<MdaTab>("stats");
+    return (
+      <MemoryRouter initialEntries={["/research/stats?dataset=mda-test"]}>
+        <MdaWorkspace tab={tab} onTabChange={setTab} />
+      </MemoryRouter>
+    );
+  }
+  render(<Harness />);
   await screen.findByText("1,000 有效手牌", { exact: false });
   await waitFor(() =>
     expect(backend.api).toHaveBeenCalledWith(
@@ -81,7 +92,7 @@ it("keeps datasets separate, pins queries and requires dataset cloud consent", a
       }),
     ),
   );
-  fireEvent.click(screen.getByRole("button", { name: "AI 剝削分析" }));
+  fireEvent.click(screen.getByRole("tab", { name: "AI 剝削分析" }));
   expect(
     await screen.findByText("在「平台限制及資料分享」", { exact: false }),
   ).toBeTruthy();

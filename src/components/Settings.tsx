@@ -21,11 +21,13 @@ export function Settings({
   health,
   refresh,
   notify,
+  section = "sources",
 }: {
   profiles: Profile[];
   health?: Health | null;
   refresh: () => void;
   notify: (s: string) => void;
+  section?: "sources" | "preferences";
 }) {
   const { t } = useTranslation();
   const [error, setError] = useState(""),
@@ -159,218 +161,233 @@ export function Settings({
   return (
     <div className="settings-view">
       <ThemeSelect />
-      <section className="panel">
-        <div className="settings-action language-setting">
-          <div>
-            <h2>{t("介面語言")}</h2>
-            <p>
+      {section === "preferences" ? (
+        <section className="panel">
+          <div className="settings-action language-setting">
+            <div>
+              <h2>{t("介面語言")}</h2>
+              <p>
+                {t(
+                  "語言選擇會儲存於本機；不影響牌譜原文、筆記、篩選條件或金額。",
+                )}
+              </p>
+            </div>
+            <LanguageSelect />
+          </div>
+        </section>
+      ) : (
+        <>
+          {error && <ErrorBanner>{error}</ErrorBanner>}
+          {health?.equity_error && (
+            <ErrorBanner>
+              {t("Equity 計算已暫停：{{v0}}。可重試「繼續計算」。", {
+                v0: health.equity_error,
+              })}
+            </ErrorBanner>
+          )}
+          <section className="panel">
+            <div className="panel-heading">
+              <div>
+                <span className="section-kicker">{t("SOURCE PROFILES")}</span>
+                <h2>{t("牌譜來源")}</h2>
+              </div>
+              <button
+                className="button subtle"
+                onClick={() => setCreating((v) => !v)}
+                disabled={!!busy}
+                aria-expanded={creating}
+              >
+                <Plus size={16} />
+                {t("新增來源")}
+              </button>
+            </div>
+            <div className="profile-list">
+              {profiles.map((p) => (
+                <div className="profile-row" key={p.id}>
+                  <span className="profile-icon">
+                    <Database size={22} />
+                  </span>
+                  <div>
+                    <h3>{p.name}</h3>
+                    <small>
+                      {t("{{v0}} · Hero: {{v1}} · {{v2}}", {
+                        v0: p.brand,
+                        v1: p.hero,
+                        v2: p.timezone,
+                      })}
+                    </small>
+                  </div>
+                  <span className="subtle-badge">{t("本機")}</span>
+                </div>
+              ))}
+            </div>
+            {creating && (
+              <fieldset className="profile-form" disabled={!!busy}>
+                <Field label={t("顯示名稱")}>
+                  <input
+                    value={draft.name}
+                    onChange={(e) =>
+                      setDraft({ ...draft, name: e.target.value })
+                    }
+                    placeholder={t("例如：GGPoker Hero")}
+                  />
+                </Field>
+                <Field label={t("品牌")}>
+                  <select
+                    value={draft.brand}
+                    onChange={(e) =>
+                      setDraft({ ...draft, brand: e.target.value })
+                    }
+                  >
+                    {importRooms.map(({ room, converted }) => (
+                      <option key={room} value={room}>
+                        {room}
+                        {converted ? ` · ${t("僅 PokerStars 轉換檔")}` : ""}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label={t("牌譜內 Hero 名稱")}>
+                  <input
+                    value={draft.hero}
+                    onChange={(e) =>
+                      setDraft({ ...draft, hero: e.target.value })
+                    }
+                  />
+                </Field>
+                <Field label={t("牌譜內原始時區")}>
+                  <input
+                    value={draft.timezone}
+                    onChange={(e) =>
+                      setDraft({ ...draft, timezone: e.target.value })
+                    }
+                  />
+                </Field>
+                <button
+                  className="button primary"
+                  disabled={
+                    !!busy ||
+                    !draft.name.trim() ||
+                    !draft.hero.trim() ||
+                    !draft.timezone.trim()
+                  }
+                  onClick={() => void create()}
+                >
+                  {t("建立來源")}
+                </button>
+              </fieldset>
+            )}
+            <p className="panel-footnote">
               {t(
-                "語言選擇會儲存於本機；不影響牌譜原文、筆記、篩選條件或金額。",
+                "時區依牌譜內文設定；不使用檔名時間。同一份牌譜應使用同一來源，避免跨 profile 重複計算。",
               )}
             </p>
-          </div>
-          <LanguageSelect />
-        </div>
-      </section>
-      {error && <ErrorBanner>{error}</ErrorBanner>}
-      {health?.equity_error && (
-        <ErrorBanner>
-          {t("Equity 計算已暫停：{{v0}}。可重試「繼續計算」。", {
-            v0: health.equity_error,
-          })}
-        </ErrorBanner>
-      )}
-      <section className="panel">
-        <div className="panel-heading">
-          <div>
-            <span className="section-kicker">{t("SOURCE PROFILES")}</span>
-            <h2>{t("牌譜來源")}</h2>
-          </div>
-          <button
-            className="button subtle"
-            onClick={() => setCreating((v) => !v)}
-            disabled={!!busy}
-            aria-expanded={creating}
-          >
-            <Plus size={16} />
-            {t("新增來源")}
-          </button>
-        </div>
-        <div className="profile-list">
-          {profiles.map((p) => (
-            <div className="profile-row" key={p.id}>
-              <span className="profile-icon">
-                <Database size={22} />
-              </span>
+          </section>
+          <section className="panel">
+            <div className="panel-heading">
               <div>
-                <h3>{p.name}</h3>
-                <small>
-                  {t("{{v0}} · Hero: {{v1}} · {{v2}}", {
-                    v0: p.brand,
-                    v1: p.hero,
-                    v2: p.timezone,
-                  })}
-                </small>
+                <span className="section-kicker">{t("LOCAL DATA")}</span>
+                <h2>{t("備份與還原")}</h2>
               </div>
-              <span className="subtle-badge">{t("本機")}</span>
+              <HardDrives size={23} />
             </div>
-          ))}
-        </div>
-        {creating && (
-          <fieldset className="profile-form" disabled={!!busy}>
-            <Field label={t("顯示名稱")}>
-              <input
-                value={draft.name}
-                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-                placeholder={t("例如：GGPoker Hero")}
-              />
-            </Field>
-            <Field label={t("品牌")}>
-              <select
-                value={draft.brand}
-                onChange={(e) => setDraft({ ...draft, brand: e.target.value })}
+            <div className="settings-action">
+              <div>
+                <h3>{t("一致性資料庫備份")}</h3>
+                <p>
+                  {t("包含牌譜原文、統計、筆記、標籤及篩選；不依賴原始 ZIP。")}
+                </p>
+              </div>
+              <button
+                className="button subtle"
+                disabled={!!busy}
+                onClick={() => void backup()}
               >
-                {importRooms.map(({ room, converted }) => (
-                  <option key={room} value={room}>
-                    {room}
-                    {converted ? ` · ${t("僅 PokerStars 轉換檔")}` : ""}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label={t("牌譜內 Hero 名稱")}>
-              <input
-                value={draft.hero}
-                onChange={(e) => setDraft({ ...draft, hero: e.target.value })}
-              />
-            </Field>
-            <Field label={t("牌譜內原始時區")}>
-              <input
-                value={draft.timezone}
-                onChange={(e) =>
-                  setDraft({ ...draft, timezone: e.target.value })
-                }
-              />
-            </Field>
-            <button
-              className="button primary"
-              disabled={
-                !!busy ||
-                !draft.name.trim() ||
-                !draft.hero.trim() ||
-                !draft.timezone.trim()
-              }
-              onClick={() => void create()}
-            >
-              {t("建立來源")}
-            </button>
-          </fieldset>
-        )}
-        <p className="panel-footnote">
-          {t(
-            "時區依牌譜內文設定；不使用檔名時間。同一份牌譜應使用同一來源，避免跨 profile 重複計算。",
-          )}
-        </p>
-      </section>
-      <section className="panel">
-        <div className="panel-heading">
-          <div>
-            <span className="section-kicker">{t("LOCAL DATA")}</span>
-            <h2>{t("備份與還原")}</h2>
-          </div>
-          <HardDrives size={23} />
-        </div>
-        <div className="settings-action">
-          <div>
-            <h3>{t("一致性資料庫備份")}</h3>
-            <p>{t("包含牌譜原文、統計、筆記、標籤及篩選；不依賴原始 ZIP。")}</p>
-          </div>
-          <button
-            className="button subtle"
-            disabled={!!busy}
-            onClick={() => void backup()}
-          >
-            <DownloadSimple size={17} />
-            {busy === "backup" ? t("備份中…") : t("建立備份")}
-          </button>
-        </div>
-        <div className="settings-action">
-          <div>
-            <h3>{t("從備份還原")}</h3>
-            <p>
-              {t("先驗證資料庫並保存目前資料，再替換；請先完成或暫停匯入。")}
+                <DownloadSimple size={17} />
+                {busy === "backup" ? t("備份中…") : t("建立備份")}
+              </button>
+            </div>
+            <div className="settings-action">
+              <div>
+                <h3>{t("從備份還原")}</h3>
+                <p>
+                  {t(
+                    "先驗證資料庫並保存目前資料，再替換；請先完成或暫停匯入。",
+                  )}
+                </p>
+              </div>
+              <button
+                className="button subtle"
+                disabled={!!busy || health?.import_active}
+                onClick={() => void restore()}
+              >
+                <UploadSimple size={17} />
+                {busy === "restore" ? t("還原中…") : t("選擇備份")}
+              </button>
+            </div>
+            <div className="settings-action">
+              <div>
+                <h3>{t("從原文重新計算")}</h3>
+                <p>{t("以目前 parser 重新解析帳本與統計，保留複盤筆記。")}</p>
+              </div>
+              <button
+                className="button subtle"
+                disabled={!!busy || health?.import_active}
+                onClick={() => void rebuild()}
+              >
+                <ArrowClockwise size={17} />
+                {busy === "rebuild" ? t("重算中…") : t("重算資料")}
+              </button>
+            </div>
+          </section>
+          <section className="panel">
+            <div className="panel-heading">
+              <div>
+                <span className="section-kicker">{t("ENGINE")}</span>
+                <h2>{t("本機分析引擎")}</h2>
+              </div>
+              <ShieldCheck size={23} />
+            </div>
+            <div className="settings-action">
+              <div>
+                <h3>{t("All-in equity 精確枚舉")}</h3>
+                <p>
+                  {!health
+                    ? t("未連接")
+                    : health.equity_paused
+                      ? t("已暫停，可隨時續算。")
+                      : health?.equity_running
+                        ? t("背景計算中，結果逐手保存。")
+                        : t("啟用；適用牌局匯入後自動計算。")}
+                </p>
+              </div>
+              <button
+                className="button subtle"
+                disabled={!!busy || !health}
+                onClick={() => void equity()}
+              >
+                {health?.equity_paused ? t("繼續計算") : t("暫停計算")}
+              </button>
+            </div>
+            <dl className="engine-details">
+              <dt>{t("Parser")}</dt>
+              <dd>{health?.parser || "—"}</dd>
+              <dt>{t("Statistics")}</dt>
+              <dd>{health?.stats || "—"}</dd>
+              <dt>{t("Schema")}</dt>
+              <dd>{health?.schema || "—"}</dd>
+              <dt>{t("Database")}</dt>
+              <dd className="mono">{health?.database || t("未連接")}</dd>
+            </dl>
+            <p className="panel-footnote">
+              {t(
+                "支援多牌室 NLHE Cash 及指定 MTT 格式；樣本狀態及匯出方法見下表。無 live HUD、RTA、雲端同步或 Solver 評分。",
+              )}
             </p>
-          </div>
-          <button
-            className="button subtle"
-            disabled={!!busy || health?.import_active}
-            onClick={() => void restore()}
-          >
-            <UploadSimple size={17} />
-            {busy === "restore" ? t("還原中…") : t("選擇備份")}
-          </button>
-        </div>
-        <div className="settings-action">
-          <div>
-            <h3>{t("從原文重新計算")}</h3>
-            <p>{t("以目前 parser 重新解析帳本與統計，保留複盤筆記。")}</p>
-          </div>
-          <button
-            className="button subtle"
-            disabled={!!busy || health?.import_active}
-            onClick={() => void rebuild()}
-          >
-            <ArrowClockwise size={17} />
-            {busy === "rebuild" ? t("重算中…") : t("重算資料")}
-          </button>
-        </div>
-      </section>
-      <section className="panel">
-        <div className="panel-heading">
-          <div>
-            <span className="section-kicker">{t("ENGINE")}</span>
-            <h2>{t("本機分析引擎")}</h2>
-          </div>
-          <ShieldCheck size={23} />
-        </div>
-        <div className="settings-action">
-          <div>
-            <h3>{t("All-in equity 精確枚舉")}</h3>
-            <p>
-              {!health
-                ? t("未連接")
-                : health.equity_paused
-                  ? t("已暫停，可隨時續算。")
-                  : health?.equity_running
-                    ? t("背景計算中，結果逐手保存。")
-                    : t("啟用；適用牌局匯入後自動計算。")}
-            </p>
-          </div>
-          <button
-            className="button subtle"
-            disabled={!!busy || !health}
-            onClick={() => void equity()}
-          >
-            {health?.equity_paused ? t("繼續計算") : t("暫停計算")}
-          </button>
-        </div>
-        <dl className="engine-details">
-          <dt>{t("Parser")}</dt>
-          <dd>{health?.parser || "—"}</dd>
-          <dt>{t("Statistics")}</dt>
-          <dd>{health?.stats || "—"}</dd>
-          <dt>{t("Schema")}</dt>
-          <dd>{health?.schema || "—"}</dd>
-          <dt>{t("Database")}</dt>
-          <dd className="mono">{health?.database || t("未連接")}</dd>
-        </dl>
-        <p className="panel-footnote">
-          {t(
-            "支援多牌室 NLHE Cash 及指定 MTT 格式；樣本狀態及匯出方法見下表。無 live HUD、RTA、雲端同步或 Solver 評分。",
-          )}
-        </p>
-        <HandFormats />
-      </section>
+            <HandFormats />
+          </section>
+        </>
+      )}
     </div>
   );
 }

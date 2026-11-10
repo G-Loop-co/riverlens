@@ -34,7 +34,7 @@ export function Empty({
 export function Skeleton({ rows = 4 }: { rows?: number }) {
   const { t } = useTranslation();
   return (
-    <div aria-label={t("載入中")} className="skeleton">
+    <div role="status" aria-label={t("載入中")} className="skeleton">
       {Array.from({ length: rows }, (_, i) => (
         <div
           className="skeleton-line"
