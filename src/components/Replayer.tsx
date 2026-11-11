@@ -3,7 +3,7 @@ import { study, useStudy, useStudyMutation } from "../study-api";
 import type { DecisionRef } from "../study-types";
 import { useTranslation } from "react-i18next";
 import { diagnosticMessage } from "../diagnostics";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowCounterClockwise,
   CaretLeft,
@@ -59,6 +59,7 @@ export function Replayer({
   close,
   saved,
   initialStep = 0,
+  onStep,
   askAi,
   population,
 }: {
@@ -66,6 +67,7 @@ export function Replayer({
   close: () => void;
   saved: () => void;
   initialStep?: number;
+  onStep?: (seq: number) => void;
   askAi?: (seq: number) => void;
   population?: { dataset_id: string; version: string; hand_key: string };
 }) {
@@ -92,8 +94,9 @@ export function Replayer({
   const [saving, setSaving] = useState(false),
     [error, setError] = useState(""),
     [clean, setClean] = useState(true);
+  const initialStepRef = useRef(false);
   useEffect(() => {
-    if (result.data) {
+    if (result.data && !initialStepRef.current) {
       const a = result.data.annotation;
       setNote(a.note);
       setTags(a.tags.join(", "));
@@ -103,8 +106,12 @@ export function Replayer({
       );
       setPlaying(false);
       setClean(true);
+      initialStepRef.current = true;
     }
   }, [result.data, initialStep]);
+  useEffect(() => {
+    onStep?.(step);
+  }, [onStep, step]);
   useEffect(() => {
     if (!h || !playing) return;
     const t = setInterval(

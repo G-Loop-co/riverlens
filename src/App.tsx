@@ -1,5 +1,12 @@
 import { useTranslation } from "react-i18next";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import {
   Cards,
@@ -190,6 +197,20 @@ export default function App() {
       from && isSafeReturnPath(from) ? from : workspaceHref("hands", "list");
     navigate({ pathname, search: routeSearch(filter) });
   }
+
+  const syncReplayStep = useCallback(
+    (seq: number) => {
+      const from = searchParams.get("from");
+      setSearchParams(
+        routeSearch(filter, {
+          step: seq,
+          from: from ?? parseRoute(location.pathname)?.pathname,
+        }),
+        { replace: true },
+      );
+    },
+    [filter, location.pathname, searchParams, setSearchParams],
+  );
 
   useLayoutEffect(() => {
     const main = content.current;
@@ -908,6 +929,7 @@ export default function App() {
         <Replayer
           id={route.handId ?? 0}
           initialStep={Math.max(0, Number(searchParams.get("step") ?? 0))}
+          onStep={syncReplayStep}
           askAi={(seq) => {
             setAiQuestion(
               `${t("複盤手牌")} #${route.handId}，${t("決策")} ${seq}`,
