@@ -8,6 +8,7 @@ import {
   screen,
   waitFor,
 } from "@testing-library/react";
+import { HashRouter } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useRpc } from "./api";
 import App from "./App";
@@ -18,6 +19,7 @@ import type { HandPage, HandRow, Request } from "./types";
 
 afterEach(() => {
   cleanup();
+  window.history.replaceState(null, "", "/");
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -71,7 +73,11 @@ describe("UI request and storage regressions", () => {
       getItem: (key: string) => storage.get(key) ?? null,
       setItem: (key: string, value: string) => storage.set(key, value),
     });
-    render(<App />);
+    render(
+      <HashRouter>
+        <App />
+      </HashRouter>,
+    );
     const game = screen.getByRole("combobox", { name: "牌局類型" });
     fireEvent.change(game, { target: { value: "Tournament" } });
     await waitFor(() =>
@@ -223,7 +229,11 @@ describe("UI request and storage regressions", () => {
       setItem: (key: string, value: string) => storage.set(key, value),
     });
     const requests = delayedFetch();
-    render(<App />);
+    render(
+      <HashRouter>
+        <App />
+      </HashRouter>,
+    );
     const savedRequest = requests.find(
       (request) => request.body.op === "saved_filters",
     )!;
@@ -255,6 +265,7 @@ describe("UI request and storage regressions", () => {
       "null",
     );
     expect(JSON.parse(localStorage.getItem("riverlens-filter")!)).toEqual({
+      currency: "USD",
       position: "BB",
       reviewed: false,
       stack_min: 0,
@@ -262,6 +273,7 @@ describe("UI request and storage regressions", () => {
     fireEvent.click(screen.getByRole("button", { name: "位置: BB" }));
     expect(screen.queryByRole("button", { name: "位置: BB" })).toBeNull();
     expect(JSON.parse(localStorage.getItem("riverlens-filter")!)).toEqual({
+      currency: "USD",
       reviewed: false,
       stack_min: 0,
     });

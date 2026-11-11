@@ -1,22 +1,14 @@
 import { useEffect, useState } from "react";
 import "../study.css";
 import { useTranslation } from "react-i18next";
-import {
-  ArrowRight,
-  Gauge,
-  Crosshair,
-  GraduationCap,
-  MagnifyingGlass,
-  Target,
-  TrendUp,
-} from "@phosphor-icons/react";
+import { useSearchParams } from "react-router";
 import { api } from "../api";
 import { useStudy, useStudyMutation } from "../study-api";
 import { decimal } from "../format";
-import { readPreference, writePreference } from "../preferences";
 import type { Filter, Health, Profile } from "../types";
 import type { DecisionRef, PackSummary, SpotDefinition } from "../study-types";
 import { Field, ErrorBanner } from "./UI";
+import { RouteTabs, TabPanel } from "./RouteUI";
 import { SpotExplorer } from "./StudySpots";
 import { LeakFinder } from "./StudyLeaks";
 import { StrategyCompare } from "./StudyStrategy";
@@ -26,12 +18,7 @@ import { StudyProgress } from "./StudyProgress";
 import type { TrainingFeedback } from "../study-types";
 
 export type StudyTab =
-  | "progress"
-  | "spots"
-  | "leaks"
-  | "strategy"
-  | "range"
-  | "trainer";
+  "progress" | "spots" | "leaks" | "strategy" | "range" | "trainer";
 export const emptySpot = (): SpotDefinition => ({ line: [] });
 export function StudySelect({
   label,
@@ -102,7 +89,9 @@ export function StudyRecentPractice({
             {openReplay && r.replay_hand !== null && (
               <button
                 className="text-button"
-                onClick={() => openReplay(r.replay_hand!, r.reference?.seq ?? 0)}
+                onClick={() =>
+                  openReplay(r.replay_hand!, r.reference?.seq ?? 0)
+                }
               >
                 {t("study.replay")}
               </button>
@@ -120,6 +109,8 @@ export function StudyWorkspace({
   revision,
   refresh,
   open,
+  tab,
+  onTabChange,
   notify,
 }: {
   profiles: Profile[];
@@ -127,247 +118,252 @@ export function StudyWorkspace({
   revision: number;
   refresh: () => void;
   open: (id: number, step: number) => void;
+  tab: StudyTab;
+  onTabChange: (tab: StudyTab) => void;
   notify: (message: string) => void;
 }) {
   const { t } = useTranslation();
-  const [tab, setTab] = useState<StudyTab>("spots");
+  const [searchParams, setSearchParams] = useSearchParams();
   const [filter, setFilter] = useState<Filter>({});
   const [spot, setSpot] = useState<SpotDefinition>(emptySpot);
-  const [pack, setPack] = useState(() =>
-    readPreference("riverlens-study-pack"),
-  );
-  const [node, setNode] = useState("");
+  const pack = searchParams.get("pack") || "";
+  const node = searchParams.get("node") || "";
   const [reference, setReference] = useState<DecisionRef | null>(null);
   const packs = useStudy<PackSummary[]>({ op: "packs" }, revision);
   const operation = useStudyMutation();
+  function updateStudyParams(updates: Record<string, string | undefined>) {
+    const next = new URLSearchParams(searchParams);
+    for (const [key, value] of Object.entries(updates)) {
+      if (value) next.set(key, value);
+      else next.delete(key);
+    }
+    setSearchParams(next, { replace: true });
+  }
+  const setPack = (value: string) => updateStudyParams({ pack: value });
+  const setNode = (value: string) => updateStudyParams({ node: value });
   useEffect(() => {
-    writePreference("riverlens-study-pack", pack);
-  }, [pack]);
-  useEffect(() => {
-    if (packs.data && !packs.data.some((p) => p.id === pack))
-      setPack(packs.data[0]?.id || "");
-  }, [packs.data, pack]);
+    if (packs.data && !pack && packs.data[0] && !searchParams.has("pack")) {
+      updateStudyParams({ pack: packs.data[0].id });
+    }
+  }, [packs.data, pack, searchParams]);
   const goStrategy = (id: string, ref?: DecisionRef) => {
-    setNode(id);
+    updateStudyParams({ node: id });
     setReference(ref || null);
-    setTab("strategy");
+    onTabChange("strategy");
   };
   function updateFilter(patch: Partial<Filter>) {
     setFilter((f) => ({ ...f, ...patch }));
   }
   return (
     <div className="study-workspace">
-      <nav className="study-steps" aria-label={t("study.flow")}>
-        {(
-          [
-            ["progress", Gauge],
-            ["spots", MagnifyingGlass],
-            ["leaks", TrendUp],
-            ["strategy", Crosshair],
-            ["range", Target],
-            ["trainer", GraduationCap],
-          ] as const
-        ).map(([key, Icon], i) => (
-          <button
-            key={key}
-            className={tab === key ? "active" : ""}
-            aria-current={tab === key ? "page" : undefined}
-            onClick={() => setTab(key)}
-          >
-            <span className="step-number">0{i + 1}</span>
-            <Icon size={20} />
-            <span>{t(`study.${key}`)}</span>
-            {i < 5 && <ArrowRight size={14} />}
-          </button>
-        ))}
-      </nav>
-      <div className="study-status" role="status">
-        <span>
-          {t("study.coverage", {
-            indexed: health?.study?.indexed ?? 0,
-            total: health?.study?.total ?? 0,
-          })}
-        </span>
-        {health?.study && !health.study.complete && (
-          <strong>{t("study.partial")}</strong>
-        )}
-        {(health?.study_running ||
-          health?.study_paused ||
-          health?.study_error) && (
-          <button
-            className="text-button"
-            disabled={operation.busy}
-            onClick={() =>
-              void operation.run(async () => {
-                await api({
-                  op: "study_control",
-                  paused: !health?.study_paused,
-                });
-                refresh();
-              })
-            }
-          >
-            {t(health?.study_paused ? "study.resumeIndex" : "study.pauseIndex")}
-          </button>
-        )}
-      </div>
-      {(health?.study_error || operation.error || packs.error) && (
-        <ErrorBanner>
-          {health?.study_error || operation.error || packs.error}
-        </ErrorBanner>
-      )}
-      {tab !== "trainer" && (
-        <section className="study-cohort panel" aria-label={t("study.cohort")}>
-          <StudySelect
-            label="study.profile"
-            value={filter.profile}
-            options={profiles.map((p) => [p.id, p.name])}
-            change={(profile) => updateFilter({ profile })}
-          />
-          <Field label={t("study.from")}>
-            <input
-              type="date"
-              value={filter.date_from || ""}
-              onChange={(e) =>
-                updateFilter({ date_from: e.target.value || undefined })
+      <RouteTabs
+        label="study.flow"
+        panelId="study-workspace"
+        value={tab}
+        onChange={onTabChange}
+        items={[
+          { value: "progress", label: "study.progress" },
+          { value: "spots", label: "study.spots" },
+          { value: "leaks", label: "study.leaks" },
+          { value: "strategy", label: "study.strategy" },
+          { value: "range", label: "study.range" },
+          { value: "trainer", label: "study.trainer" },
+        ]}
+      />
+      <TabPanel id="study-workspace" activeTab={tab}>
+        <div className="study-status" role="status">
+          <span>
+            {t("study.coverage", {
+              indexed: health?.study?.indexed ?? 0,
+              total: health?.study?.total ?? 0,
+            })}
+          </span>
+          {health?.study && !health.study.complete && (
+            <strong>{t("study.partial")}</strong>
+          )}
+          {(health?.study_running ||
+            health?.study_paused ||
+            health?.study_error) && (
+            <button
+              className="text-button"
+              disabled={operation.busy}
+              onClick={() =>
+                void operation.run(async () => {
+                  await api({
+                    op: "study_control",
+                    paused: !health?.study_paused,
+                  });
+                  refresh();
+                })
               }
+            >
+              {t(
+                health?.study_paused ? "study.resumeIndex" : "study.pauseIndex",
+              )}
+            </button>
+          )}
+        </div>
+        {(health?.study_error || operation.error || packs.error) && (
+          <ErrorBanner>
+            {health?.study_error || operation.error || packs.error}
+          </ErrorBanner>
+        )}
+        {tab !== "trainer" && (
+          <section
+            className="study-cohort panel"
+            aria-label={t("study.cohort")}
+          >
+            <StudySelect
+              label="study.profile"
+              value={filter.profile}
+              options={profiles.map((p) => [p.id, p.name])}
+              change={(profile) => updateFilter({ profile })}
             />
-          </Field>
-          <Field label={t("study.to")}>
-            <input
-              type="date"
-              value={filter.date_to || ""}
-              onChange={(e) =>
-                updateFilter({ date_to: e.target.value || undefined })
-              }
-            />
-          </Field>
-          <StudySelect
-            label="study.game"
-            value={filter.game}
-            options={[
-              ["Cash", "Cash"],
-              ["Rush", "Rush"],
-              ["Tournament", t("MTT／錦標賽")],
-            ]}
-            change={(game) =>
-              updateFilter({
-                game,
-                currency: game === "Tournament" ? "CHIPS" : undefined,
-                tournament_id: undefined,
-                stakes: undefined,
-              })
-            }
-          />
-          <Field label={t("賽事編號")}>
-            <input
-              value={filter.tournament_id || ""}
-              onChange={(e) =>
+            <Field label={t("study.from")}>
+              <input
+                type="date"
+                value={filter.date_from || ""}
+                onChange={(e) =>
+                  updateFilter({ date_from: e.target.value || undefined })
+                }
+              />
+            </Field>
+            <Field label={t("study.to")}>
+              <input
+                type="date"
+                value={filter.date_to || ""}
+                onChange={(e) =>
+                  updateFilter({ date_to: e.target.value || undefined })
+                }
+              />
+            </Field>
+            <StudySelect
+              label="study.game"
+              value={filter.game}
+              options={[
+                ["Cash", "Cash"],
+                ["Rush", "Rush"],
+                ["Tournament", t("MTT／錦標賽")],
+              ]}
+              change={(game) =>
                 updateFilter({
-                  tournament_id: e.target.value || undefined,
-                  game: "Tournament",
-                  currency: "CHIPS",
+                  game,
+                  currency: game === "Tournament" ? "CHIPS" : undefined,
+                  tournament_id: undefined,
+                  stakes: undefined,
                 })
               }
             />
-          </Field>
-          <StudySelect
-            label="study.stakes"
-            value={filter.stakes}
-            options={[
-              "0.01/0.02",
-              "0.02/0.05",
-              "0.05/0.10",
-              "0.10/0.25",
-              "0.25/0.50",
-              "0.50/1.00",
-              "1.00/2.00",
-            ].map((s) => [s, s])}
-            change={(stakes) => updateFilter({ stakes })}
+            <Field label={t("賽事編號")}>
+              <input
+                value={filter.tournament_id || ""}
+                onChange={(e) =>
+                  updateFilter({
+                    tournament_id: e.target.value || undefined,
+                    game: "Tournament",
+                    currency: "CHIPS",
+                  })
+                }
+              />
+            </Field>
+            <StudySelect
+              label="study.stakes"
+              value={filter.stakes}
+              options={[
+                "0.01/0.02",
+                "0.02/0.05",
+                "0.05/0.10",
+                "0.10/0.25",
+                "0.25/0.50",
+                "0.50/1.00",
+                "1.00/2.00",
+              ].map((s) => [s, s])}
+              change={(stakes) => updateFilter({ stakes })}
+            />
+            <StudySelect
+              label="study.pack"
+              value={pack}
+              options={(packs.data || []).map((p) => [p.id, p.name])}
+              all={false}
+              change={(p) => {
+                setPack(p || "");
+                setNode("");
+              }}
+            />
+          </section>
+        )}
+        {tab === "progress" && (
+          <StudyProgress
+            filter={filter}
+            pack={pack}
+            revision={revision}
+            open={open}
+            goTrainer={() => onTabChange("trainer")}
           />
-          <StudySelect
-            label="study.pack"
-            value={pack}
-            options={(packs.data || []).map((p) => [p.id, p.name])}
-            all={false}
-            change={(p) => {
-              setPack(p || "");
-              setNode("");
+        )}
+        {tab === "spots" && (
+          <SpotExplorer
+            filter={filter}
+            spot={spot}
+            setSpot={setSpot}
+            pack={pack}
+            revision={revision}
+            refresh={refresh}
+            open={open}
+            compare={(r) => goStrategy("", r)}
+            notify={notify}
+            onLeaks={() => onTabChange("leaks")}
+          />
+        )}
+        {tab === "leaks" && (
+          <LeakFinder
+            filter={filter}
+            spot={spot}
+            pack={pack}
+            revision={revision}
+            refresh={refresh}
+            explore={(s) => {
+              setSpot(s);
+              onTabChange("spots");
             }}
+            strategy={goStrategy}
           />
-        </section>
-      )}
-      {tab === "progress" && (
-        <StudyProgress
-          filter={filter}
-          pack={pack}
-          revision={revision}
-          open={open}
-          goTrainer={() => setTab("trainer")}
-        />
-      )}
-      {tab === "spots" && (
-        <SpotExplorer
-          filter={filter}
-          spot={spot}
-          setSpot={setSpot}
-          pack={pack}
-          revision={revision}
-          refresh={refresh}
-          open={open}
-          compare={(r) => goStrategy("", r)}
-          notify={notify}
-          onLeaks={() => setTab("leaks")}
-        />
-      )}
-      {tab === "leaks" && (
-        <LeakFinder
-          filter={filter}
-          spot={spot}
-          pack={pack}
-          revision={revision}
-          refresh={refresh}
-          explore={(s) => {
-            setSpot(s);
-            setTab("spots");
-          }}
-          strategy={goStrategy}
-        />
-      )}
-      {tab === "strategy" && (
-        <StrategyCompare
-          filter={filter}
-          pack={pack}
-          setPack={setPack}
-          node={node}
-          setNode={setNode}
-          reference={reference}
-          clearReference={() => setReference(null)}
-          revision={revision}
-          refresh={refresh}
-          notify={notify}
-          open={open}
-          trainer={() => setTab("trainer")}
-        />
-      )}
-      {tab === "range" && (
-        <RangeDrill
-          pack={pack}
-          node={node}
-          revision={revision}
-          refresh={refresh}
-          notify={notify}
-          goTrainer={() => setTab("trainer")}
-        />
-      )}
-      {tab === "trainer" && (
-        <Trainer
-          revision={revision}
-          refresh={refresh}
-          open={open}
-          findSpots={() => setTab("spots")}
-        />
-      )}
+        )}
+        {tab === "strategy" && (
+          <StrategyCompare
+            filter={filter}
+            pack={pack}
+            setPack={setPack}
+            node={node}
+            setNode={setNode}
+            reference={reference}
+            clearReference={() => setReference(null)}
+            revision={revision}
+            refresh={refresh}
+            notify={notify}
+            open={open}
+            trainer={() => onTabChange("trainer")}
+          />
+        )}
+        {tab === "range" && (
+          <RangeDrill
+            pack={pack}
+            node={node}
+            revision={revision}
+            refresh={refresh}
+            notify={notify}
+            goTrainer={() => onTabChange("trainer")}
+          />
+        )}
+        {tab === "trainer" && (
+          <Trainer
+            revision={revision}
+            refresh={refresh}
+            open={open}
+            findSpots={() => onTabChange("spots")}
+          />
+        )}
+      </TabPanel>
     </div>
   );
 }

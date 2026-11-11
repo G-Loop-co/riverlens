@@ -8,6 +8,9 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { MdaWorkspace } from "./components/MdaWorkspace";
+import type { MdaTab } from "./components/MdaWorkspace";
+import { MemoryRouter } from "react-router";
+import { useState } from "react";
 import { AiCoach, EvidenceCard } from "./components/AiCoach";
 import { Replayer } from "./components/Replayer";
 import type { ReactNode } from "react";
@@ -64,7 +67,15 @@ it("keeps datasets separate, pins queries and requires dataset cloud consent", a
       result: await backend.api(JSON.parse(init.body as string)),
     }),
   }));
-  render(<MdaWorkspace />);
+  function Harness(): ReactNode {
+    const [tab, setTab] = useState<MdaTab>("stats");
+    return (
+      <MemoryRouter initialEntries={["/research/stats?dataset=mda-test"]}>
+        <MdaWorkspace tab={tab} onTabChange={setTab} />
+      </MemoryRouter>
+    );
+  }
+  render(<Harness />);
   await screen.findByText("1,000 有效手牌", { exact: false });
   await waitFor(() =>
     expect(backend.api).toHaveBeenCalledWith(
@@ -81,7 +92,7 @@ it("keeps datasets separate, pins queries and requires dataset cloud consent", a
       }),
     ),
   );
-  fireEvent.click(screen.getByRole("button", { name: "AI 剝削分析" }));
+  fireEvent.click(screen.getByRole("tab", { name: "AI 剝削分析" }));
   expect(
     await screen.findByText("在「平台限制及資料分享」", { exact: false }),
   ).toBeTruthy();
@@ -130,8 +141,13 @@ it("population replay cannot read or edit personal study and annotations", async
     hand_key: "000000000000000a",
   };
   const requests: unknown[] = [];
+  const onStep = vi.fn();
   vi.stubGlobal("fetch", async (_url: unknown, init: RequestInit) => {
-    requests.push(JSON.parse(init.body as string));
+    const request = JSON.parse(init.body as string);
+    requests.push(request);
+    if (request.op === "study") {
+      return { ok: true, json: async () => ({ result: [] }) };
+    }
     return {
       ok: true,
       json: async () => ({
@@ -153,7 +169,20 @@ it("population replay cannot read or edit personal study and annotations", async
             status: "valid",
             issues: [],
             boards: [[]],
-            actions: [],
+            actions: [
+              {
+                seq: 0,
+                street: "preflop",
+                runout: 0,
+                actor: 1,
+                kind: "small_blind",
+                amount: "0.01",
+                to: "0.01",
+                all_in: false,
+                cards: [],
+                pot_after: 1,
+              },
+            ],
             players: [
               {
                 seat: 1,
@@ -183,6 +212,7 @@ it("population replay cannot read or edit personal study and annotations", async
       population={population}
       close={() => {}}
       saved={() => {}}
+      onStep={onStep}
     />,
   );
   expect(await screen.findByText("MDA · 無 Hero")).toBeTruthy();
@@ -198,6 +228,8 @@ it("population replay cannot read or edit personal study and annotations", async
   expect(requests).toEqual([
     { op: "mda", request: { op: "hand", ...population } },
   ]);
+  fireEvent.click(screen.getByRole("button", { name: "下一步" }));
+  expect(onStep).toHaveBeenCalledWith(1);
 });
 
 it("keeps saved MDA drafts and anonymous evidence available after cloud sharing is disabled", async () => {

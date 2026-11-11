@@ -77,7 +77,7 @@ it("creates a local draft and requires explicit user acceptance", async () => {
       expect.objectContaining({ name: "create_report_draft" }),
     ),
   );
-  fireEvent.click(screen.getByRole("button", { name: "學習資料" }));
+  fireEvent.click(screen.getByRole("tab", { name: "學習資料" }));
   await screen.findByText("目前篩選統計");
   expect(backend.api).not.toHaveBeenCalledWith(
     expect.objectContaining({ op: "agent_review" }),
@@ -98,7 +98,7 @@ it("passes ordered action filters and opens source hands", async () => {
   engine();
   const open = vi.fn();
   render(<AiCoach filter={{ position: "BB" }} openHand={open} />);
-  fireEvent.click(screen.getByRole("button", { name: "局面探索" }));
+  fireEvent.click(screen.getByRole("tab", { name: "局面探索" }));
   fireEvent.click(screen.getByRole("button", { name: "新增行動" }));
   fireEvent.click(screen.getByRole("button", { name: "搜尋局面" }));
   fireEvent.click(await screen.findByRole("button", { name: "BTN AA #42" }));
@@ -134,13 +134,13 @@ it("selects new providers in coach and connections and clears incompatible model
     fireEvent.change(model, { target: { value: choice } });
     expect(model.value).toBe(choice);
   }
-  fireEvent.click(screen.getByRole("button", { name: "AI 連接" }));
+  fireEvent.click(screen.getByRole("tab", { name: "AI 連接" }));
   expect(screen.getByRole("option", { name: "deepseek" })).toBeTruthy();
   expect(screen.getByRole("option", { name: "opencode-go" })).toBeTruthy();
   fireEvent.change(screen.getByLabelText("模型供應商"), {
     target: { value: "gemini" },
   });
-  fireEvent.click(screen.getByRole("button", { name: "AI 教練" }));
+  fireEvent.click(screen.getByRole("tab", { name: "AI 教練" }));
   const updated = screen.getByLabelText("模型 ID") as HTMLSelectElement;
   expect(updated.value).toBe("");
   expect(Array.from(updated.options).map((option) => option.value)).toEqual([
@@ -201,7 +201,7 @@ it("opens saved evidence using the original envelope", async () => {
       expect.objectContaining({ name: "create_report_draft" }),
     ),
   );
-  fireEvent.click(screen.getByRole("button", { name: "學習資料" }));
+  fireEvent.click(screen.getByRole("tab", { name: "學習資料" }));
   fireEvent.click(
     await screen.findByRole("button", { name: "查看證據 1", hidden: true }),
   );
@@ -238,7 +238,7 @@ it("filters categorized reports and keeps the original section text", async () =
     },
   ]);
   render(<AiCoach filter={{}} openHand={() => {}} />);
-  fireEvent.click(screen.getByRole("button", { name: "學習資料" }));
+  fireEvent.click(screen.getByRole("tab", { name: "學習資料" }));
   await screen.findByText("Blind review");
   expect(screen.getByText("First line")).toBeTruthy();
   expect(screen.getByText("Second line")).toBeTruthy();

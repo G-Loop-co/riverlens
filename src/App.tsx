@@ -1,20 +1,23 @@
 import { useTranslation } from "react-i18next";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
-  ArrowsClockwise,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
+import {
   Cards,
   ChartLineUp,
   CheckCircle,
   Database,
   DownloadSimple,
   FunnelSimple,
-  GridFour,
   GraduationCap,
-  HardDrives,
   ListChecks,
   Plus,
-  ShieldCheck,
-  SlidersHorizontal,
   X,
 } from "@phosphor-icons/react";
 import { api, errorText, useRpc } from "./api";
@@ -30,6 +33,7 @@ import { number, CUES, ACTIONS, STAT_LABELS } from "./format";
 import { ErrorBanner, Field } from "./components/UI";
 import { AiCoach } from "./components/AiCoach";
 import { MdaWorkspace } from "./components/MdaWorkspace";
+import type { MdaTab } from "./components/MdaWorkspace";
 import { Overview } from "./components/Overview";
 import { HandsView } from "./components/HandsView";
 import { RangeView } from "./components/RangeView";
@@ -42,55 +46,48 @@ import { LanguageSelect } from "./components/LanguageSelect";
 import { StudyWorkspace } from "./components/StudyWorkspace";
 import { Dialog } from "./components/Dialog";
 import { normalizeFilter, readFilter, writePreference } from "./preferences";
-
-type Page =
-  | "coach"
-  | "mda"
-  | "overview"
-  | "hands"
-  | "ranges"
-  | "review"
-  | "study"
-  | "imports"
-  | "settings";
-const nav = [
-  ["coach", "AI 教練", Cards],
-  ["mda", "MDA 群體分析", Database],
-  ["overview", "牌局總覽", ChartLineUp],
-  ["hands", "手牌資料庫", Cards],
-  ["ranges", "起手牌矩陣", GridFour],
-  ["review", "複盤工作台", ListChecks],
-  ["study", "study.workspace", GraduationCap],
-] as const;
-const titles: Record<Page, [string, string]> = {
-  mda: ["MDA 群體分析", "匯入牌池、查群體傾向，再用手牌驗證調整方向。"],
-  study: ["study.workspace", "study.subtitle"],
-  coach: ["AI 教練", "用資料理解局面，把建議變成練習。"],
-  overview: ["牌局總覽", "從結果到決策，掌握每一手牌。"],
-  hands: ["手牌資料庫", "篩選、標記，再逐步回看你嘅行動。"],
-  ranges: ["起手牌矩陣", "你實際打過嘅 range；每格都可追溯。"],
-  review: ["複盤工作台", "找出值得重看嘅情境，建立自己的筆記。"],
-  imports: ["匯入中心", "所有來源、進度與資料問題，集中處理。"],
-  settings: ["資料與設定", "牌譜留喺你嘅電腦，備份由你掌握。"],
-};
+import { AppShell, type AppNavItem } from "./components/AppShell";
+import {
+  RouteTabs,
+  RouteErrorBoundary,
+  TabPanel,
+  WorkspaceHeading,
+} from "./components/RouteUI";
+import {
+  DEFAULT_SECTIONS,
+  filterFromSearchParams,
+  filterToSearchParams,
+  isSafeReturnPath,
+  parseRoute,
+  routeSearch,
+  workspaceHref,
+  type Workspace,
+} from "./routes";
 
 export default function App() {
   const { t } = useTranslation();
-  const [page, setPage] = useState<Page>("overview");
-  const [filter, setFilter] = useState<Filter>(() => ({
-    currency: "USD",
-    ...readFilter(),
-  }));
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const parsedRoute = parseRoute(location.pathname);
+  const route = parsedRoute ?? {
+    workspace: "today" as Workspace,
+    section: DEFAULT_SECTIONS.today,
+    pathname: workspaceHref("today"),
+  };
+  const filter = useMemo(
+    () =>
+      normalizeFilter({
+        currency: "USD",
+        ...readFilter(),
+        ...filterFromSearchParams(searchParams),
+      }),
+    [searchParams],
+  );
   const [revision, setRevision] = useState(0);
   const [importOpen, setImportOpen] = useState(false);
   const [advanced, setAdvanced] = useState(false);
   const [aiQuestion, setAiQuestion] = useState("");
-  const [selected, setSelected] = useState<number | null>(null);
-  const [replayStep, setReplayStep] = useState(0);
-  function openHand(id: number) {
-    setReplayStep(0);
-    setSelected(id);
-  }
   const [toast, setToast] = useState("");
   const [globalError, setGlobalError] = useState("");
   const [saveName, setSaveName] = useState<string | null>(null);
@@ -102,12 +99,14 @@ export default function App() {
     hover: "AA",
   });
   const [compare, setCompare] = useState<Filter | null>(null);
-  const [returnTo, setReturnTo] = useState<{
-    page: Page;
-    filter: Filter;
-  } | null>(null);
   const content = useRef<HTMLElement>(null);
   const scroll = useRef<Record<string, number>>({});
+  const returnTo =
+    typeof location.state?.from === "string" &&
+    isSafeReturnPath(location.state.from)
+      ? location.state.from
+      : null;
+  const routeKey = `${route.workspace}/${route.section}`;
   const profiles = useRpc<Profile[]>({ op: "profiles" }, revision);
   const health = useRpc<Health>({ op: "health" }, revision);
   const jobs = useRpc<Job[]>({ op: "jobs" }, revision);
@@ -118,8 +117,10 @@ export default function App() {
   );
   const refresh = () => setRevision((v) => v + 1);
   useEffect(() => {
-    writePreference("riverlens-filter", JSON.stringify(filter));
-  }, [filter]);
+    if (!parsedRoute) {
+      navigate(`/today${routeSearch(filter)}`, { replace: true });
+    }
+  }, [parsedRoute, navigate, filter]);
   useEffect(() => {
     if (!toast) return;
     const id = setTimeout(() => setToast(""), 4500);
@@ -134,14 +135,87 @@ export default function App() {
     const id = setInterval(() => setRevision((v) => v + 1), 2500);
     return () => clearInterval(id);
   }, [running]);
-  function navigate(next: Page) {
-    if (content.current) scroll.current[page] = content.current.scrollTop;
-    setPage(next);
+  function goWorkspace(workspace: Workspace) {
+    const pathname = workspaceHref(workspace);
+    const extras =
+      workspace === "research"
+        ? { dataset: searchParams.get("dataset") ?? undefined }
+        : workspace === "learn"
+          ? {
+              pack: searchParams.get("pack") ?? undefined,
+              node: searchParams.get("node") ?? undefined,
+            }
+          : {};
+    navigate({ pathname, search: routeSearch(filter, extras) });
   }
+
+  function goSection(workspace: Workspace, section: string) {
+    const pathname = workspaceHref(workspace, section);
+    const extras =
+      workspace === "research"
+        ? { dataset: searchParams.get("dataset") ?? undefined }
+        : workspace === "learn"
+          ? {
+              pack: searchParams.get("pack") ?? undefined,
+              node: searchParams.get("node") ?? undefined,
+            }
+          : {};
+    navigate({ pathname, search: routeSearch(filter, extras) });
+  }
+
+  function update(patch: Partial<Filter>) {
+    const next = normalizeFilter({ ...filter, ...patch });
+    writePreference("riverlens-filter", JSON.stringify(next));
+    setSearchParams(filterToSearchParams(next), { replace: true });
+  }
+
+  function drill(patch: Partial<Filter>, sort?: "win" | "loss") {
+    const next = normalizeFilter({ ...filter, ...patch });
+    if (sort) writePreference("riverlens-hand-sort", sort);
+    writePreference("riverlens-filter", JSON.stringify(next));
+    navigate(
+      {
+        pathname: workspaceHref("hands", "list"),
+        search: routeSearch(next),
+      },
+      { state: { from: location.pathname + location.search } },
+    );
+  }
+
+  function openHand(id: number, seq?: number) {
+    const from =
+      parseRoute(location.pathname)?.pathname ?? workspaceHref("today");
+    navigate({
+      pathname: `/hands/replay/${id}`,
+      search: routeSearch(filter, { step: seq, from }),
+    });
+  }
+
+  function closeReplay() {
+    const from = searchParams.get("from");
+    const pathname =
+      from && isSafeReturnPath(from) ? from : workspaceHref("hands", "list");
+    navigate({ pathname, search: routeSearch(filter) });
+  }
+
+  const syncReplayStep = useCallback(
+    (seq: number) => {
+      const from = searchParams.get("from");
+      setSearchParams(
+        routeSearch(filter, {
+          step: seq,
+          from: from ?? parseRoute(location.pathname)?.pathname,
+        }),
+        { replace: true },
+      );
+    },
+    [filter, location.pathname, searchParams, setSearchParams],
+  );
+
   useLayoutEffect(() => {
     const main = content.current;
     if (!main) return;
-    const top = scroll.current[page] || 0;
+    const top = scroll.current[routeKey] || 0;
     if (!top) {
       main.scrollTop = 0;
       return;
@@ -169,16 +243,7 @@ export default function App() {
     main.addEventListener("keydown", stop);
     restore();
     return stop;
-  }, [page]);
-  function update(patch: Partial<Filter>) {
-    setFilter((f) => normalizeFilter({ ...f, ...patch }));
-  }
-  function drill(patch: Partial<Filter>, sort?: "win" | "loss") {
-    if (sort) writePreference("riverlens-hand-sort", sort);
-    setReturnTo({ page, filter: { ...filter } });
-    update(patch);
-    navigate("hands");
-  }
+  }, [routeKey]);
   async function saveFilter() {
     if (!saveName?.trim() || savingFilter) return;
     setSavingFilter(true);
@@ -233,140 +298,264 @@ export default function App() {
     showdown: "Showdown",
     search: "Hand ID",
   };
+  const navItems: AppNavItem[] = [
+    {
+      workspace: "today",
+      label: "牌局總覽",
+      icon: (
+        <ChartLineUp
+          size={20}
+          weight={route.workspace === "today" ? "duotone" : "regular"}
+        />
+      ),
+    },
+    {
+      workspace: "hands",
+      label: "牌局覆盤",
+      icon: (
+        <Cards
+          size={20}
+          weight={route.workspace === "hands" ? "duotone" : "regular"}
+        />
+      ),
+      detail: overall.data ? number(overall.data.hands) : undefined,
+    },
+    {
+      workspace: "learn",
+      label: "學習工作台",
+      icon: (
+        <GraduationCap
+          size={20}
+          weight={route.workspace === "learn" ? "duotone" : "regular"}
+        />
+      ),
+    },
+    {
+      workspace: "research",
+      label: "MDA 群體分析",
+      icon: (
+        <Database
+          size={20}
+          weight={route.workspace === "research" ? "duotone" : "regular"}
+        />
+      ),
+    },
+    {
+      workspace: "coach",
+      label: "AI 教練",
+      icon: (
+        <ListChecks
+          size={20}
+          weight={route.workspace === "coach" ? "duotone" : "regular"}
+        />
+      ),
+    },
+    {
+      workspace: "data",
+      label: "資料中心",
+      icon: <DownloadSimple size={20} />,
+      busy: jobs.data?.some((j) => j.state === "running"),
+    },
+  ];
+  const headings = {
+    "today/dashboard": [
+      "YOUR GAME, IN FOCUS",
+      "牌局總覽",
+      "從結果到決策，掌握每一手牌。",
+    ],
+    "hands/list": [
+      "RIVERLENS / HANDS",
+      "牌局覆盤",
+      "篩選與標記手牌，逐步檢視決策過程。",
+    ],
+    "hands/matrix": [
+      "RIVERLENS / HANDS",
+      "起手牌矩陣",
+      "呈現實際觀察的 range，每個組合均可追溯。",
+    ],
+    "hands/review": [
+      "RIVERLENS / HANDS",
+      "複盤工作台",
+      "識別需要檢討的情境，記錄決策依據。",
+    ],
+    "learn/spots": [
+      "RIVERLENS / LEARN",
+      "學習工作台",
+      "從情境探索到每日練習，建立可追溯的覆盤流程。",
+    ],
+    "learn/progress": [
+      "RIVERLENS / LEARN",
+      "學習工作台",
+      "從情境探索到每日練習，建立可追溯的覆盤流程。",
+    ],
+    "learn/leaks": [
+      "RIVERLENS / LEARN",
+      "學習工作台",
+      "從情境探索到每日練習，建立可追溯的覆盤流程。",
+    ],
+    "learn/strategy": [
+      "RIVERLENS / LEARN",
+      "學習工作台",
+      "從情境探索到每日練習，建立可追溯的覆盤流程。",
+    ],
+    "learn/range": [
+      "RIVERLENS / LEARN",
+      "學習工作台",
+      "從情境探索到每日練習，建立可追溯的覆盤流程。",
+    ],
+    "learn/trainer": [
+      "RIVERLENS / LEARN",
+      "學習工作台",
+      "從情境探索到每日練習，建立可追溯的覆盤流程。",
+    ],
+    "research/stats": [
+      "RIVERLENS / RESEARCH",
+      "MDA 群體分析",
+      "匯入牌池、查群體傾向，再用手牌驗證調整方向。",
+    ],
+    "research/wizard": [
+      "RIVERLENS / RESEARCH",
+      "MDA 群體分析",
+      "匯入牌池、查群體傾向，再用手牌驗證調整方向。",
+    ],
+    "research/candidates": [
+      "RIVERLENS / RESEARCH",
+      "MDA 群體分析",
+      "匯入牌池、查群體傾向，再用手牌驗證調整方向。",
+    ],
+    "research/evidence": [
+      "RIVERLENS / RESEARCH",
+      "MDA 群體分析",
+      "匯入牌池、查群體傾向，再用手牌驗證調整方向。",
+    ],
+    "research/ai": [
+      "RIVERLENS / RESEARCH",
+      "MDA 群體分析",
+      "匯入牌池、查群體傾向，再用手牌驗證調整方向。",
+    ],
+    "research/import": [
+      "RIVERLENS / RESEARCH",
+      "MDA 群體分析",
+      "匯入牌池、查群體傾向，再用手牌驗證調整方向。",
+    ],
+    "coach/situation": [
+      "RIVERLENS / COACH",
+      "AI 教練",
+      "用資料理解局面，把建議變成練習。",
+    ],
+    "coach/chat": [
+      "RIVERLENS / COACH",
+      "AI 教練",
+      "用資料理解局面，把建議變成練習。",
+    ],
+    "coach/library": [
+      "RIVERLENS / COACH",
+      "AI 教練",
+      "用資料理解局面，把建議變成練習。",
+    ],
+    "coach/connections": [
+      "RIVERLENS / COACH",
+      "AI 教練",
+      "用資料理解局面，把建議變成練習。",
+    ],
+    "data/import": [
+      "RIVERLENS / DATA",
+      "資料中心",
+      "匯入進度、來源設定與資料安全集中管理。",
+    ],
+    "data/sources": [
+      "RIVERLENS / DATA",
+      "資料中心",
+      "匯入進度、來源設定與資料安全集中管理。",
+    ],
+    "data/preferences": [
+      "RIVERLENS / DATA",
+      "資料中心",
+      "匯入進度、來源設定與資料安全集中管理。",
+    ],
+  } as const;
+  const heading =
+    headings[routeKey as keyof typeof headings] ?? headings["today/dashboard"];
+  const showFilter = ["today", "hands", "coach"].includes(route.workspace);
+  const showImport =
+    route.workspace === "today" ||
+    (route.workspace === "hands" && route.section === "list");
 
   return (
-    <div className="app-shell">
-      <a className="skip-link" href="#main-content">
-        {t("跳至主要內容")}
-      </a>
-      <aside className="sidebar" aria-label={t("主要導覽")}>
-        <button
-          className="brand"
-          onClick={() => navigate("overview")}
-          aria-label={t("RiverLens 首頁")}
-        >
-          <span className="brand-mark">
-            <Cards size={25} weight="duotone" />
-          </span>
-          <span>
-            {t("riverlens")}
-            <span className="brand-dot">.</span>
-          </span>
-        </button>
-        <div className="nav-caption">{t("分析")}</div>
-        <nav>
-          {nav.map(([id, label, Icon]) => (
-            <button
-              key={id}
-              onClick={() => navigate(id)}
-              className={`nav-item ${page === id ? "active" : ""}`}
-              aria-current={page === id ? "page" : undefined}
-            >
-              <Icon size={20} weight={page === id ? "duotone" : "regular"} />
-              <span>{t(label)}</span>
-              {id === "hands" && (
-                <small>{overall.data ? number(overall.data.hands) : "—"}</small>
-              )}
-            </button>
-          ))}
-        </nav>
-        <div className="nav-caption manage">{t("管理")}</div>
-        <button
-          className={`nav-item ${page === "imports" ? "active" : ""}`}
-          aria-current={page === "imports" ? "page" : undefined}
-          onClick={() => navigate("imports")}
-        >
-          <DownloadSimple size={20} />
-          <span>{t("匯入中心")}</span>
-          {jobs.data?.some((j) => j.state === "running") && (
-            <i className="status-dot" />
-          )}
-        </button>
-        <button
-          className={`nav-item ${page === "settings" ? "active" : ""}`}
-          aria-current={page === "settings" ? "page" : undefined}
-          onClick={() => navigate("settings")}
-        >
-          <SlidersHorizontal size={20} />
-          <span>{t("資料與設定")}</span>
-        </button>
-        <div className="sidebar-bottom">
-          <div className="local-status">
-            <HardDrives size={20} />
-            <div>
-              <strong>{t("完全本機")}</strong>
-              <small>{t("你的牌譜，只屬於你。")}</small>
-            </div>
-          </div>
-          <div className="version">
-            <span>{t("RiverLens")}</span>
-            <span>v0.4.0</span>
-          </div>
-        </div>
-      </aside>
-      <div className="workspace-main">
-        <header className="topbar">
-          <div className="breadcrumb">
-            {t("WORKSPACE ")}
-            <span>/</span>{" "}
-            <strong>
-              {page === "settings" || page === "imports"
-                ? t("LIBRARY")
-                : filter.currency === "CHIPS" || filter.game === "Tournament"
-                  ? t("MTT／錦標賽")
-                  : t("CASH GAMES")}
-            </strong>
-          </div>
-          <div className="topbar-actions">
-            {page !== "mda" && (
-              <button className="button" onClick={() => navigate("coach")}>
+    <>
+      <AppShell
+        nav={navItems}
+        activeWorkspace={route.workspace}
+        onNavigate={goWorkspace}
+        healthError={Boolean(health.error)}
+        version={health.data?.version ? `v${health.data.version}` : "v0.6.0"}
+        onRefresh={refresh}
+        mainRef={content}
+        actions={
+          <>
+            {route.workspace !== "coach" && route.workspace !== "research" && (
+              <button className="button" onClick={() => goWorkspace("coach")}>
                 {t("問 AI")}
               </button>
             )}
             <LanguageSelect />
-            <span className="connection">
-              <i className={`status-dot ${health.error ? "offline" : ""}`} />
-              <span className="connection-label">
-                {health.error ? t("引擎未連接") : t("本機資料庫")}
-              </span>
-            </span>
-            <button
-              className="icon-button"
-              title={t("重新整理")}
-              aria-label={t("重新整理")}
-              onClick={refresh}
-            >
-              <ArrowsClockwise size={18} />
-            </button>
-            <span className="avatar small">{t("H")}</span>
-          </div>
-        </header>
-        <main
-          id="main-content"
-          tabIndex={-1}
-          ref={content}
-          className="main-content"
-        >
-          <div className="page-heading">
-            <div>
-              <div className="eyebrow">
-                {page === "overview"
-                  ? t("YOUR GAME, IN FOCUS")
-                  : "RIVERLENS / " + page.toUpperCase()}
-              </div>
-              <h1>{t(titles[page][0])}</h1>
-              <p>{t(titles[page][1])}</p>
-            </div>
-            {page !== "mda" && (
-              <button
-                className="button primary"
-                onClick={() => setImportOpen(true)}
-              >
-                <Plus size={17} weight="bold" />
-                {t("匯入牌譜")}
+          </>
+        }
+      >
+        <RouteErrorBoundary key={route.workspace}>
+          <WorkspaceHeading
+            eyebrow={heading[0]}
+            title={heading[1]}
+            description={heading[2]}
+            action={
+              showImport ? (
+                <button
+                  className="button primary"
+                  onClick={() => setImportOpen(true)}
+                >
+                  <Plus size={17} weight="bold" />
+                  {t("匯入牌譜")}
+                </button>
+              ) : undefined
+            }
+          />
+          {route.workspace === "today" && (
+            <div className="context-cards" aria-label={t("下一步行動")}>
+              <button onClick={() => goSection("hands", "review")}>
+                <strong>{t("下一步覆盤")}</strong>
+                <small>{t("檢查未完成複盤與關鍵情境")}</small>
               </button>
-            )}
-          </div>
+              <button onClick={() => goSection("data", "import")}>
+                <strong>{t("匯入進度")}</strong>
+                <small>
+                  {jobs.data?.some((j) => j.state === "running")
+                    ? t("匯入中")
+                    : t("查看匯入狀態與資料問題")}
+                </small>
+              </button>
+              <button onClick={() => goSection("learn", "trainer")}>
+                <strong>{t("學習練習")}</strong>
+                <small>
+                  {health.data?.study?.complete
+                    ? t("開啟 Trainer 與到期題目")
+                    : t("等待索引完成後開始練習")}
+                </small>
+              </button>
+            </div>
+          )}
+          {route.workspace === "data" && (
+            <RouteTabs
+              label="資料中心"
+              panelId="data-workspace"
+              value={route.section as "import" | "sources" | "preferences"}
+              onChange={(section) => goSection("data", section)}
+              items={[
+                { value: "import", label: "匯入中心" },
+                { value: "sources", label: "資料與設定" },
+                { value: "preferences", label: "介面偏好" },
+              ]}
+            />
+          )}
           {(globalError || profiles.error) && (
             <ErrorBanner>
               {globalError ||
@@ -384,7 +573,7 @@ export default function App() {
               </button>
             </ErrorBanner>
           )}
-          {!["imports", "settings", "study", "mda"].includes(page) && (
+          {showFilter && (
             <>
               <div className="filterbar">
                 <div className="filter-select">
@@ -522,7 +711,7 @@ export default function App() {
                       const s = saved.data?.find(
                         (s) => s.id === Number(e.target.value),
                       );
-                      if (s) setFilter(normalizeFilter(s.filter));
+                      if (s) update(normalizeFilter(s.filter));
                     }}
                   >
                     <option value="">{t("已儲存")}</option>
@@ -573,7 +762,13 @@ export default function App() {
                   ))}
                   <button
                     className="clear-filters"
-                    onClick={() => setFilter({ currency: "USD" })}
+                    onClick={() =>
+                      update(
+                        Object.fromEntries(
+                          Object.keys(filter).map((key) => [key, undefined]),
+                        ) as Partial<Filter>,
+                      )
+                    }
                   >
                     {t("清除全部")}
                   </button>
@@ -581,18 +776,60 @@ export default function App() {
               )}
             </>
           )}
-          {page === "mda" && <MdaWorkspace />}
-          {page === "coach" && (
+          {route.workspace === "hands" && (
+            <RouteTabs
+              label="牌局覆盤"
+              panelId="hands-workspace"
+              value={route.section as "list" | "matrix" | "review"}
+              onChange={(section) => goSection("hands", section)}
+              items={[
+                { value: "list", label: "手牌資料庫" },
+                { value: "matrix", label: "起手牌矩陣" },
+                { value: "review", label: "複盤工作台" },
+              ]}
+            />
+          )}
+          {route.workspace === "research" && (
+            <MdaWorkspace
+              tab={
+                (route.section === "evidence"
+                  ? "spots"
+                  : route.section) as MdaTab
+              }
+              onTabChange={(tab) =>
+                goSection("research", tab === "spots" ? "evidence" : tab)
+              }
+            />
+          )}
+          {route.workspace === "coach" && (
             <AiCoach
               filter={filter}
               question={aiQuestion}
-              openHand={(id, seq) => {
-                setReplayStep(seq ?? 0);
-                setSelected(id);
-              }}
+              openHand={openHand}
+              tab={
+                route.section === "connections"
+                  ? "connect"
+                  : route.section === "chat"
+                    ? "spots"
+                    : route.section === "library"
+                      ? "library"
+                      : "coach"
+              }
+              onTabChange={(tab) =>
+                goSection(
+                  "coach",
+                  tab === "connect"
+                    ? "connections"
+                    : tab === "spots"
+                      ? "chat"
+                      : tab === "library"
+                        ? "library"
+                        : "situation",
+                )
+              }
             />
           )}
-          {page === "overview" && (
+          {route.workspace === "today" && (
             <Overview
               filter={filter}
               revision={revision}
@@ -602,82 +839,80 @@ export default function App() {
               setCompare={setCompare}
             />
           )}
-          {page === "hands" && (
-            <>
+          {route.workspace === "hands" && (
+            <TabPanel id="hands-workspace" activeTab={route.section}>
               {returnTo && (
                 <button
                   className="text-button"
                   style={{ marginBottom: 16 }}
                   onClick={() => {
-                    setFilter(returnTo.filter);
-                    navigate(returnTo.page);
-                    setReturnTo(null);
+                    navigate(returnTo);
                   }}
                 >
                   {t("← 返回報表及原本篩選")}
                 </button>
               )}
-              <HandsView
-                filter={filter}
-                revision={revision}
-                open={openHand}
-                notify={setToast}
-              />
-            </>
+              {route.section === "list" && (
+                <HandsView
+                  filter={filter}
+                  revision={revision}
+                  open={openHand}
+                  notify={setToast}
+                />
+              )}
+              {route.section === "matrix" && (
+                <RangeView
+                  filter={filter}
+                  revision={revision}
+                  drill={drill}
+                  view={rangeView}
+                  setView={setRangeView}
+                />
+              )}
+              {route.section === "review" && (
+                <ReviewView filter={filter} revision={revision} drill={drill} />
+              )}
+            </TabPanel>
           )}
-          {page === "ranges" && (
-            <RangeView
-              filter={filter}
-              revision={revision}
-              drill={drill}
-              view={rangeView}
-              setView={setRangeView}
-            />
-          )}
-          {page === "review" && (
-            <ReviewView filter={filter} revision={revision} drill={drill} />
-          )}
-          {page === "study" && (
+          {route.workspace === "learn" && (
             <StudyWorkspace
               profiles={profiles.data || []}
               health={health.data || undefined}
               revision={revision}
               refresh={refresh}
-              open={(id, step) => {
-                setReplayStep(step);
-                setSelected(id);
-              }}
+              open={openHand}
+              tab={route.section as never}
+              onTabChange={(tab) => goSection("learn", tab)}
               notify={setToast}
             />
           )}
-          {page === "imports" && (
-            <Imports
-              jobs={jobs.data || []}
-              revision={revision}
-              refresh={refresh}
-              openHand={openHand}
-              notify={setToast}
-              onImport={() => setImportOpen(true)}
-            />
+          {route.workspace === "data" && (
+            <TabPanel id="data-workspace" activeTab={route.section}>
+              {route.section === "import" && (
+                <Imports
+                  jobs={jobs.data || []}
+                  revision={revision}
+                  refresh={refresh}
+                  openHand={openHand}
+                  notify={setToast}
+                  onImport={() => setImportOpen(true)}
+                />
+              )}
+              {route.section !== "import" && (
+                <Settings
+                  profiles={profiles.data || []}
+                  health={health.data}
+                  refresh={refresh}
+                  notify={setToast}
+                  section={
+                    route.section === "preferences" ? "preferences" : "sources"
+                  }
+                />
+              )}
+            </TabPanel>
           )}
-          {page === "settings" && (
-            <Settings
-              profiles={profiles.data || []}
-              health={health.data}
-              refresh={refresh}
-              notify={setToast}
-            />
-          )}
-          <footer className="main-footer">
-            <ShieldCheck size={13} />
-            <span>{t("本機賽後複盤")}</span>
-            <span className="footer-separator">·</span>
-            <span>{t("不連接遊戲客戶端")}</span>
-            <span className="footer-spacer" />
-            <span>HKT · {filter.currency || t("全部")} / bb</span>
-          </footer>
-        </main>
-      </div>
+        </RouteErrorBoundary>
+      </AppShell>
       {importOpen && (
         <ImportDialog
           profiles={profiles.data || []}
@@ -685,26 +920,23 @@ export default function App() {
           imported={() => {
             setImportOpen(false);
             refresh();
-            navigate("imports");
+            goWorkspace("data");
             setToast(t("背景匯入已開始"));
           }}
         />
       )}
-      {selected !== null && (
+      {Boolean(route.handId) && (
         <Replayer
-          id={selected}
-          initialStep={replayStep}
+          id={route.handId ?? 0}
+          initialStep={Math.max(0, Number(searchParams.get("step") ?? 0))}
+          onStep={syncReplayStep}
           askAi={(seq) => {
             setAiQuestion(
-              t("複盤手牌") + " #" + selected + "，" + t("決策") + " " + seq,
+              `${t("複盤手牌")} #${route.handId}，${t("決策")} ${seq}`,
             );
-            setSelected(null);
-            navigate("coach");
+            goWorkspace("coach");
           }}
-          close={() => {
-            setSelected(null);
-            setReplayStep(0);
-          }}
+          close={closeReplay}
           saved={() => {
             refresh();
             setToast(t("複盤筆記已儲存"));
@@ -763,6 +995,6 @@ export default function App() {
           {toast}
         </div>
       )}
-    </div>
+    </>
   );
 }
