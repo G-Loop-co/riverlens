@@ -11,7 +11,7 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%28Apple%20Silicon%20%26%20Intel%29-blue)
 ![Runtime](https://img.shields.io/badge/runtime-offline%20first-2f6f4f)
 
-**[⬇️ RiverLens v0.6.0 다운로드](https://github.com/G-Loop-co/riverlens/releases/latest)**
+**[⬇️ RiverLens v0.6.1 다운로드](https://github.com/G-Loop-co/riverlens/releases/latest)**
 
 <sub>macOS 빌드는 ad-hoc 서명입니다(notarization 없음).</sub>
 

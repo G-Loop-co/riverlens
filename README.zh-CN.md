@@ -12,10 +12,10 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%28Apple%20Silicon%20%26%20Intel%29-blue)
 ![Runtime](https://img.shields.io/badge/runtime-offline%20first-2f6f4f)
 
-**[⬇️ 下载 RiverLens v0.6.0](https://github.com/G-Loop-co/riverlens/releases/latest)** ·
+**[⬇️ 下载 RiverLens v0.6.1](https://github.com/G-Loop-co/riverlens/releases/latest)** ·
 Windows 安装档 · macOS Apple Silicon · macOS Intel
 
-<sub>macOS 版本为 ad-hoc 签章，未经 Apple notarization。[发布说明](docs/release-v0.6.0.md)。</sub>
+<sub>macOS 版本为 ad-hoc 签章，未经 Apple notarization。[发布说明](docs/release-v0.6.1.md)。</sub>
 
 ![RiverLens 总览 — 合成资料](docs/screenshots/overview-zh-CN.jpg)
 
@@ -59,16 +59,17 @@ Windows 安装档 · macOS Apple Silicon · macOS Intel
 
 </details>
 
-## v0.6.0 新功能
+## v0.6.1 新功能
 
-- 📈 **Leak 趋势快照** — 随时记录目标快照；快照由引擎以索引帐本重算（不信任页面端数字），并将实际频率对照目标区间画成趋势图。
-- 📤 **学习记录汇出** — 练习记录、操练记录与 leak 快照可汇出为全新 CSV。
-- 🌏 **MDA 完整本地化** — MDA 工作台与研究向导现在支援 English／繁体中文／简体中文。
-- 🤖 **AI 草稿 → Trainer** — AI 教练的练习草稿转为间隔复习题卡；研究向导按假设 → Wilson 区间 → 匿名手牌验证 → AI 剥削分析逐步引导。
+- 🧭 **六个工作区** — Today、Hands、Learn、Research、AI Coach、Data 取代九个平铺页面。
+- 🔗 **Deep link** — 工作区 tab、筛选与 Replayer step 可在刷新／返回后还原。
+- 🧱 **共用 UI** — shell、tabs、scope、状态与空状态一致，降低功能寻找成本。
+- ♿ **键盘与恢复** — WAI-ARIA tabs、本地化 live status、route error boundary。
 
 <details>
 <summary><strong>历史版本</strong></summary>
 
+- **v0.6.0** — Leak 趋势快照、学习记录汇出与 MDA 完整本地化。
 - **v0.5.0** — AI 练习草稿 → Trainer 题卡；Range 操练对照策略包节点；MDA 研究向导；一页学习进度仪表板。
 - **v0.4.x** — 独立 DuckDB 的 MDA 群体分析、AI／MCP 整合、多牌室 Cash 与锦标赛牌谱。
 

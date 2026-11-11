@@ -11,7 +11,7 @@ Importeer eigen handhistories uit 20+ kamers, bestudeer populatietendsen, vind l
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%28Apple%20Silicon%20%26%20Intel%29-blue)
 ![Runtime](https://img.shields.io/badge/runtime-offline%20first-2f6f4f)
 
-**[⬇️ RiverLens v0.6.0 downloaden](https://github.com/G-Loop-co/riverlens/releases/latest)**
+**[⬇️ RiverLens v0.6.1 downloaden](https://github.com/G-Loop-co/riverlens/releases/latest)**
 
 <sub>macOS-builds zijn ad-hoc ondertekend, niet notarized.</sub>
 

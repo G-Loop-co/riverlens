@@ -13,10 +13,10 @@ on your machine, with nothing sent anywhere unless you switch it on.
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%28Apple%20Silicon%20%26%20Intel%29-blue)
 ![Runtime](https://img.shields.io/badge/runtime-offline%20first-2f6f4f)
 
-**[⬇️ Download RiverLens v0.6.0](https://github.com/G-Loop-co/riverlens/releases/latest)** ·
+**[⬇️ Download RiverLens v0.6.1](https://github.com/G-Loop-co/riverlens/releases/latest)** ·
 Windows installer · macOS Apple Silicon · macOS Intel
 
-<sub>macOS builds are ad-hoc signed, not notarized. [Release notes](docs/release-v0.6.0.md).</sub>
+<sub>macOS builds are ad-hoc signed, not notarized. [Release notes](docs/release-v0.6.1.md).</sub>
 
 ![RiverLens overview — synthetic data](docs/screenshots/overview-en.jpg)
 
@@ -60,16 +60,17 @@ Screenshots capture full pages at 1920px desktop width with the Paper (warm whit
 
 </details>
 
-## What's new in v0.6.0
+## What's new in v0.6.1
 
-- 📈 **Leak trend snapshots** — record a benchmark any time; the engine recomputes numerator, opportunities and Wilson interval from the indexed ledger (the app never trusts numbers from the page), then charts your actual frequency against the target range.
-- 📤 **Study history export** — practice attempts, range-drill records and leak snapshots export to brand-new CSV files.
-- 🌏 **Full MDA localisation** — the MDA workspace and research wizard now speak English, Traditional Chinese and Simplified Chinese.
-- 🤖 **AI drafts → Trainer** — practice drafts from your AI coach convert into spaced self-review cards; the research wizard walks hypothesis → Wilson-interval stats → anonymous hand verification → AI exploitation analysis.
+- 🧭 **Six workspaces** — Today, Hands, Learn, Research, AI Coach and Data replace nine flat pages.
+- 🔗 **Deep links** — workspace tabs, filters and replay steps survive refresh and back/forward navigation.
+- 🧱 **Shared UI** — common shell, tabs, scope, status and empty states keep every workspace predictable.
+- ♿ **Keyboard and recovery** — WAI-ARIA tabs, localized live status and route error boundaries.
 
 <details>
 <summary><strong>Previous releases</strong></summary>
 
+- **v0.6.0** — Leak trend snapshots, study history export and full MDA localisation.
 - **v0.5.0** — AI practice drafts → Trainer self-review cards; range drill against strategy-pack nodes; MDA research wizard; one-page progress dashboard.
 - **v0.4.x** — MDA population analysis on independent DuckDB datasets, AI / MCP integration, multi-room cash and tournament hand histories.
 

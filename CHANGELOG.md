@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.1 — 2026-11-12 — Structured six-workspace UX
+
+- Reorganise nine flat pages into Today, Hands, Learn, Research, AI Coach and Data workspaces with persistent child tabs.
+- Add hash-based desktop routing, deep links, refresh/back-forward restore and URL-backed filters, workspace tabs and replay steps.
+- Add shared shell, tabs, scope, status and empty-state components; contextual import/AI actions; WAI-ARIA tabs, localized live status and route error boundaries.
+- Refresh visual tokens while retaining Forest, Midnight and Paper themes; preserve Rust engine, RPC, SQLite, DuckDB and import/backup behavior.
+
 ## 0.6.0 — 2026-11-01 — Leak trend snapshots, study CSV export, full MDA localisation
 
 - Leak trend snapshots: record per-benchmark snapshots recomputed by the engine from the indexed ledger (the client never supplies numbers); review actual-frequency trends against target-range guides in Leak Finder, and export snapshots / practice / range-drill history as brand-new CSV files. Snapshots are append-only with a 1,000-per-target cap and refuse silent file overwrites on export.
