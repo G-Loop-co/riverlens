@@ -94,9 +94,10 @@ export function Replayer({
   const [saving, setSaving] = useState(false),
     [error, setError] = useState(""),
     [clean, setClean] = useState(true);
-  const initialStepRef = useRef(false);
+  const initialStepKey = `${id}:${population?.hand_key ?? ""}`;
+  const appliedInitialStepRef = useRef<string | null>(null);
   useEffect(() => {
-    if (result.data && !initialStepRef.current) {
+    if (result.data && appliedInitialStepRef.current !== initialStepKey) {
       const a = result.data.annotation;
       setNote(a.note);
       setTags(a.tags.join(", "));
@@ -106,9 +107,9 @@ export function Replayer({
       );
       setPlaying(false);
       setClean(true);
-      initialStepRef.current = true;
+      appliedInitialStepRef.current = initialStepKey;
     }
-  }, [result.data, initialStep]);
+  }, [initialStepKey, result.data, initialStep]);
   useEffect(() => {
     onStep?.(step);
   }, [onStep, step]);
