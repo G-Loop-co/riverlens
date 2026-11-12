@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fromUnits, replay, units } from "./replay";
+import { fromUnits, replay, replayOpeningStep, units } from "./replay";
 import type { Action, Hand } from "./types";
 function action(
   kind: string,
@@ -43,6 +43,18 @@ describe("exact chronological replayer", () => {
     expect(replay(h, 0).boards).toEqual([[]]);
     expect(replay(h, 1).shown.has(2)).toBe(false);
     expect(replay(h, 2).shown.has(2)).toBe(true);
+  });
+
+  it("starts replay after every opening forced post", () => {
+    const h = hand([
+      action("ante", 1, ".02"),
+      action("small_blind", 1, ".01"),
+      action("big_blind", 2, ".02"),
+      action("call", 1, ".01"),
+    ]);
+    expect(replayOpeningStep(h.actions)).toBe(3);
+    expect(replay(h, 3).pot).toBe(units(".05"));
+    expect(replay(h, 4).pot).toBe(units(".06"));
   });
   it("tracks returns and collection exactly once", () => {
     const h = hand([

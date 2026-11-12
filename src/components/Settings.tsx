@@ -160,21 +160,23 @@ export function Settings({
   }
   return (
     <div className="settings-view">
-      <ThemeSelect />
       {section === "preferences" ? (
-        <section className="panel">
-          <div className="settings-action language-setting">
-            <div>
-              <h2>{t("介面語言")}</h2>
-              <p>
-                {t(
-                  "語言選擇會儲存於本機；不影響牌譜原文、筆記、篩選條件或金額。",
-                )}
-              </p>
+        <>
+          <ThemeSelect />
+          <section className="panel">
+            <div className="settings-action language-setting">
+              <div>
+                <h2>{t("介面語言")}</h2>
+                <p>
+                  {t(
+                    "語言選擇會儲存於本機；不影響牌譜原文、筆記、篩選條件或金額。",
+                  )}
+                </p>
+              </div>
+              <LanguageSelect />
             </div>
-            <LanguageSelect />
-          </div>
-        </section>
+          </section>
+        </>
       ) : (
         <>
           {error && <ErrorBanner>{error}</ErrorBanner>}

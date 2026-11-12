@@ -44,6 +44,7 @@ export function AppShell({
     ["today", "hands", "learn", "research", "coach"].includes(item.workspace),
   );
   const dataNav = nav.filter((item) => item.workspace === "data");
+  const settingsNav = nav.filter((item) => item.workspace === "settings");
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">
@@ -96,6 +97,24 @@ export function AppShell({
             {item.busy && <i className="status-dot" aria-hidden="true" />}
           </button>
         ))}
+        {settingsNav.length > 0 && (
+          <>
+            <div className="nav-caption settings">{t("設定")}</div>
+            {settingsNav.map((item) => (
+              <button
+                key={item.workspace}
+                className={`nav-item ${activeWorkspace === item.workspace ? "active" : ""}`}
+                aria-current={
+                  activeWorkspace === item.workspace ? "page" : undefined
+                }
+                onClick={() => onNavigate(item.workspace)}
+              >
+                {item.icon}
+                <span>{t(item.label)}</span>
+              </button>
+            ))}
+          </>
+        )}
         <div className="sidebar-bottom">
           <div className="local-status">
             <HardDrives size={20} />

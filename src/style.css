@@ -746,6 +746,43 @@ input[type="checkbox"] {
   align-items: center;
   gap: 10px;
 }
+.bb-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  user-select: none;
+}
+.bb-switch input {
+  appearance: none;
+  width: 36px;
+  height: 20px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  position: relative;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.bb-switch input::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.bb-switch input:checked {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+.bb-switch input:checked::after {
+  transform: translateX(16px);
+  background: var(--on-accent);
+}
 .subtle-badge {
   color: var(--muted);
   border: 1px solid var(--line);

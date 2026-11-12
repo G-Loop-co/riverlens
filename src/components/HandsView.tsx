@@ -33,6 +33,9 @@ export function HandsView({
     return ["recent", "loss", "win"].includes(value) ? value : "recent";
   });
   const [search, setSearch] = useState("");
+  const [showBB, setShowBB] = useState(
+    () => readPreference("riverlens-show-bb", "false") === "true",
+  );
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -206,6 +209,18 @@ export function HandsView({
           <option value="loss">{t("最大虧損")}</option>
           <option value="win">{t("最大盈利")}</option>
         </select>
+        <label className="bb-switch">
+          <input
+            role="switch"
+            type="checkbox"
+            checked={showBB}
+            onChange={(e) => {
+              setShowBB(e.target.checked);
+              writePreference("riverlens-show-bb", String(e.target.checked));
+            }}
+          />
+          <span>{t("顯示 BB")}</span>
+        </label>
       </div>
       {error && <ErrorBanner>{error}</ErrorBanner>}
       {(loading || rowsKey !== queryKey) && !rows.length ? (
@@ -243,8 +258,14 @@ export function HandsView({
                 <th>{t("位置")}</th>
                 <th>{t("底池")}</th>
                 <th>{t("盲注")}</th>
-                <th>{t("盈虧")}</th>
-                <th>{t("Net bb")}</th>
+                {showBB ? (
+                  <th>{t("盈虧 BB")}</th>
+                ) : (
+                  <>
+                    <th>{t("盈虧")}</th>
+                    <th>{t("Net bb")}</th>
+                  </>
+                )}
                 <th>
                   <span className="sr-only">{t("開啟手牌")}</span>
                 </th>
@@ -295,13 +316,21 @@ export function HandsView({
                     )}
                   </td>
                   <td className="mono muted">{row.stakes}</td>
-                  <td>
-                    <small>{row.currency || "USD"}</small>
-                    <Signed value={Number(row.net)} />
-                  </td>
-                  <td>
-                    <Signed value={row.net_bb} digits={1} />
-                  </td>
+                  {showBB ? (
+                    <td>
+                      <Signed value={row.net_bb} digits={1} />
+                    </td>
+                  ) : (
+                    <>
+                      <td>
+                        <small>{row.currency || "USD"}</small>
+                        <Signed value={Number(row.net)} />
+                      </td>
+                      <td>
+                        <Signed value={row.net_bb} digits={1} />
+                      </td>
+                    </>
+                  )}
                   <td>
                     {row.reviewed ? (
                       <Check size={17} className="positive" />

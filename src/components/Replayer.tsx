@@ -20,7 +20,7 @@ import {
 import { api, errorText, useRpc } from "../api";
 import type { HandDetail } from "../types";
 import { ACTIONS, EV_REASONS, money } from "../format";
-import { fromUnits, replay } from "../replay";
+import { fromUnits, replay, replayOpeningStep } from "../replay";
 import { ErrorBanner, Field, Skeleton } from "./UI";
 import { Dialog } from "./Dialog";
 
@@ -58,7 +58,7 @@ export function Replayer({
   id,
   close,
   saved,
-  initialStep = 0,
+  initialStep = null,
   onStep,
   askAi,
   population,
@@ -66,7 +66,7 @@ export function Replayer({
   id: number;
   close: () => void;
   saved: () => void;
-  initialStep?: number;
+  initialStep?: number | null;
   onStep?: (seq: number) => void;
   askAi?: (seq: number) => void;
   population?: { dataset_id: string; version: string; hand_key: string };
@@ -96,6 +96,10 @@ export function Replayer({
     [clean, setClean] = useState(true);
   const initialStepKey = `${id}:${population?.hand_key ?? ""}`;
   const appliedInitialStepRef = useRef<string | null>(null);
+  const openingStep = useMemo(
+    () => (h ? replayOpeningStep(h.actions) : 0),
+    [h],
+  );
   useEffect(() => {
     if (result.data && appliedInitialStepRef.current !== initialStepKey) {
       const a = result.data.annotation;
@@ -103,13 +107,16 @@ export function Replayer({
       setTags(a.tags.join(", "));
       setReviewed(a.reviewed);
       setStep(
-        Math.min(Math.max(initialStep, 0), result.data.hand.actions.length),
+        Math.min(
+          Math.max(initialStep ?? openingStep, 0),
+          result.data.hand.actions.length,
+        ),
       );
       setPlaying(false);
       setClean(true);
       appliedInitialStepRef.current = initialStepKey;
     }
-  }, [initialStepKey, result.data, initialStep]);
+  }, [initialStepKey, result.data, initialStep, openingStep]);
   useEffect(() => {
     onStep?.(step);
   }, [onStep, step]);
@@ -151,7 +158,7 @@ export function Replayer({
       if (e.code === "Space") {
         if ((e.target as HTMLElement).closest("button")) return;
         e.preventDefault();
-        if (step === h.actions.length) setStep(0);
+        if (step === h.actions.length) setStep(openingStep);
         setPlaying((p) => !p);
       }
     }
@@ -461,7 +468,7 @@ export function Replayer({
                     <button
                       className="icon-button"
                       aria-label={t("回到開始")}
-                      onClick={() => go(0)}
+                      onClick={() => go(openingStep)}
                     >
                       <SkipBack size={19} />
                     </button>
@@ -476,7 +483,7 @@ export function Replayer({
                       className="play-button"
                       aria-label={playing ? t("暫停") : t("播放")}
                       onClick={() => {
-                        if (step === h.actions.length) setStep(0);
+                        if (step === h.actions.length) setStep(openingStep);
                         setPlaying((p) => !p);
                       }}
                     >
@@ -515,7 +522,9 @@ export function Replayer({
                     </span>
                   </div>
                   <div className="street-jumps">
-                    <button onClick={() => go(0)}>{t("Preflop")}</button>
+                    <button onClick={() => go(openingStep)}>
+                      {t("Preflop")}
+                    </button>
                     {h.actions
                       .filter((a) => a.kind === "board")
                       .map((a) => (

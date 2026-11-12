@@ -18,6 +18,7 @@ import {
   Database,
   DownloadSimple,
   FunnelSimple,
+  GearSix,
   GraduationCap,
   ListChecks,
   Plus,
@@ -385,6 +386,11 @@ export default function App() {
       icon: <DownloadSimple size={20} />,
       busy: jobs.data?.some((j) => j.state === "running"),
     },
+    {
+      workspace: "settings",
+      label: "設定",
+      icon: <GearSix size={20} />,
+    },
   ];
   const headings = {
     "today/dashboard": [
@@ -497,10 +503,10 @@ export default function App() {
       "資料中心",
       "匯入進度、來源設定與資料安全集中管理。",
     ],
-    "data/preferences": [
-      "RIVERLENS / DATA",
-      "資料中心",
-      "匯入進度、來源設定與資料安全集中管理。",
+    "settings/preferences": [
+      "RIVERLENS / SETTINGS",
+      "設定",
+      "主題、語言同介面偏好集中管理。",
     ],
   } as const;
   const heading =
@@ -576,12 +582,11 @@ export default function App() {
             <RouteTabs
               label="資料中心"
               panelId="data-workspace"
-              value={route.section as "import" | "sources" | "preferences"}
+              value={route.section as "import" | "sources"}
               onChange={(section) => goSection("data", section)}
               items={[
                 { value: "import", label: "匯入中心" },
-                { value: "sources", label: "資料與設定" },
-                { value: "preferences", label: "介面偏好" },
+                { value: "sources", label: "資料來源" },
               ]}
             />
           )}
@@ -933,18 +938,25 @@ export default function App() {
                   onImport={() => setImportOpen(true)}
                 />
               )}
-              {route.section !== "import" && (
+              {route.section === "sources" && (
                 <Settings
                   profiles={profiles.data || []}
                   health={health.data}
                   refresh={refresh}
                   notify={setToast}
-                  section={
-                    route.section === "preferences" ? "preferences" : "sources"
-                  }
+                  section="sources"
                 />
               )}
             </TabPanel>
+          )}
+          {route.workspace === "settings" && (
+            <Settings
+              profiles={profiles.data || []}
+              health={health.data}
+              refresh={refresh}
+              notify={setToast}
+              section="preferences"
+            />
           )}
         </RouteErrorBoundary>
       </AppShell>
@@ -963,7 +975,11 @@ export default function App() {
       {Boolean(route.handId) && (
         <Replayer
           id={route.handId ?? 0}
-          initialStep={Math.max(0, Number(searchParams.get("step") ?? 0))}
+          initialStep={
+            searchParams.has("step")
+              ? Math.max(0, Number(searchParams.get("step") ?? 0))
+              : null
+          }
           onStep={syncReplayStep}
           askAi={(seq) => {
             setAiQuestion(

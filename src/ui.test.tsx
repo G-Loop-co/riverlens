@@ -175,6 +175,43 @@ describe("UI request and storage regressions", () => {
     expect(screen.getByText("#SYN3")).toBeTruthy();
   });
 
+  it("switches hand review profit between currency and BB", async () => {
+    const requests = delayedFetch();
+    const storage = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => storage.set(key, value),
+    });
+    render(
+      <HandsView
+        filter={{ position: "BTN" }}
+        open={vi.fn()}
+        notify={vi.fn()}
+        revision={0}
+      />,
+    );
+    await act(async () =>
+      respond(requests[0], {
+        rows: [row(1, "BTN")],
+        next_cursor: null,
+      } satisfies HandPage),
+    );
+    expect(screen.getByText("USD")).toBeTruthy();
+    expect(
+      screen.getByText((_, element) => element?.textContent === "+0.12"),
+    ).toBeTruthy();
+    fireEvent.click(screen.getByRole("switch", { name: "顯示 BB" }));
+    expect(screen.queryByText("USD")).toBeNull();
+    expect(
+      screen.queryByText((_, element) => element?.textContent === "+0.12"),
+    ).toBeNull();
+    expect(
+      screen.getAllByText((_, element) => element?.textContent === "+6.0")
+        .length,
+    ).toBeGreaterThan(0);
+    expect(storage.get("riverlens-show-bb")).toBe("true");
+  });
+
   it("keeps checkbox keyboard input separate from opening a hand and catches export dialog errors", async () => {
     const requests = delayedFetch();
     const open = vi.fn();

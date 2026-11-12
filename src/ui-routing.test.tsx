@@ -23,7 +23,7 @@ function renderApp() {
 }
 
 describe("workspace routing", () => {
-  it("has no serious or critical accessibility violations in the six workspaces", async () => {
+  it("has no serious or critical accessibility violations in the seven workspaces", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() => new Promise(() => {})),
@@ -35,6 +35,7 @@ describe("workspace routing", () => {
       ["#/research/stats", "MDA 群體分析"],
       ["#/coach/situation", "AI 教練"],
       ["#/data/import", "資料中心"],
+      ["#/settings/preferences", "設定"],
     ] as const;
     for (const [hash, title] of routes) {
       cleanup();
@@ -74,6 +75,7 @@ describe("workspace routing", () => {
       "學習工作台",
       "MDA 群體分析",
       "AI 教練",
+      "設定",
     ]) {
       expect(screen.getByRole("button", { name })).toBeTruthy();
     }
@@ -110,6 +112,7 @@ describe("workspace routing", () => {
       "MDA population analysis",
       "AI coach",
       "Data center",
+      "Settings",
     ]) {
       expect(screen.getByRole("button", { name })).toBeTruthy();
     }
