@@ -4,12 +4,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { HashRouter } from "react-router";
 import "axe-core";
 import App from "./App";
+import { changeLanguage } from "./i18n";
 import { RouteErrorBoundary } from "./components/RouteUI";
 
 afterEach(() => {
   cleanup();
   window.history.replaceState(null, "", "/");
   vi.unstubAllGlobals();
+  void changeLanguage("zh-TW");
 });
 
 function renderApp() {
@@ -91,6 +93,26 @@ describe("workspace routing", () => {
     expect(screen.getByRole("tab", { selected: true }).textContent).toContain(
       "起手牌矩陣",
     );
+  });
+
+  it("localizes every sidebar workspace in English", async () => {
+    await changeLanguage("en");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise(() => {})),
+    );
+    renderApp();
+    await waitFor(() => expect(window.location.hash).toContain("#/today"));
+    for (const name of [
+      "Overview",
+      "Hand review",
+      "Study workspace",
+      "MDA population analysis",
+      "AI coach",
+      "Data center",
+    ]) {
+      expect(screen.getByRole("button", { name })).toBeTruthy();
+    }
   });
 
   it("keeps the rest of the shell usable when a workspace throws", () => {

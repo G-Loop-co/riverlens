@@ -33,7 +33,7 @@ export function AppShell({
   activeWorkspace: Workspace;
   onNavigate: (workspace: Workspace) => void;
   healthError?: boolean;
-  version: string;
+  version?: string;
   onRefresh: () => void;
   mainRef?: RefObject<HTMLElement | null>;
   actions: ReactNode;
@@ -106,7 +106,7 @@ export function AppShell({
           </div>
           <div className="version">
             <span>{t("RiverLens")}</span>
-            <span>{version}</span>
+            {version && <span>{version}</span>}
           </div>
         </div>
       </aside>

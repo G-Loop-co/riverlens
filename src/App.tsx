@@ -9,6 +9,7 @@ import {
   Suspense,
   useState,
 } from "react";
+import { getVersion } from "@tauri-apps/api/app";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
 import {
   Cards,
@@ -22,7 +23,7 @@ import {
   Plus,
   X,
 } from "@phosphor-icons/react";
-import { api, errorText, useRpc } from "./api";
+import { api, desktop, errorText, useRpc } from "./api";
 import type {
   Filter,
   Health,
@@ -100,6 +101,7 @@ export default function App() {
     [searchParams],
   );
   const [revision, setRevision] = useState(0);
+  const [appVersion, setAppVersion] = useState<string>();
   const [importOpen, setImportOpen] = useState(false);
   const [advanced, setAdvanced] = useState(false);
   const [aiQuestion, setAiQuestion] = useState("");
@@ -145,6 +147,18 @@ export default function App() {
     jobs.data?.some((j) => j.state === "running") ||
     health.data?.equity_running ||
     health.data?.study_running;
+  useEffect(() => {
+    if (!desktop) return;
+    let active = true;
+    getVersion()
+      .then((version) => {
+        if (active) setAppVersion(`v${version}`);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
   useEffect(() => {
     if (!running) return;
     const id = setInterval(() => setRevision((v) => v + 1), 2500);
@@ -503,7 +517,7 @@ export default function App() {
         activeWorkspace={route.workspace}
         onNavigate={goWorkspace}
         healthError={Boolean(health.error)}
-        version={health.data?.version ? `v${health.data.version}` : "v0.6.0"}
+        version={appVersion}
         onRefresh={refresh}
         mainRef={content}
         actions={
