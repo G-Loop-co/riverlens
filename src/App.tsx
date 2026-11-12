@@ -4,7 +4,9 @@ import {
   useEffect,
   useLayoutEffect,
   useMemo,
+  lazy,
   useRef,
+  Suspense,
   useState,
 } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router";
@@ -30,9 +32,7 @@ import type {
   SavedFilter,
 } from "./types";
 import { number, CUES, ACTIONS, STAT_LABELS } from "./format";
-import { ErrorBanner, Field } from "./components/UI";
-import { AiCoach } from "./components/AiCoach";
-import { MdaWorkspace } from "./components/MdaWorkspace";
+import { ErrorBanner, Field, Skeleton } from "./components/UI";
 import type { MdaTab } from "./components/MdaWorkspace";
 import { Overview } from "./components/Overview";
 import { HandsView } from "./components/HandsView";
@@ -43,7 +43,6 @@ import { Settings } from "./components/Settings";
 import { Replayer } from "./components/Replayer";
 import { AdvancedFilters } from "./components/Filters";
 import { LanguageSelect } from "./components/LanguageSelect";
-import { StudyWorkspace } from "./components/StudyWorkspace";
 import { Dialog } from "./components/Dialog";
 import { normalizeFilter, readFilter, writePreference } from "./preferences";
 import { AppShell, type AppNavItem } from "./components/AppShell";
@@ -63,6 +62,22 @@ import {
   workspaceHref,
   type Workspace,
 } from "./routes";
+
+const MdaWorkspace = lazy(() =>
+  import("./components/MdaWorkspace").then(({ MdaWorkspace }) => ({
+    default: MdaWorkspace,
+  })),
+);
+const AiCoach = lazy(() =>
+  import("./components/AiCoach").then(({ AiCoach }) => ({
+    default: AiCoach,
+  })),
+);
+const StudyWorkspace = lazy(() =>
+  import("./components/StudyWorkspace").then(({ StudyWorkspace }) => ({
+    default: StudyWorkspace,
+  })),
+);
 
 export default function App() {
   const { t } = useTranslation();
@@ -790,44 +805,48 @@ export default function App() {
             />
           )}
           {route.workspace === "research" && (
-            <MdaWorkspace
-              tab={
-                (route.section === "evidence"
-                  ? "spots"
-                  : route.section) as MdaTab
-              }
-              onTabChange={(tab) =>
-                goSection("research", tab === "spots" ? "evidence" : tab)
-              }
-            />
+            <Suspense fallback={<Skeleton rows={6} />}>
+              <MdaWorkspace
+                tab={
+                  (route.section === "evidence"
+                    ? "spots"
+                    : route.section) as MdaTab
+                }
+                onTabChange={(tab) =>
+                  goSection("research", tab === "spots" ? "evidence" : tab)
+                }
+              />
+            </Suspense>
           )}
           {route.workspace === "coach" && (
-            <AiCoach
-              filter={filter}
-              question={aiQuestion}
-              openHand={openHand}
-              tab={
-                route.section === "connections"
-                  ? "connect"
-                  : route.section === "chat"
-                    ? "spots"
-                    : route.section === "library"
-                      ? "library"
-                      : "coach"
-              }
-              onTabChange={(tab) =>
-                goSection(
-                  "coach",
-                  tab === "connect"
-                    ? "connections"
-                    : tab === "spots"
-                      ? "chat"
-                      : tab === "library"
+            <Suspense fallback={<Skeleton rows={6} />}>
+              <AiCoach
+                filter={filter}
+                question={aiQuestion}
+                openHand={openHand}
+                tab={
+                  route.section === "connections"
+                    ? "connect"
+                    : route.section === "chat"
+                      ? "spots"
+                      : route.section === "library"
                         ? "library"
-                        : "situation",
-                )
-              }
-            />
+                        : "coach"
+                }
+                onTabChange={(tab) =>
+                  goSection(
+                    "coach",
+                    tab === "connect"
+                      ? "connections"
+                      : tab === "spots"
+                        ? "chat"
+                        : tab === "library"
+                          ? "library"
+                          : "situation",
+                  )
+                }
+              />
+            </Suspense>
           )}
           {route.workspace === "today" && (
             <Overview
@@ -875,16 +894,18 @@ export default function App() {
             </TabPanel>
           )}
           {route.workspace === "learn" && (
-            <StudyWorkspace
-              profiles={profiles.data || []}
-              health={health.data || undefined}
-              revision={revision}
-              refresh={refresh}
-              open={openHand}
-              tab={route.section as never}
-              onTabChange={(tab) => goSection("learn", tab)}
-              notify={setToast}
-            />
+            <Suspense fallback={<Skeleton rows={6} />}>
+              <StudyWorkspace
+                profiles={profiles.data || []}
+                health={health.data || undefined}
+                revision={revision}
+                refresh={refresh}
+                open={openHand}
+                tab={route.section as never}
+                onTabChange={(tab) => goSection("learn", tab)}
+                notify={setToast}
+              />
+            </Suspense>
           )}
           {route.workspace === "data" && (
             <TabPanel id="data-workspace" activeTab={route.section}>
