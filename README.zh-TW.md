@@ -12,10 +12,10 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%28Apple%20Silicon%20%26%20Intel%29-blue)
 ![Runtime](https://img.shields.io/badge/runtime-offline%20first-2f6f4f)
 
-**[⬇️ 下載 RiverLens v0.6.1](https://github.com/G-Loop-co/riverlens/releases/latest)** ·
+**[⬇️ 下載 RiverLens v0.6.2](https://github.com/G-Loop-co/riverlens/releases/latest)** ·
 Windows 安裝檔 · macOS Apple Silicon · macOS Intel
 
-<sub>macOS 版本為 ad-hoc 簽章，未經 Apple notarization。[發布說明](docs/release-v0.6.1.md)。</sub>
+<sub>macOS 版本為 ad-hoc 簽章，未經 Apple notarization。[發布說明](docs/release-v0.6.2.md)。</sub>
 
 ![RiverLens 總覽 — 合成資料](docs/screenshots/overview-zh-TW.jpg)
 
@@ -27,14 +27,14 @@ Windows 安裝檔 · macOS Apple Silicon · macOS Intel
 
 ## 為什麼選 RiverLens
 
-| | |
-| --- | --- |
-| 🔒 **本機優先，設計如此** | 個人複盤存 SQLite，群體研究存獨立 DuckDB。無帳號、無雲端同步、無遙測。AI 與資料集分享皆為選用，預設關閉。 |
-| 🧪 **證據，不是感覺** | 每個頻率都附合法機會分母、Wilson 95% 區間，並可下鑽匿名手牌。缺基線就標示為研究假設——絕不直接說「你有 leak」。 |
-| 🌍 **20+ 牌室與網絡** | GG／Natural8、PokerStars、WPN、888、partypoker、Winamax、iPoker 等原生解析器，Cash 與錦標賽——見[完整表格](#支援牌室)。 |
-| 🤖 **有憑有據的 AI** | 23 個本機 MCP 工具供你的 agent 使用，或用內建教練（OpenAI／Anthropic／Gemini／DeepSeek／OpenCode Go）。AI 的每個主張都連回手牌證據，並需你批准。 |
-| 🧠 **閉環的學習流程** | Spot Explorer → Leak Finder → GTO 對照 → Range 操練 → Trainer 間隔複習——現在還有 leak 趨勢快照，讓你看見 leak 正在收斂。 |
-| 📊 **嚴謹數字，誠實標示** | 13 項核心統計、13×13 矩陣、精確枚舉 all-in equity。不是 decision EV 的東西就標明不是。 |
+|                           |                                                                                                                                                  |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 🔒 **本機優先，設計如此** | 個人複盤存 SQLite，群體研究存獨立 DuckDB。無帳號、無雲端同步、無遙測。AI 與資料集分享皆為選用，預設關閉。                                        |
+| 🧪 **證據，不是感覺**     | 每個頻率都附合法機會分母、Wilson 95% 區間，並可下鑽匿名手牌。缺基線就標示為研究假設——絕不直接說「你有 leak」。                                   |
+| 🌍 **20+ 牌室與網絡**     | GG／Natural8、PokerStars、WPN、888、partypoker、Winamax、iPoker 等原生解析器，Cash 與錦標賽——見[完整表格](#支援牌室)。                           |
+| 🤖 **有憑有據的 AI**      | 23 個本機 MCP 工具供你的 agent 使用，或用內建教練（OpenAI／Anthropic／Gemini／DeepSeek／OpenCode Go）。AI 的每個主張都連回手牌證據，並需你批准。 |
+| 🧠 **閉環的學習流程**     | Spot Explorer → Leak Finder → GTO 對照 → Range 操練 → Trainer 間隔複習——現在還有 leak 趨勢快照，讓你看見 leak 正在收斂。                         |
+| 📊 **嚴謹數字，誠實標示** | 13 項核心統計、13×13 矩陣、精確枚舉 all-in equity。不是 decision EV 的東西就標明不是。                                                           |
 
 ## 學習閉環
 
@@ -59,12 +59,12 @@ Windows 安裝檔 · macOS Apple Silicon · macOS Intel
 
 </details>
 
-## v0.6.1 新功能
+## v0.6.2 新功能
 
-- 🧭 **六個工作區** — Today、Hands、Learn、Research、AI Coach、Data 取代九個平鋪頁面。
-- 🔗 **Deep link** — 工作區 tab、篩選與 Replayer step 可在刷新／返回後還原。
-- 🧱 **共用 UI** — shell、tabs、scope、狀態與空狀態一致，降低功能尋找成本。
-- ♿ **鍵盤與恢復** — WAI-ARIA tabs、本地化 live status、route error boundary。
+- ⚙️ **設定獨立** — 主題與語言偏好移至獨立設定頁；資料中心專注匯入與來源資料。
+- 📏 **顯示 BB** — 手牌覆盤可切換幣別盈虧與淨 BB，偏好會保存在本機。
+- 🎬 **盲注後開始回放** — 自動跳過 SB／BB／Ante／Straddle 入池，由第一個真正決策開始。
+- 🚀 **更穩定桌面版本** — 工作區懶載入與精簡字型，配合穩定 CGU1 release profile。
 
 <details>
 <summary><strong>歷史版本</strong></summary>
@@ -84,26 +84,26 @@ Windows 安裝檔 · macOS Apple Silicon · macOS Intel
 <details>
 <summary><strong>完整牌室／網絡表</strong></summary>
 
-| 牌室／網絡 | Cash 匯入 | MTT／錦標賽 | 支援範圍 |
-| --- | --- | --- | --- |
-| GG / Natural8 | TXT | Yes | 原生語法 |
-| PokerStars | TXT | Yes | 原生語法 |
-| WPN / ACR / Black Chip / PokerKing | TXT（舊＋新） | 僅新格式 | 原生語法 |
-| 888 / Pacific | TXT | Yes | 原生語法 |
-| partypoker / bwin | TXT | — | 原生語法 |
-| Winamax | TXT | Yes | 原生語法 |
-| iPoker skins | XML | Yes | 原生語法 |
-| CoinPoker | TXT (USDT) | — | 原生語法；僅合成驗證 |
-| Ignition / Bovada / Bodog | TXT | — | 原生語法 |
-| Unibet | TXT | — | 原生語法 |
-| Full Tilt | TXT | Yes | 歷史原生語法 |
-| Cake / Revolution | TXT | — | 歷史原生語法 |
-| OnGame | TXT | — | 歷史原生語法 |
-| Merge / Carbon | XML | — | 歷史原生語法 |
-| Microgaming / MPN | XML | — | 歷史原生語法 |
-| Chico / BetOnline / SportsBetting / TigerGaming | PokerStars TXT | — | 僅既有完整轉換 |
-| PPPoker / PokerBros / UPoker / ClubGG / X-Poker / QQPK | PokerStars TXT | — | 僅既有完整轉換 |
-| WPT Global | PokerStars TXT | — | 僅既有完整轉換 |
+| 牌室／網絡                                             | Cash 匯入      | MTT／錦標賽 | 支援範圍             |
+| ------------------------------------------------------ | -------------- | ----------- | -------------------- |
+| GG / Natural8                                          | TXT            | Yes         | 原生語法             |
+| PokerStars                                             | TXT            | Yes         | 原生語法             |
+| WPN / ACR / Black Chip / PokerKing                     | TXT（舊＋新）  | 僅新格式    | 原生語法             |
+| 888 / Pacific                                          | TXT            | Yes         | 原生語法             |
+| partypoker / bwin                                      | TXT            | —           | 原生語法             |
+| Winamax                                                | TXT            | Yes         | 原生語法             |
+| iPoker skins                                           | XML            | Yes         | 原生語法             |
+| CoinPoker                                              | TXT (USDT)     | —           | 原生語法；僅合成驗證 |
+| Ignition / Bovada / Bodog                              | TXT            | —           | 原生語法             |
+| Unibet                                                 | TXT            | —           | 原生語法             |
+| Full Tilt                                              | TXT            | Yes         | 歷史原生語法         |
+| Cake / Revolution                                      | TXT            | —           | 歷史原生語法         |
+| OnGame                                                 | TXT            | —           | 歷史原生語法         |
+| Merge / Carbon                                         | XML            | —           | 歷史原生語法         |
+| Microgaming / MPN                                      | XML            | —           | 歷史原生語法         |
+| Chico / BetOnline / SportsBetting / TigerGaming        | PokerStars TXT | —           | 僅既有完整轉換       |
+| PPPoker / PokerBros / UPoker / ClubGG / X-Poker / QQPK | PokerStars TXT | —           | 僅既有完整轉換       |
+| WPT Global                                             | PokerStars TXT | —           | 僅既有完整轉換       |
 
 </details>
 
@@ -113,12 +113,12 @@ Windows 安裝檔 · macOS Apple Silicon · macOS Intel
 
 兩種接入方式——都連證據、都需你批准才會保存：
 
-| | 內建教練 | 外部 agent（MCP） |
-| --- | --- | --- |
-| **設定** | 在 AI 連接頁存 API key（OpenAI／Anthropic／Gemini／DeepSeek／OpenCode Go） | 開啟本機連接，將任何 stdio-MCP 用戶端（如 Codex）指向它 |
-| **金鑰存放** | OS 憑證庫 | agent 自己的登入——RiverLens 不保管 provider 金鑰 |
-| **工具** | 5 個限域群體工具＋完整學習工具 | 23 個本機 MCP 工具 |
-| **產出** | 學習資料庫中的證據草稿 | 同樣的草稿，由你的 agent 驅動 |
+|              | 內建教練                                                                   | 外部 agent（MCP）                                       |
+| ------------ | -------------------------------------------------------------------------- | ------------------------------------------------------- |
+| **設定**     | 在 AI 連接頁存 API key（OpenAI／Anthropic／Gemini／DeepSeek／OpenCode Go） | 開啟本機連接，將任何 stdio-MCP 用戶端（如 Codex）指向它 |
+| **金鑰存放** | OS 憑證庫                                                                  | agent 自己的登入——RiverLens 不保管 provider 金鑰        |
+| **工具**     | 5 個限域群體工具＋完整學習工具                                             | 23 個本機 MCP 工具                                      |
+| **產出**     | 學習資料庫中的證據草稿                                                     | 同樣的草稿，由你的 agent 驅動                           |
 
 Live provider 通話仍未驗證；離線學習不需任何金鑰。[完整設定與限制](docs/ai-agent-coach.md)。
 

@@ -3460,7 +3460,7 @@ dependencies = [
 
 [[package]]
 name = "riverlens"
-version = "0.6.1"
+version = "0.6.2"
 dependencies = [
  "poker-core",
  "riverlens-ai",

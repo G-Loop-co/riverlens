@@ -11,7 +11,7 @@ Importez vos propres historiques depuis plus de 20 salles, étudiez les tendance
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%28Apple%20Silicon%20%26%20Intel%29-blue)
 ![Runtime](https://img.shields.io/badge/runtime-offline%20first-2f6f4f)
 
-**[⬇️ Télécharger RiverLens v0.6.1](https://github.com/G-Loop-co/riverlens/releases/latest)**
+**[⬇️ Télécharger RiverLens v0.6.2](https://github.com/G-Loop-co/riverlens/releases/latest)**
 
 <sub>Les builds macOS sont signés ad-hoc, non notarized.</sub>
 

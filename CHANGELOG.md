@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.2 — 2026-11-13 — Settings, BB review and safer desktop delivery
+
+- Move theme and language preferences into a dedicated Settings workspace; Data Center now contains import and source-data management only, with legacy links redirecting automatically.
+- Add a persisted Show BB switch to Hand review so profit can replace currency values with net BB without changing exported data.
+- Start replay after opening SB, BB, ante, straddle and dead-blind posts; explicit deep-link steps remain respected.
+- Show the actual Tauri bundle version in the shell and complete the English Study workspace translation.
+- Reduce startup payload with lazy-loaded Learn, Research and AI Coach workspaces and Latin-only bundled Geist fonts.
+- Retain the stable CGU1 release profile after CGU16 reproduced a desktop-window disappearance regression.
+- No SQLite/DuckDB migration: existing hand histories, notes, filters, study data and datasets remain compatible.
+
 ## 0.6.1 — 2026-11-12 — Structured six-workspace UX
 
 - Reorganise nine flat pages into Today, Hands, Learn, Research, AI Coach and Data workspaces with persistent child tabs.
