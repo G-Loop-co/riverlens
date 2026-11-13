@@ -13,10 +13,10 @@ on your machine, with nothing sent anywhere unless you switch it on.
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%28Apple%20Silicon%20%26%20Intel%29-blue)
 ![Runtime](https://img.shields.io/badge/runtime-offline%20first-2f6f4f)
 
-**[⬇️ Download RiverLens v0.6.1](https://github.com/G-Loop-co/riverlens/releases/latest)** ·
+**[⬇️ Download RiverLens v0.6.2](https://github.com/G-Loop-co/riverlens/releases/latest)** ·
 Windows installer · macOS Apple Silicon · macOS Intel
 
-<sub>macOS builds are ad-hoc signed, not notarized. [Release notes](docs/release-v0.6.1.md).</sub>
+<sub>macOS builds are ad-hoc signed, not notarized. [Release notes](docs/release-v0.6.2.md).</sub>
 
 ![RiverLens overview — synthetic data](docs/screenshots/overview-en.jpg)
 
@@ -28,14 +28,14 @@ Windows installer · macOS Apple Silicon · macOS Intel
 
 ## Why RiverLens
 
-| | |
-| --- | --- |
-| 🔒 **Local-first, by design** | Personal review lives in SQLite, population research in independent DuckDB datasets. No account, no cloud sync, no telemetry. AI and dataset sharing are opt-in and off by default. |
-| 🧪 **Evidence, not vibes** | Every rate ships with its legal-opportunity denominator, Wilson 95% interval and drill-down to anonymous hands. Missing baselines are called research hypotheses — never "you leak X". |
-| 🌍 **20+ rooms and networks** | Native parsers for GG/Natural8, PokerStars, WPN, 888, partypoker, Winamax, iPoker and more, cash and tournaments — see the [full table](#supported-rooms). |
-| 🤖 **AI that shows receipts** | 23 local MCP tools for your own agent, or an in-app coach (OpenAI / Anthropic / Gemini / DeepSeek / OpenCode Go). Every AI claim links back to hand evidence and requires your approval. |
-| 🧠 **A study loop that closes** | Spot Explorer → Leak Finder → GTO reference → Range drill → Trainer with spaced review — and now leak trend snapshots so you can see a leak shrinking. |
-| 📊 **Serious numbers, honest labels** | 13 core statistics, 13×13 matrix, all-in equity with exact enumeration. What is not decision EV is labelled as not decision EV. |
+|                                       |                                                                                                                                                                                          |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🔒 **Local-first, by design**         | Personal review lives in SQLite, population research in independent DuckDB datasets. No account, no cloud sync, no telemetry. AI and dataset sharing are opt-in and off by default.      |
+| 🧪 **Evidence, not vibes**            | Every rate ships with its legal-opportunity denominator, Wilson 95% interval and drill-down to anonymous hands. Missing baselines are called research hypotheses — never "you leak X".   |
+| 🌍 **20+ rooms and networks**         | Native parsers for GG/Natural8, PokerStars, WPN, 888, partypoker, Winamax, iPoker and more, cash and tournaments — see the [full table](#supported-rooms).                               |
+| 🤖 **AI that shows receipts**         | 23 local MCP tools for your own agent, or an in-app coach (OpenAI / Anthropic / Gemini / DeepSeek / OpenCode Go). Every AI claim links back to hand evidence and requires your approval. |
+| 🧠 **A study loop that closes**       | Spot Explorer → Leak Finder → GTO reference → Range drill → Trainer with spaced review — and now leak trend snapshots so you can see a leak shrinking.                                   |
+| 📊 **Serious numbers, honest labels** | 13 core statistics, 13×13 matrix, all-in equity with exact enumeration. What is not decision EV is labelled as not decision EV.                                                          |
 
 ## The study loop
 
@@ -60,12 +60,12 @@ Screenshots capture full pages at 1920px desktop width with the Paper (warm whit
 
 </details>
 
-## What's new in v0.6.1
+## What's new in v0.6.2
 
-- 🧭 **Six workspaces** — Today, Hands, Learn, Research, AI Coach and Data replace nine flat pages.
-- 🔗 **Deep links** — workspace tabs, filters and replay steps survive refresh and back/forward navigation.
-- 🧱 **Shared UI** — common shell, tabs, scope, status and empty states keep every workspace predictable.
-- ♿ **Keyboard and recovery** — WAI-ARIA tabs, localized live status and route error boundaries.
+- ⚙️ **Settings, separated** — theme and language preferences now have their own workspace; Data Center focuses on imports and source data.
+- 📏 **Show BB** — switch Hand review between currency profit and net big blinds with a persisted preference.
+- 🎬 **Blind-aware replay** — hands open after SB/BB/ante/straddle posts, ready for the first real decision.
+- 🚀 **Safer desktop delivery** — lazy-loaded workspaces and smaller font payloads ship with the stable CGU1 release profile.
 
 <details>
 <summary><strong>Previous releases</strong></summary>
@@ -85,26 +85,26 @@ English NLHE personal review, 2–10 seats, UTF-8; cash and supported tournament
 <details>
 <summary><strong>Full room / network table</strong></summary>
 
-| Room / network | Cash input | MTT / tournament | Support scope |
-| --- | --- | --- | --- |
-| GG / Natural8 | TXT | Yes | Native grammar |
-| PokerStars | TXT | Yes | Native grammar |
-| WPN / ACR / Black Chip / PokerKing | TXT (legacy + modern) | Modern format only | Native grammar |
-| 888 / Pacific | TXT | Yes | Native grammar |
-| partypoker / bwin | TXT | — | Native grammar |
-| Winamax | TXT | Yes | Native grammar |
-| iPoker skins | XML | Yes | Native grammar |
-| CoinPoker | TXT (USDT) | — | Native grammar; synthetic proof only |
-| Ignition / Bovada / Bodog | TXT | — | Native grammar |
-| Unibet | TXT | — | Native grammar |
-| Full Tilt | TXT | Yes | Archived native grammar |
-| Cake / Revolution | TXT | — | Archived native grammar |
-| OnGame | TXT | — | Archived native grammar |
-| Merge / Carbon | XML | — | Archived native grammar |
-| Microgaming / MPN | XML | — | Archived native grammar |
-| Chico / BetOnline / SportsBetting / TigerGaming | PokerStars TXT | — | Existing complete conversion only |
-| PPPoker / PokerBros / UPoker / ClubGG / X-Poker / QQPK | PokerStars TXT | — | Existing complete conversion only |
-| WPT Global | PokerStars TXT | — | Existing complete conversion only |
+| Room / network                                         | Cash input            | MTT / tournament   | Support scope                        |
+| ------------------------------------------------------ | --------------------- | ------------------ | ------------------------------------ |
+| GG / Natural8                                          | TXT                   | Yes                | Native grammar                       |
+| PokerStars                                             | TXT                   | Yes                | Native grammar                       |
+| WPN / ACR / Black Chip / PokerKing                     | TXT (legacy + modern) | Modern format only | Native grammar                       |
+| 888 / Pacific                                          | TXT                   | Yes                | Native grammar                       |
+| partypoker / bwin                                      | TXT                   | —                  | Native grammar                       |
+| Winamax                                                | TXT                   | Yes                | Native grammar                       |
+| iPoker skins                                           | XML                   | Yes                | Native grammar                       |
+| CoinPoker                                              | TXT (USDT)            | —                  | Native grammar; synthetic proof only |
+| Ignition / Bovada / Bodog                              | TXT                   | —                  | Native grammar                       |
+| Unibet                                                 | TXT                   | —                  | Native grammar                       |
+| Full Tilt                                              | TXT                   | Yes                | Archived native grammar              |
+| Cake / Revolution                                      | TXT                   | —                  | Archived native grammar              |
+| OnGame                                                 | TXT                   | —                  | Archived native grammar              |
+| Merge / Carbon                                         | XML                   | —                  | Archived native grammar              |
+| Microgaming / MPN                                      | XML                   | —                  | Archived native grammar              |
+| Chico / BetOnline / SportsBetting / TigerGaming        | PokerStars TXT        | —                  | Existing complete conversion only    |
+| PPPoker / PokerBros / UPoker / ClubGG / X-Poker / QQPK | PokerStars TXT        | —                  | Existing complete conversion only    |
+| WPT Global                                             | PokerStars TXT        | —                  | Existing complete conversion only    |
 
 </details>
 
@@ -114,12 +114,12 @@ English NLHE personal review, 2–10 seats, UTF-8; cash and supported tournament
 
 Two ways to bring AI in — both evidence-linked, both requiring your approval before anything is saved:
 
-| | In-app coach | External agent (MCP) |
-| --- | --- | --- |
-| **Setup** | Save an API key (OpenAI, Anthropic, Gemini, DeepSeek, OpenCode Go) in AI Connections | Enable the local connection and point any stdio-MCP client (e.g. Codex) at it |
-| **Key storage** | OS credential store | Your agent's own login — RiverLens holds no provider key |
-| **Tools** | 5 scoped population tools + full study tools | 23 local MCP tools |
-| **Output** | Evidence-linked drafts in the Learning Library | Same drafts, driven by your agent |
+|                 | In-app coach                                                                         | External agent (MCP)                                                          |
+| --------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| **Setup**       | Save an API key (OpenAI, Anthropic, Gemini, DeepSeek, OpenCode Go) in AI Connections | Enable the local connection and point any stdio-MCP client (e.g. Codex) at it |
+| **Key storage** | OS credential store                                                                  | Your agent's own login — RiverLens holds no provider key                      |
+| **Tools**       | 5 scoped population tools + full study tools                                         | 23 local MCP tools                                                            |
+| **Output**      | Evidence-linked drafts in the Learning Library                                       | Same drafts, driven by your agent                                             |
 
 Live provider calls remain unverified; offline study works without any key. [Full setup and limitations](docs/ai-agent-coach.md).
 
