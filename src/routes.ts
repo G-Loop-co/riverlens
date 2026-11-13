@@ -7,6 +7,7 @@ export const WORKSPACES = [
   "research",
   "coach",
   "data",
+  "settings",
 ] as const;
 export type Workspace = (typeof WORKSPACES)[number];
 
@@ -17,6 +18,7 @@ export const DEFAULT_SECTIONS = {
   research: "stats",
   coach: "situation",
   data: "import",
+  settings: "preferences",
 } as const;
 
 const VALID_SECTIONS = {
@@ -39,7 +41,8 @@ const VALID_SECTIONS = {
     "import",
   ]),
   coach: new Set(["situation", "chat", "library", "connections"]),
-  data: new Set(["import", "sources", "preferences"]),
+  data: new Set(["import", "sources"]),
+  settings: new Set(["preferences"]),
 } as const;
 
 export type AppRoute = {
@@ -112,6 +115,14 @@ export function parseRoute(pathname: string): AppRoute | null {
     };
   }
   const section = parts[1] || DEFAULT_SECTIONS[workspace];
+  // Keep existing shared links and bookmarks working after settings moved out.
+  if (workspace === "data" && section === "preferences") {
+    return {
+      workspace: "settings",
+      section: "preferences",
+      pathname: workspaceHref("settings", "preferences"),
+    };
+  }
   if (!(VALID_SECTIONS[workspace] as ReadonlySet<string>).has(section)) {
     return null;
   }

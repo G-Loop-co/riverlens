@@ -108,7 +108,7 @@ export function ImportDialog({
         </Field>
         {!profiles.length && (
           <ErrorBanner>
-            {t("尚無來源設定，請先至「資料與設定」新增來源。")}
+            {t("尚無來源設定，請先至「資料來源」新增來源。")}
           </ErrorBanner>
         )}
         {profile && (

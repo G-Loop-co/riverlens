@@ -33,7 +33,7 @@ export function AppShell({
   activeWorkspace: Workspace;
   onNavigate: (workspace: Workspace) => void;
   healthError?: boolean;
-  version: string;
+  version?: string;
   onRefresh: () => void;
   mainRef?: RefObject<HTMLElement | null>;
   actions: ReactNode;
@@ -44,6 +44,7 @@ export function AppShell({
     ["today", "hands", "learn", "research", "coach"].includes(item.workspace),
   );
   const dataNav = nav.filter((item) => item.workspace === "data");
+  const settingsNav = nav.filter((item) => item.workspace === "settings");
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">
@@ -96,6 +97,24 @@ export function AppShell({
             {item.busy && <i className="status-dot" aria-hidden="true" />}
           </button>
         ))}
+        {settingsNav.length > 0 && (
+          <>
+            <div className="nav-caption settings">{t("設定")}</div>
+            {settingsNav.map((item) => (
+              <button
+                key={item.workspace}
+                className={`nav-item ${activeWorkspace === item.workspace ? "active" : ""}`}
+                aria-current={
+                  activeWorkspace === item.workspace ? "page" : undefined
+                }
+                onClick={() => onNavigate(item.workspace)}
+              >
+                {item.icon}
+                <span>{t(item.label)}</span>
+              </button>
+            ))}
+          </>
+        )}
         <div className="sidebar-bottom">
           <div className="local-status">
             <HardDrives size={20} />
@@ -106,7 +125,7 @@ export function AppShell({
           </div>
           <div className="version">
             <span>{t("RiverLens")}</span>
-            <span>{version}</span>
+            {version && <span>{version}</span>}
           </div>
         </div>
       </aside>

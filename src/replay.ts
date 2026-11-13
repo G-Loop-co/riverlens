@@ -13,6 +13,20 @@ export function fromUnits(n: bigint): string {
   const a = negative ? -n : n;
   return `${negative ? "-" : ""}${a / 1_000_000n}.${(a % 1_000_000n).toString().padStart(6, "0")}`;
 }
+const OPENING_POST_KINDS = new Set([
+  "small_blind",
+  "big_blind",
+  "dead_blind",
+  "ante",
+  "straddle",
+]);
+
+export function replayOpeningStep(actions: Hand["actions"]): number {
+  let index = 0;
+  while (index < actions.length && OPENING_POST_KINDS.has(actions[index].kind))
+    index += 1;
+  return index;
+}
 export function replay(hand: Hand, count: number) {
   const stacks: Record<number, bigint> = {};
   let contributions: Record<number, bigint> = {};

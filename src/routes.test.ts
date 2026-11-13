@@ -9,7 +9,7 @@ import {
 } from "./routes";
 
 describe("app routes", () => {
-  it("parses the six workspaces and validates sections", () => {
+  it("parses the seven workspaces and validates sections", () => {
     expect(parseRoute("/")).toBeNull();
     expect(parseRoute("/today")).toMatchObject({
       workspace: "today",
@@ -34,6 +34,15 @@ describe("app routes", () => {
     expect(parseRoute("/data/sources")).toMatchObject({
       workspace: "data",
       section: "sources",
+    });
+    expect(parseRoute("/settings/preferences")).toMatchObject({
+      workspace: "settings",
+      section: "preferences",
+    });
+    expect(parseRoute("/data/preferences")).toMatchObject({
+      workspace: "settings",
+      section: "preferences",
+      pathname: "/settings/preferences",
     });
     expect(parseRoute("/hands/not-a-section")).toBeNull();
     expect(parseRoute("/not-a-workspace")).toBeNull();

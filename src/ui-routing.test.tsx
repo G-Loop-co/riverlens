@@ -4,12 +4,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { HashRouter } from "react-router";
 import "axe-core";
 import App from "./App";
+import { changeLanguage } from "./i18n";
 import { RouteErrorBoundary } from "./components/RouteUI";
 
 afterEach(() => {
   cleanup();
   window.history.replaceState(null, "", "/");
   vi.unstubAllGlobals();
+  void changeLanguage("zh-TW");
 });
 
 function renderApp() {
@@ -21,7 +23,7 @@ function renderApp() {
 }
 
 describe("workspace routing", () => {
-  it("has no serious or critical accessibility violations in the six workspaces", async () => {
+  it("has no serious or critical accessibility violations in the seven workspaces", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() => new Promise(() => {})),
@@ -33,6 +35,7 @@ describe("workspace routing", () => {
       ["#/research/stats", "MDA 群體分析"],
       ["#/coach/situation", "AI 教練"],
       ["#/data/import", "資料中心"],
+      ["#/settings/preferences", "設定"],
     ] as const;
     for (const [hash, title] of routes) {
       cleanup();
@@ -72,6 +75,7 @@ describe("workspace routing", () => {
       "學習工作台",
       "MDA 群體分析",
       "AI 教練",
+      "設定",
     ]) {
       expect(screen.getByRole("button", { name })).toBeTruthy();
     }
@@ -91,6 +95,27 @@ describe("workspace routing", () => {
     expect(screen.getByRole("tab", { selected: true }).textContent).toContain(
       "起手牌矩陣",
     );
+  });
+
+  it("localizes every sidebar workspace in English", async () => {
+    await changeLanguage("en");
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise(() => {})),
+    );
+    renderApp();
+    await waitFor(() => expect(window.location.hash).toContain("#/today"));
+    for (const name of [
+      "Overview",
+      "Hand review",
+      "Study workspace",
+      "MDA population analysis",
+      "AI coach",
+      "Data center",
+      "Settings",
+    ]) {
+      expect(screen.getByRole("button", { name })).toBeTruthy();
+    }
   });
 
   it("keeps the rest of the shell usable when a workspace throws", () => {

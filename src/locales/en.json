@@ -554,7 +554,7 @@
   "Main pot": "Main pot",
   "Side pot {{v0}}": "Side pot {{v0}}",
   "跳至主要內容": "Skip to main content",
-  "尚無來源設定，請先至「資料與設定」新增來源。": "No source profiles yet. Add one in Data & settings.",
+  "尚無來源設定，請先至「資料與設定」新增來源。": "No source profiles yet. Add one in Data sources.",
   " 衝突": " Conflicts",
   "每次最多選取 1,000 手牌。取消勾選可匯出全部符合條件的手牌。": "Select up to 1,000 hands per export. Clear the selection to export all matching hands.",
   "備份輸出完整路徑（不覆寫現有檔案）": "Full backup destination path (existing files will not be overwritten)",
@@ -1098,5 +1098,10 @@
   "在「平台限制及資料分享」啟用此資料集的雲端 AI Coach 後才可分析。本機學習草稿可在分享關閉時檢視、編輯及回查。": "Enable cloud AI Coach for this dataset under \"Platform limits and data sharing\" before analysis. Local learning drafts stay viewable, editable and verifiable while sharing is off.",
   "在「平台限制及資料分享」明確啟用此資料集的雲端 AI Coach，然後選擇既有 provider／model。": "Explicitly enable cloud AI Coach for this dataset under \"Platform limits and data sharing\", then choose an existing provider / model.",
   "最新隔離記錄": "Latest quarantine records",
-  "MDA 群體分析": "MDA population analysis"
+  "MDA 群體分析": "MDA population analysis",
+  "學習工作台": "Study workspace",
+  "設定": "Settings",
+  "顯示 BB": "Show BB",
+  "盈虧 BB": "Net BB",
+  "尚無來源設定，請先至「資料來源」新增來源。": "No source profiles yet. Add one in Data sources."
 }

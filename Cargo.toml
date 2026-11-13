@@ -5,7 +5,7 @@ resolver = "2"
 
 [profile.release]
 lto = "thin"
-codegen-units = 16
+codegen-units = 1
 strip = "symbols"
 
 # CI keeps the 100k audit assertions intact while avoiding full debug codegen.
