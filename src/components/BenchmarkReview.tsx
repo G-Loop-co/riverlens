@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useRpc } from "../api";
 import { decimal, number, time, currencySymbol, money } from "../format";
@@ -171,15 +172,19 @@ export function BenchmarkReview({
 }) {
   const { t } = useTranslation();
   const groups = cohorts(data.positions);
-  const [selection, setSelection] = useState(""),
-    [expanded, setExpanded] = useState<Metric | null>(null),
-    [spot, setSpot] = useState(false);
+  const [params, setParams] = useSearchParams();
+  const [spot, setSpot] = useState(false);
+  const selection = params.get("reviewGroup");
+  const expanded = metricIds.find((id) => id === params.get("reviewMetric"));
   const group = groups.find((g) => g.key === selection) ?? groups[0];
   const broad = allowsOverallBand(filter),
     top = priorities(groups, filter);
   function select(key: string, id: Metric | null) {
-    setSelection(key);
-    setExpanded(id);
+    const next = new URLSearchParams(params);
+    next.set("reviewGroup", key);
+    if (id) next.set("reviewMetric", id);
+    else next.delete("reviewMetric");
+    setParams(next, { replace: true });
     setSpot(false);
   }
   const context = (g: Cohort) => [t(g.game), g.currency, g.stakes].join(" · ");

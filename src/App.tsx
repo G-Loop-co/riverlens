@@ -237,6 +237,11 @@ export default function App() {
 
   function drill(patch: Partial<Filter>, sort?: "win" | "loss") {
     const next = normalizeFilter({ ...filter, ...patch });
+    // A dashboard opened from the base URL may inherit saved filters.
+    const source = new URLSearchParams(searchParams);
+    if (!source.has("currency"))
+      for (const [key, value] of filterToSearchParams(filter))
+        source.set(key, value);
     if (sort) writePreference("riverlens-hand-sort", sort);
     writePreference("riverlens-filter", JSON.stringify(next));
     navigate(
@@ -244,7 +249,7 @@ export default function App() {
         pathname: workspaceHref("hands", "list"),
         search: routeSearch(next),
       },
-      { state: { from: location.pathname + location.search } },
+      { state: { from: location.pathname + "?" + source.toString() } },
     );
   }
 
@@ -585,7 +590,11 @@ export default function App() {
         onNavigate={goWorkspace}
         healthError={Boolean(health.error)}
         version={appVersion}
-        footerUnits={route.section === "bluffs" ? "HKT" : undefined}
+        footerUnits={
+          route.section === "bluffs" || !filter.currency
+            ? "HKT"
+            : `HKT · ${filter.currency} / bb`
+        }
         onRefresh={refresh}
         mainRef={content}
         actions={

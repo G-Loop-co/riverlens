@@ -27,6 +27,13 @@ if (testKeyPath) {
   if (!process.env.TAURI_SIGNING_PRIVATE_KEY) throw new Error('Release requires TAURI_SIGNING_PRIVATE_KEY');
 }
 const publicKey = testKeyPath ? readFileSync(testKeyPath, 'utf8') : config.plugins.updater.pubkey;
+if (!testKeyPath && process.env.RIVERLENS_PREVIOUS_DESKTOP_CONFIG) {
+  const previous = readJson(process.env.RIVERLENS_PREVIOUS_DESKTOP_CONFIG).plugins?.updater?.pubkey;
+  const keyMaterial = encoded => Buffer.from(encoded.trim(), 'base64').toString('utf8').split(/\r?\n/)[1];
+  if (previous && keyMaterial(previous) !== keyMaterial(publicKey)) {
+    throw new Error('The current stable release trusts a different key; existing users cannot install this update');
+  }
+}
 const commit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
 if (commit !== process.env.GITHUB_SHA) throw new Error('Build SHA mismatch');
 const repository = process.env.GITHUB_REPOSITORY;

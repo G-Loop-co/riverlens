@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "react-router";
 import i18n from "./i18n";
 import {
   assess,
@@ -181,6 +182,7 @@ describe("review navigation", () => {
         open={vi.fn()}
         drill={drill}
       />,
+      { wrapper: MemoryRouter },
     );
     const card = screen
       .getByText(i18n.t("bench.three_bet"), { selector: "strong" })
@@ -267,7 +269,7 @@ describe("review navigation", () => {
         open={open}
       />
     );
-    const view = render(ui());
+    const view = render(ui(), { wrapper: MemoryRouter });
     fireEvent.click(
       screen
         .getByText(i18n.t("bench.three_bet"), { selector: "strong" })

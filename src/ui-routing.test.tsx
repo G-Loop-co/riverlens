@@ -1,10 +1,17 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { HashRouter } from "react-router";
 import "axe-core";
 import App from "./App";
-import { changeLanguage } from "./i18n";
+import i18n, { changeLanguage } from "./i18n";
+import { metricIds } from "./benchmarks";
 import { RouteErrorBoundary } from "./components/RouteUI";
 
 afterEach(() => {
@@ -81,6 +88,62 @@ describe("workspace routing", () => {
     }
     expect(screen.getByRole("button", { name: "匯入與資料" })).toBeTruthy();
   });
+
+  it("returns a benchmark drill to the original cohort, metric and filters", async () => {
+    window.history.replaceState(null, "", "#/today");
+    const rows = ["Cash", "Rush"].map((game) => ({
+      currency: "USD",
+      game,
+      stakes: "0.01/0.02",
+      position: "BB",
+      hands: 20,
+      metrics: Object.fromEntries(metricIds.map((id) => [id, [1, 10]])),
+    }));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn((_url, init: RequestInit) => {
+        if (JSON.parse(String(init.body)).op !== "review_dashboard")
+          return new Promise(() => {});
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            result: { positions: rows, latest: null, has_hands: true },
+          }),
+        });
+      }),
+    );
+    const saved = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => saved.get(key) ?? null,
+      setItem: (key: string, value: string) => saved.set(key, value),
+    });
+    renderApp();
+    const cohort = JSON.stringify(["USD", "Rush", "0.01/0.02"]);
+    const select = await screen.findByRole("combobox", {
+      name: new RegExp(i18n.t("review.cohort")),
+    });
+    fireEvent.change(select, { target: { value: cohort } });
+    const metricButton = () =>
+      screen
+        .getByText(i18n.t("bench.three_bet"), { selector: "strong" })
+        .closest("button")!;
+    fireEvent.click(metricButton());
+    fireEvent.click(
+      screen.getByRole("button", { name: i18n.t("review.missed") }),
+    );
+    expect(window.location.hash).toContain("stat_mode=benchmark_missed");
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: i18n.t("← 返回報表及原本篩選"),
+      }),
+    );
+    const restored = await screen.findByRole<HTMLSelectElement>("combobox", {
+      name: new RegExp(i18n.t("review.cohort")),
+    });
+    expect(restored.value).toBe(cohort);
+    expect(metricButton().getAttribute("aria-expanded")).toBe("true");
+    expect(window.location.hash).not.toContain("stat_mode");
+  }, 18000);
 
   it("restores a hand-review tab from a deep link", () => {
     window.history.replaceState(null, "", "#/hands/matrix?currency=USD");
