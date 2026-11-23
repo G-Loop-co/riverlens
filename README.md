@@ -13,10 +13,10 @@ on your machine, with nothing sent anywhere unless you switch it on.
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%28Apple%20Silicon%20%26%20Intel%29-blue)
 ![Runtime](https://img.shields.io/badge/runtime-offline%20first-2f6f4f)
 
-**[⬇️ Download RiverLens v0.6.2](https://github.com/G-Loop-co/riverlens/releases/latest)** ·
+**[⬇️ Download RiverLens v0.6.3](https://github.com/G-Loop-co/riverlens/releases/latest)** ·
 Windows installer · macOS Apple Silicon · macOS Intel
 
-<sub>macOS builds are ad-hoc signed, not notarized. [Release notes](docs/release-v0.6.2.md).</sub>
+<sub>macOS builds are ad-hoc signed, not notarized. [Release notes](docs/release-v0.6.3.md).</sub>
 
 ![RiverLens overview — synthetic data](docs/screenshots/overview-en.jpg)
 
@@ -60,16 +60,16 @@ Screenshots capture full pages at 1920px desktop width with the Paper (warm whit
 
 </details>
 
-## What's new in v0.6.2
+## What's new in v0.6.3
 
-- ⚙️ **Settings, separated** — theme and language preferences now have their own workspace; Data Center focuses on imports and source data.
-- 📏 **Show BB** — switch Hand review between currency profit and net big blinds with a persisted preference.
-- 🎬 **Blind-aware replay** — hands open after SB/BB/ante/straddle posts, ready for the first real decision.
-- 🚀 **Safer desktop delivery** — lazy-loaded workspaces and smaller font payloads ship with the stable CGU1 release profile.
+- 🃏 **Personal bluff review** — compare flop and turn air, strong draws and river air across heads-up and multiway cash pots.
+- 🧭 **Lines, sizes and next actions** — review double and triple barrels, checked-through turns and check-raise leads, then split results by sizing and hand class.
+- 🎬 **Decision-level replay** — open the exact bet or raise, compare segment cashflow with whole-hand net, and mark lower-pair bluff choices for focused review.
 
 <details>
 <summary><strong>Previous releases</strong></summary>
 
+- **v0.6.2** — Dedicated Settings, BB-first hand review and safer desktop delivery.
 - **v0.6.0** — Leak trend snapshots, study history export and full MDA localisation.
 - **v0.5.0** — AI practice drafts → Trainer self-review cards; range drill against strategy-pack nodes; MDA research wizard; one-page progress dashboard.
 - **v0.4.x** — MDA population analysis on independent DuckDB datasets, AI / MCP integration, multi-room cash and tournament hand histories.

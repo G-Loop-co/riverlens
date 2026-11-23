@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.6.3 — 2026-11-23 — Personal bluff analysis
+
+- Add a local Hero bluff report for no-limit Hold'em cash hands with flop and turn air, strong draws, river air, pair-plus-draw and manually marked lower-pair bluffs.
+- Review single-street bets, raises and check-raises, double and triple barrels, delayed river barrels and check-raise leads with legal next-action denominators.
+- Compare immediate folds, segment cashflow and final whole-hand net, then break results down by sizing, response, position, opponent, pot type, player count, stack depth and board texture.
+- Open the exact aggressive decision in replay and persist manual marks through incremental indexing and database rebuilds.
+- Cover heads-up and multiway postflop decisions while preserving existing heads-up-only study comparisons.
+- Add 12 bluff integration tests, frontend report coverage and additive SQLite tables; no hand-history reimport is required for an incremental backfill.
+
 ## 0.6.2 — 2026-11-13 — Settings, BB review and safer desktop delivery
 
 - Move theme and language preferences into a dedicated Settings workspace; Data Center now contains import and source-data management only, with legacy links redirecting automatically.

@@ -12,10 +12,10 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%28Apple%20Silicon%20%26%20Intel%29-blue)
 ![Runtime](https://img.shields.io/badge/runtime-offline%20first-2f6f4f)
 
-**[⬇️ 下載 RiverLens v0.6.2](https://github.com/G-Loop-co/riverlens/releases/latest)** ·
+**[⬇️ 下載 RiverLens v0.6.3](https://github.com/G-Loop-co/riverlens/releases/latest)** ·
 Windows 安裝檔 · macOS Apple Silicon · macOS Intel
 
-<sub>macOS 版本為 ad-hoc 簽章，未經 Apple notarization。[發布說明](docs/release-v0.6.2.md)。</sub>
+<sub>macOS 版本為 ad-hoc 簽章，未經 Apple notarization。[發布說明](docs/release-v0.6.3.md)。</sub>
 
 ![RiverLens 總覽 — 合成資料](docs/screenshots/overview-zh-TW.jpg)
 
@@ -59,16 +59,16 @@ Windows 安裝檔 · macOS Apple Silicon · macOS Intel
 
 </details>
 
-## v0.6.2 新功能
+## v0.6.3 新功能
 
-- ⚙️ **設定獨立** — 主題與語言偏好移至獨立設定頁；資料中心專注匯入與來源資料。
-- 📏 **顯示 BB** — 手牌覆盤可切換幣別盈虧與淨 BB，偏好會保存在本機。
-- 🎬 **盲注後開始回放** — 自動跳過 SB／BB／Ante／Straddle 入池，由第一個真正決策開始。
-- 🚀 **更穩定桌面版本** — 工作區懶載入與精簡字型，配合穩定 CGU1 release profile。
+- 🃏 **個人詐唬複盤** — 在單挑及多人現金桌比較翻牌、轉牌空氣牌、強聽牌與河牌空氣牌。
+- 🧭 **路線、尺寸與續打** — 檢視雙槍、三槍、轉牌全桌過牌後河牌再打及過牌加注領打，再按尺寸和牌型拆分。
+- 🎬 **逐決策回放** — 打開準確的下注或加注，分開看街段收支與整手淨利，並標記小對子轉詐唬作重點複盤。
 
 <details>
 <summary><strong>歷史版本</strong></summary>
 
+- **v0.6.2** — 設定頁獨立、BB 優先手牌覆盤及更穩定的桌面交付。
 - **v0.6.0** — Leak 趨勢快照、學習記錄匯出與 MDA 完整本地化。
 - **v0.5.0** — AI 練習草稿 → Trainer 題卡；Range 操練對照策略包節點；MDA 研究嚮導；一頁學習進度儀表板。
 - **v0.4.x** — 獨立 DuckDB 的 MDA 群體分析、AI／MCP 整合、多牌室 Cash 與錦標賽牌譜。
