@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { execFileSync, spawn } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { createServer } from 'node:http';
-import { createReadStream, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { createReadStream, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -64,7 +64,8 @@ const target = process.argv[2];
 const nativeTarget = mac ? `${process.arch === 'arm64' ? 'aarch64' : 'x86_64'}-apple-darwin` : 'x86_64-pc-windows-msvc';
 assert.ok((mac || (process.platform === 'win32' && process.arch === 'x64')) && target === nativeTarget, 'Run on the target OS and CPU');
 const root = process.cwd();
-const tmp = mkdtempSync(join(tmpdir(), 'riverlens-native-updater-'));
+// Tauri deliberately rejects a starting binary reached through macOS's /var symlink.
+const tmp = mkdtempSync(join(realpathSync.native(tmpdir()), 'riverlens-native-updater-'));
 const token = randomBytes(6).toString('hex');
 const name = 'RiverLensUpdateQA' + token;
 const identifier = 'app.riverlens.updaterqa.' + 'r' + token;
