@@ -7,13 +7,15 @@ import { createServer } from 'node:http';
 import { createReadStream, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import { setTimeout as delay } from 'node:timers/promises';
 import { build } from 'vite';
 
 async function browserSmoke({ invoke, getVersion, check, relaunch, exit }, spec) {
   const rpc = request => invoke('api', { request });
-  const report = (step, detail = '') => fetch(spec.events, {
-    method: 'POST', body: JSON.stringify({ step, detail }),
+  // Record through the same native IPC and SQLite store used by RiverLens.
+  const report = (step, detail) => rpc({
+    op: 'save_filter', name: spec.token, filter: { search: JSON.stringify({ step, detail }) },
   });
   const expect = (condition, message) => { if (!condition) throw new Error(message); };
   const profile = { id: 'qa', name: 'Updater test', hero: 'Hero', brand: 'Natural8', timezone: 'Asia/Hong_Kong' };
@@ -86,37 +88,73 @@ for (const key of Object.keys(env)) if (key.startsWith('TAURI_SIGNING_') || key.
 const runtimeEnv = { ...env, TEMP: tmp, TMP: tmp, TMPDIR: tmp };
 const tauri = resolve('node_modules/@tauri-apps/cli/tauri.js');
 const run = (tool, args, options = {}) => execFileSync(tool, args, { env, stdio: 'inherit', ...options });
-let finish;
-const outcome = new Promise(resolve => { finish = resolve; });
 let artifact;
 let feed;
-const events = [];
-const server = createServer(async (request, response) => {
-  response.setHeader('Access-Control-Allow-Origin', '*');
+const requests = { manifest: 0, artifact: 0 };
+const server = createServer((request, response) => {
   if (request.url === '/latest.json' && feed) {
+    console.log('[native updater] manifest request', ++requests.manifest);
     response.setHeader('Content-Type', 'application/json');
     response.end(JSON.stringify(feed));
   } else if (request.url === '/artifact' && artifact) {
+    console.log('[native updater] artifact request', ++requests.artifact);
     createReadStream(artifact).pipe(response);
-  } else if (request.url === '/' + token && request.method === 'POST') {
-    const body = [];
-    for await (const chunk of request) body.push(chunk);
-    const event = JSON.parse(Buffer.concat(body).toString());
-    events.push(event);
-    console.log('[native updater]', event.step, event.detail);
-    response.end('ok');
-    if (event.step === 'passed' || event.step === 'failed') finish(event);
   } else {
     response.writeHead(404).end();
   }
 });
 
+function readEvents(database, afterId) {
+  const db = new DatabaseSync(database, { readOnly: true });
+  try {
+    return db.prepare('SELECT id, data FROM saved_filters WHERE name = ? AND id > ? ORDER BY id').all(token, afterId);
+  } catch (error) {
+    // The app creates its schema on first launch.
+    if (/no such table: saved_filters|database is (?:busy|locked)/i.test(error.message)) return [];
+    throw error;
+  } finally {
+    db.close();
+  }
+}
+
+async function observeUpgrade(app, database) {
+  const events = [];
+  let lastId = 0;
+  let launchError;
+  let sawDatabase = false;
+  app.once('error', error => { launchError = error; });
+  app.once('spawn', () => console.log('[native updater] launched process', app.pid, app.spawnfile));
+  app.once('exit', (code, signal) => {
+    console.log('[native updater] original process exited', { pid: app.pid, code, signal, hex: code == null ? null : '0x' + (code >>> 0).toString(16) });
+  });
+  const deadline = Date.now() + 180000;
+  while (Date.now() < deadline) {
+    if (launchError) throw launchError;
+    if (existsSync(database)) {
+      if (!sawDatabase) console.log('[native updater] found QA database', database);
+      sawDatabase = true;
+      for (const row of readEvents(database, lastId)) {
+        const event = JSON.parse(JSON.parse(row.data).search);
+        lastId = row.id;
+        events.push(event);
+        console.log('[native updater]', event.step, event.detail);
+        if (event.step === 'failed') throw new Error(event.detail);
+        if (event.step === 'passed') return events;
+      }
+    }
+    if (app.signalCode || (app.exitCode !== null && (app.exitCode !== 0 || !events.some(e => e.step === 'downloaded')))) {
+      throw new Error(`Original app exited before upgrade completed (code=${app.exitCode}, signal=${app.signalCode}, database=${sawDatabase}, last step=${events.at(-1)?.step || 'none'})`);
+    }
+    await delay(250);
+  }
+  throw new Error(`Timed out observing native upgrade (pid=${app.pid}, exit=${app.exitCode}, database=${sawDatabase}, last step=${events.at(-1)?.step || 'none'}, requests=${JSON.stringify(requests)})`);
+}
+
 let appProcess;
-let timer;
 try {
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
   const origin = `http://127.0.0.1:${server.address().port}`;
-  const spec = { before: version, after: next, events: origin + '/' + token, token, handPath: resolve('tests/fixtures/study-nl10.txt') };
+  const spec = { before: version, after: next, token, handPath: resolve('tests/fixtures/study-nl10.txt') };
   const source = `import { invoke } from '@tauri-apps/api/core'; import { getVersion } from '@tauri-apps/api/app';
 import { check } from '@tauri-apps/plugin-updater'; import { exit, relaunch } from '@tauri-apps/plugin-process';
 (${browserSmoke.toString()})({invoke,getVersion,check,exit,relaunch},${JSON.stringify(spec)});`;
@@ -140,7 +178,6 @@ import { check } from '@tauri-apps/plugin-updater'; import { exit, relaunch } fr
       app: {
         windows: [{ label: 'main', title: 'RiverLens updater test', width: 440, height: 160, focus: false }],
         security: {
-          csp: `default-src 'self'; script-src 'self'; connect-src ipc: http://ipc.localhost ${origin}`,
           capabilities: ['default', { identifier: 'qa-exit', windows: ['main'], permissions: ['process:allow-exit'] }],
         },
       },
@@ -172,15 +209,12 @@ import { check } from '@tauri-apps/plugin-updater'; import { exit, relaunch } fr
   run(process.execPath, [tauri, 'signer', 'sign', '-f', key, '-p', 'fixture', artifact], { stdio: 'ignore' });
   feed = { version: next, platforms: { [platform]: { url: origin + '/artifact', signature: readFileSync(artifact + '.sig', 'utf8').trim() } } };
   appProcess = spawn(executable, [], { env: runtimeEnv, stdio: 'inherit' });
-  appProcess.once('error', error => finish({ step: 'failed', detail: error.message }));
-  timer = setTimeout(() => finish({ step: 'failed', detail: 'Timed out waiting for native relaunch' }), 180000);
-  const result = await outcome;
-  assert.equal(result.step, 'passed', result.detail);
+  const events = await observeUpgrade(appProcess, join(data, 'riverlens.db'));
+  assert.ok(requests.manifest >= 2 && requests.artifact >= 1, 'Both app versions must check the feed and the original must download');
   assert.deepEqual(events.map(e => e.step), ['launched', 'downloaded', 'launched', 'passed']);
   assert.deepEqual(events.map(e => e.detail), [version, next, next, next]);
   console.log(`PASS: ${target} ${version} -> ${next}; native install, restart and data preservation`);
 } finally {
-  clearTimeout(timer);
   server.closeAllConnections();
   server.close();
   // Give process:exit time to release the DuckDB and installer handles.
