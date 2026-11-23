@@ -259,6 +259,7 @@ impl StudyRequest {
 }
 
 pub fn init(c: &Connection) -> Result<()> {
+    crate::bluffs::init(c)?;
     c.execute_batch("BEGIN IMMEDIATE;
       CREATE TABLE IF NOT EXISTS study_indexed(hand INTEGER PRIMARY KEY REFERENCES hands(id) ON DELETE CASCADE, version TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS study_decisions(
@@ -294,7 +295,13 @@ pub fn init(c: &Connection) -> Result<()> {
 pub fn index_hand(c: &Connection, id: i64, h: &Hand) -> Result<()> {
     c.execute("DELETE FROM study_decisions WHERE hand=?1", [id])?;
     let mut s = c.prepare_cached("INSERT INTO study_decisions(hand,seq,street,position,opponent,role,facing,pot_type,effective_bb,facing_pct,action,line_flop,line_turn,line_river,preflop_path,data,strategy_data) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16,?17)")?;
-    for d in decision::derive(h) {
+    let snapshots = decision::snapshots(h, matches!(h.game.as_str(), "Cash" | "Rush"));
+    crate::bluffs::index_hand(c, id, h, &snapshots)?;
+    for d in snapshots
+        .into_iter()
+        .filter(|s| s.study_eligible)
+        .map(|s| s.decision)
+    {
         s.execute(params![
             id,
             d.reference.seq,
@@ -984,6 +991,7 @@ pub fn leaks(c: &Connection, filter: &Filter, pack: Option<&str>) -> Result<Valu
 /// User-owned objects are separate from derived IDs and survive source rebuilds.
 pub fn copy_user_data(source: &Connection, dest: &Connection) -> Result<()> {
     for (table, columns) in [
+        ("bluff_marks", vec!["hand", "signature"]),
         ("study_items", vec!["kind", "id", "data"]),
         ("study_packs", vec!["id", "data"]),
         ("study_cards", vec!["id", "data", "due", "stage"]),

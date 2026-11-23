@@ -1,0 +1,80 @@
+.bluff-report {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+.bluff-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+.bluff-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.bluff-controls .field {
+  min-width: 145px;
+}
+.bluff-advanced,
+.bluff-panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  min-width: 0;
+}
+.bluff-advanced summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.bluff-advanced[open] summary {
+  margin-bottom: 12px;
+}
+.bluff-panel h2 {
+  margin: 0 0 12px;
+  font-size: 1.1rem;
+}
+.bluff-caption,
+.bluff-advanced p,
+.bluff-panel small {
+  color: var(--muted);
+}
+.bluff-caption {
+  margin: 0;
+}
+.bluff-scroll {
+  overflow-x: auto;
+}
+.bluff-report table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.bluff-report th,
+.bluff-report td {
+  padding: 10px 12px;
+  text-align: start;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.bluff-report thead th {
+  color: var(--muted);
+  font-weight: 500;
+}
+.bluff-report small {
+  display: block;
+  font-size: 0.8rem;
+}
+.bluff-report .text-button {
+  text-align: start;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.bluff-selected {
+  background: var(--surface-hover);
+}
+.bluff-panel .bluff-controls {
+  margin-top: 12px;
+}

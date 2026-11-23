@@ -1,3 +1,4 @@
+pub mod bluffs;
 pub mod equity;
 pub mod fixtures;
 pub mod hand_formats;
