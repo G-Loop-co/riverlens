@@ -24,6 +24,7 @@ export function AppShell({
   onNavigate,
   healthError,
   version,
+  footerUnits,
   actions,
   mainRef,
   onRefresh,
@@ -34,6 +35,7 @@ export function AppShell({
   onNavigate: (workspace: Workspace) => void;
   healthError?: boolean;
   version?: string;
+  footerUnits?: string;
   onRefresh: () => void;
   mainRef?: RefObject<HTMLElement | null>;
   actions: ReactNode;
@@ -167,7 +169,7 @@ export function AppShell({
             <span className="footer-separator">·</span>
             <span>{t("不連接遊戲客戶端")}</span>
             <span className="footer-spacer" />
-            <span>{t("HKT · USD / bb")}</span>
+            <span>{footerUnits ?? t("HKT · USD / bb")}</span>
           </footer>
         </main>
       </div>

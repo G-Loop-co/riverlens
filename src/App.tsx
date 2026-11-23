@@ -70,6 +70,7 @@ const MdaWorkspace = lazy(() =>
     default: MdaWorkspace,
   })),
 );
+const BluffReport = lazy(() => import("./components/BluffReport"));
 const AiCoach = lazy(() =>
   import("./components/AiCoach").then(({ AiCoach }) => ({
     default: AiCoach,
@@ -215,31 +216,37 @@ export default function App() {
   function openHand(id: number, seq?: number) {
     const from =
       parseRoute(location.pathname)?.pathname ?? workspaceHref("today");
-    navigate({
-      pathname: `/hands/replay/${id}`,
-      search: routeSearch(filter, { step: seq, from }),
-    });
+    const search =
+      from === "/hands/bluffs"
+        ? new URLSearchParams(searchParams)
+        : filterToSearchParams(filter);
+    search.set("from", from);
+    if (seq !== undefined) search.set("step", String(seq));
+    navigate({ pathname: `/hands/replay/${id}`, search: search.toString() });
   }
 
   function closeReplay() {
     const from = searchParams.get("from");
     const pathname =
       from && isSafeReturnPath(from) ? from : workspaceHref("hands", "list");
-    navigate({ pathname, search: routeSearch(filter) });
+    if (from === "/hands/bluffs") {
+      const search = new URLSearchParams(searchParams);
+      search.delete("from");
+      search.delete("step");
+      navigate({ pathname: from, search: search.toString() });
+    } else {
+      navigate({ pathname, search: routeSearch(filter) });
+    }
   }
 
   const syncReplayStep = useCallback(
     (seq: number) => {
-      const from = searchParams.get("from");
-      setSearchParams(
-        routeSearch(filter, {
-          step: seq,
-          from: from ?? parseRoute(location.pathname)?.pathname,
-        }),
-        { replace: true },
-      );
+      if (searchParams.get("step") === String(seq)) return;
+      const next = new URLSearchParams(searchParams);
+      next.set("step", String(seq));
+      setSearchParams(next, { replace: true });
     },
-    [filter, location.pathname, searchParams, setSearchParams],
+    [searchParams, setSearchParams],
   );
 
   useLayoutEffect(() => {
@@ -408,6 +415,7 @@ export default function App() {
       "起手牌矩陣",
       "呈現實際觀察的 range，每個組合均可追溯。",
     ],
+    "hands/bluffs": ["RIVERLENS / HANDS", "bluff.title", "bluff.description"],
     "hands/review": [
       "RIVERLENS / HANDS",
       "複盤工作台",
@@ -511,7 +519,9 @@ export default function App() {
   } as const;
   const heading =
     headings[routeKey as keyof typeof headings] ?? headings["today/dashboard"];
-  const showFilter = ["today", "hands", "coach"].includes(route.workspace);
+  const showFilter =
+    ["today", "hands", "coach"].includes(route.workspace) &&
+    route.section !== "bluffs";
   const showImport =
     route.workspace === "today" ||
     (route.workspace === "hands" && route.section === "list");
@@ -524,6 +534,7 @@ export default function App() {
         onNavigate={goWorkspace}
         healthError={Boolean(health.error)}
         version={appVersion}
+        footerUnits={route.section === "bluffs" ? "HKT" : undefined}
         onRefresh={refresh}
         mainRef={content}
         actions={
@@ -814,12 +825,13 @@ export default function App() {
             <RouteTabs
               label="牌局覆盤"
               panelId="hands-workspace"
-              value={route.section as "list" | "matrix" | "review"}
+              value={route.section as "list" | "matrix" | "review" | "bluffs"}
               onChange={(section) => goSection("hands", section)}
               items={[
                 { value: "list", label: "手牌資料庫" },
                 { value: "matrix", label: "起手牌矩陣" },
                 { value: "review", label: "複盤工作台" },
+                { value: "bluffs", label: "bluff.title" },
               ]}
             />
           )}
@@ -906,6 +918,16 @@ export default function App() {
                   view={rangeView}
                   setView={setRangeView}
                 />
+              )}
+              {route.section === "bluffs" && (
+                <Suspense fallback={<Skeleton rows={5} />}>
+                  <BluffReport
+                    revision={revision}
+                    profiles={profiles.data ?? []}
+                    openHand={openHand}
+                    health={health.data}
+                  />
+                </Suspense>
               )}
               {route.section === "review" && (
                 <ReviewView filter={filter} revision={revision} drill={drill} />

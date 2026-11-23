@@ -95,6 +95,8 @@ export function Replayer({
     [error, setError] = useState(""),
     [clean, setClean] = useState(true);
   const initialStepKey = `${id}:${population?.hand_key ?? ""}`;
+  const [initializedKey, setInitializedKey] = useState("");
+  const [marks, setMarks] = useState<number[]>([]);
   const appliedInitialStepRef = useRef<string | null>(null);
   const openingStep = useMemo(
     () => (h ? replayOpeningStep(h.actions) : 0),
@@ -103,6 +105,8 @@ export function Replayer({
   useEffect(() => {
     if (result.data && appliedInitialStepRef.current !== initialStepKey) {
       const a = result.data.annotation;
+      setInitializedKey(initialStepKey);
+      setMarks(result.data.bluff_marks ?? []);
       setNote(a.note);
       setTags(a.tags.join(", "));
       setReviewed(a.reviewed);
@@ -118,8 +122,8 @@ export function Replayer({
     }
   }, [initialStepKey, result.data, initialStep, openingStep]);
   useEffect(() => {
-    onStep?.(step);
-  }, [onStep, step]);
+    if (initializedKey === initialStepKey) onStep?.(step);
+  }, [onStep, step, initializedKey, initialStepKey]);
   useEffect(() => {
     if (!h || !playing) return;
     const t = setInterval(
@@ -242,6 +246,31 @@ export function Replayer({
         )}
         {!population && (
           <div className="study-row-actions">
+            {h &&
+              ["Cash", "Rush"].includes(h.game) &&
+              h.status === "valid" &&
+              h.actions[step]?.actor === h.hero_seat &&
+              h.actions[step].street !== "preflop" &&
+              ["bet", "raise"].includes(h.actions[step].kind) && (
+                <button
+                  className="button subtle"
+                  disabled={training.busy}
+                  aria-pressed={marks.includes(step)}
+                  onClick={() =>
+                    void training.run(async () => {
+                      const marked = !marks.includes(step);
+                      await api({ op: "bluff_mark", id, seq: step, marked });
+                      setMarks((previous) =>
+                        marked
+                          ? [...previous, step]
+                          : previous.filter((s) => s !== step),
+                      );
+                    })
+                  }
+                >
+                  {t(marks.includes(step) ? "bluff.unmark" : "bluff.mark")}
+                </button>
+              )}
             <button
               className="button subtle"
               disabled={

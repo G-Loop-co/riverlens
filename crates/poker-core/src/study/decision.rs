@@ -2,7 +2,7 @@ use crate::{model::Hand, money};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 
-pub const INDEX_VERSION: &str = "hero-index/3";
+pub const INDEX_VERSION: &str = "hero-index/4";
 pub const VERSION: &str = "hero-decisions/2";
 pub const ACTIONS: &[&str] = &["fold", "check", "call", "bet", "raise"];
 
@@ -71,7 +71,21 @@ pub fn line_code(line: &[LineAction], street: &str) -> String {
 /// Snapshot only information available BEFORE each Hero decision. No future board,
 /// final pot type, eventual opponent or showdown cards enter the decision features.
 pub fn derive(h: &Hand) -> Vec<Decision> {
-    if h.status != "valid" || h.bb <= 0 {
+    snapshots(h, false)
+        .into_iter()
+        .map(|s| s.decision)
+        .collect()
+}
+
+pub(crate) struct Snapshot {
+    pub decision: Decision,
+    pub study_eligible: bool,
+    pub street_players: usize,
+    pub remaining_bb: f64,
+}
+
+pub(crate) fn snapshots(h: &Hand, multiway: bool) -> Vec<Snapshot> {
+    if (h.status != "valid" && !(multiway && crate::bluffs::missing_cards_only(h))) || h.bb <= 0 {
         return vec![];
     }
     let mut result = vec![];
@@ -92,6 +106,7 @@ pub fn derive(h: &Hand) -> Vec<Decision> {
     let mut line = vec![];
     let mut board = vec![];
     let mut flop_count = None;
+    let mut street_players = h.players.len();
     let hero = h.players.iter().find(|p| p.hero);
     let stacks: BTreeMap<_, _> = h
         .players
@@ -103,6 +118,7 @@ pub fn derive(h: &Hand) -> Vec<Decision> {
             if a.runout != 0 {
                 break;
             }
+            street_players = h.players.len() - folded.len();
             if a.street == "flop" {
                 flop_count = Some(
                     h.players
@@ -142,7 +158,9 @@ pub fn derive(h: &Hand) -> Vec<Decision> {
         let can_raise = remaining > to_call
             && responsive
             && acted.get(&seat).is_none_or(|v| max_bet - *v >= min_raise);
-        if is_decision && seat == h.hero_seat && (a.street == "preflop" || flop_count == Some(2)) {
+        let study_eligible =
+            h.status == "valid" && (a.street == "preflop" || flop_count == Some(2));
+        if is_decision && seat == h.hero_seat && (study_eligible || multiway) {
             let villain = if others.len() == 1 {
                 Some(others[0])
             } else {
@@ -205,58 +223,68 @@ pub fn derive(h: &Hand) -> Vec<Decision> {
                 && matches!(path.as_str(), "flop:hero:check|flop:villain:bet|flop:hero:call|turn:hero:check|turn:villain:bet" | "flop:villain:bet|flop:hero:call|turn:villain:bet") {
                 Some("facing_second_barrel")
             } else { None };
-            result.push(Decision {
-                scenario: scenario.map(str::to_owned),
-                reference: DecisionRef {
-                    profile: h.profile.clone(),
-                    hand_id: h.id.clone(),
-                    seq: index,
-                    version: VERSION.into(),
+            let opponent_stack = others
+                .iter()
+                .map(|p| p.stack - spent.get(&p.seat).copied().unwrap_or_default())
+                .max()
+                .unwrap_or(0);
+            result.push(Snapshot {
+                street_players,
+                study_eligible,
+                remaining_bb: remaining.min(opponent_stack) as f64 / h.bb as f64,
+                decision: Decision {
+                    scenario: scenario.map(str::to_owned),
+                    reference: DecisionRef {
+                        profile: h.profile.clone(),
+                        hand_id: h.id.clone(),
+                        seq: index,
+                        version: VERSION.into(),
+                    },
+                    street: a.street.clone(),
+                    position: h.position.clone(),
+                    opponent: villain.map(|p| p.position.clone()),
+                    role,
+                    facing: facing.into(),
+                    pot_type: (if special {
+                        "special"
+                    } else {
+                        match raises {
+                            0 => "limped",
+                            1 => "SRP",
+                            2 => "3-bet",
+                            _ => "4-bet+",
+                        }
+                    })
+                    .into(),
+                    effective_bb: villain.map(|p| p.stack.min(player.stack) as f64 / h.bb as f64),
+                    action: a.kind.clone(),
+                    size_bb: match a.kind.as_str() {
+                        "raise" => Some(a.to as f64 / h.bb as f64),
+                        "bet" => Some(a.amount as f64 / h.bb as f64),
+                        _ => None,
+                    },
+                    bet_pct: if a.kind == "raise" || a.kind == "bet" {
+                        pct
+                    } else {
+                        None
+                    },
+                    facing_pct: if to_call > 0 { last_pct } else { None },
+                    preflop_path: preflop.join("-"),
+                    line: line.clone(),
+                    legal,
+                    board: board.clone(),
+                    hand_class: h.hand_class.clone(),
+                    cards: hero.map(|p| p.cards.clone()).unwrap_or_default(),
+                    player_count: h.player_count,
+                    stacks_bb: stacks.clone(),
+                    sb_bb: h.sb as f64 / h.bb as f64,
+                    bb: money::format(h.bb),
+                    currency: h.currency.clone(),
+                    game: h.game.clone(),
+                    special,
+                    pot_before: money::format(before),
+                    to_call: money::format(to_call),
                 },
-                street: a.street.clone(),
-                position: h.position.clone(),
-                opponent: villain.map(|p| p.position.clone()),
-                role,
-                facing: facing.into(),
-                pot_type: (if special {
-                    "special"
-                } else {
-                    match raises {
-                        0 => "limped",
-                        1 => "SRP",
-                        2 => "3-bet",
-                        _ => "4-bet+",
-                    }
-                })
-                .into(),
-                effective_bb: villain.map(|p| p.stack.min(player.stack) as f64 / h.bb as f64),
-                action: a.kind.clone(),
-                size_bb: match a.kind.as_str() {
-                    "raise" => Some(a.to as f64 / h.bb as f64),
-                    "bet" => Some(a.amount as f64 / h.bb as f64),
-                    _ => None,
-                },
-                bet_pct: if a.kind == "raise" || a.kind == "bet" {
-                    pct
-                } else {
-                    None
-                },
-                facing_pct: if to_call > 0 { last_pct } else { None },
-                preflop_path: preflop.join("-"),
-                line: line.clone(),
-                legal,
-                board: board.clone(),
-                hand_class: h.hand_class.clone(),
-                cards: hero.map(|p| p.cards.clone()).unwrap_or_default(),
-                player_count: h.player_count,
-                stacks_bb: stacks.clone(),
-                sb_bb: h.sb as f64 / h.bb as f64,
-                bb: money::format(h.bb),
-                currency: h.currency.clone(),
-                game: h.game.clone(),
-                special,
-                pot_before: money::format(before),
-                to_call: money::format(to_call),
             });
         }
         if is_decision {

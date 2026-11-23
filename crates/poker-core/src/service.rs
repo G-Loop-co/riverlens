@@ -18,6 +18,14 @@ use walkdir::WalkDir;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "op", rename_all = "snake_case")]
 pub enum Request {
+    BluffReport {
+        query: Box<crate::bluffs::Query>,
+    },
+    BluffMark {
+        id: i64,
+        seq: usize,
+        marked: bool,
+    },
     Mda {
         request: crate::mda::Request,
     },
@@ -184,6 +192,12 @@ impl Service {
     pub fn handle(self: &Arc<Self>, request: Request) -> Result<Value> {
         let mut c = store::open(&self.path)?;
         match request {
+            Request::BluffReport { query } => crate::bluffs::query(&mut c, &query),
+            Request::BluffMark { id, seq, marked } => {
+                let _lock = self.writer.lock().unwrap();
+                crate::bluffs::mark(&mut c, id, seq, marked)?;
+                Ok(json!({"marked":marked}))
+            }
             Request::Mda { request } => self.mda.handle(request),
             Request::AgentLearning { dataset_id } => match dataset_id {
                 Some(id) => crate::agent::learning_scoped(&c, Some(&id)),
@@ -384,7 +398,7 @@ impl Service {
                 limit.unwrap_or(60),
             ),
             Request::Hand { id } => Ok(
-                json!({"id":id,"hand":store::get_hand(&c,id)?,"annotation":store::annotation(&c,id)?}),
+                json!({"id":id,"hand":store::get_hand(&c,id)?,"annotation":store::annotation(&c,id)?,"bluff_marks":crate::bluffs::marks(&c,id)?}),
             ),
             Request::Matrix { filter, stat } => store::matrix(&c, &filter, &stat),
             Request::SaveAnnotation { id, annotation } => {

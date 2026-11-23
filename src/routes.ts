@@ -23,7 +23,7 @@ export const DEFAULT_SECTIONS = {
 
 const VALID_SECTIONS = {
   today: new Set(["dashboard"]),
-  hands: new Set(["list", "matrix", "review"]),
+  hands: new Set(["list", "matrix", "review", "bluffs"]),
   learn: new Set([
     "spots",
     "progress",

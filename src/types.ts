@@ -185,6 +185,7 @@ export interface HandDetail {
   id: number;
   hand: Hand;
   annotation: Annotation;
+  bluff_marks?: number[];
 }
 export interface MatrixCell {
   hand: string;
@@ -243,8 +244,8 @@ export interface Health {
   offline: boolean;
 }
 export type Request =
-  | {op: "mda";request: import("./mda-types").MdaRequest}
-  | {op: "agent_learning"; dataset_id?: string}
+  | { op: "mda"; request: import("./mda-types").MdaRequest }
+  | { op: "agent_learning"; dataset_id?: string }
   | { op: "study"; request: import("./study-types").StudyRequest }
   | { op: "study_control"; paused: boolean }
   | {
@@ -277,6 +278,8 @@ export type Request =
       cursor?: Cursor | null;
       limit?: number;
     }
+  | { op: "bluff_report"; query: import("./bluff-types").BluffQuery }
+  | { op: "bluff_mark"; id: number; seq: number; marked: boolean }
   | { op: "hand"; id: number }
   | { op: "matrix"; filter: Filter; stat: string }
   | { op: "save_annotation"; id: number; annotation: Annotation }

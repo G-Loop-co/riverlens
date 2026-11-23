@@ -11,6 +11,7 @@ The interface now has six primary workspaces instead of nine flat pages. The app
 | `/today`                       | Overview       | Results, trends, core statistics and next actions.           |
 | `/hands/list`                  | Hand review    | Hand library, annotations and exports.                       |
 | `/hands/matrix`                | Hand review    | Observed starting-hand matrix.                               |
+| `/hands/bluffs`                | Hand review    | Hero cash-game bluff lines, outcomes and decision replay.     |
 | `/hands/review`                | Hand review    | Situation-focused review entry points.                       |
 | `/hands/replay/:handId?step=n` | Replayer modal | Route-backed replay over the retained hand-review workspace. |
 | `/learn/spots`                 | Study          | Spot Explorer and current study cohort.                      |
