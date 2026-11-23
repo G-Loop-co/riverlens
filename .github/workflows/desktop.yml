@@ -76,7 +76,7 @@ jobs:
           test -x "$app/Contents/MacOS/riverlens"
           test "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$app/Contents/Info.plist")" = "$(node -p "require('./package.json').version")"
           arch="${TARGET%%-*}"
-          /usr/bin/lipo -verify_arch "${arch/aarch64/arm64}" "$app/Contents/MacOS/riverlens"
+          /usr/bin/lipo "$app/Contents/MacOS/riverlens" -verify_arch "${arch/aarch64/arm64}"
           if [[ "$APPLE_SIGNING_IDENTITY" != "-" ]]; then
             /usr/bin/xcrun stapler validate "$app"
             /usr/sbin/spctl --assess --type execute "$app"
