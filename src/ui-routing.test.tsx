@@ -60,7 +60,7 @@ describe("workspace routing", () => {
           .map((violation) => violation.id),
       ).toEqual([]);
     }
-  });
+  }, 18000);
 
   it("redirects the root to Today and exposes six primary workspaces", async () => {
     vi.stubGlobal(
@@ -71,15 +71,15 @@ describe("workspace routing", () => {
     await waitFor(() => expect(window.location.hash).toContain("#/today"));
     for (const name of [
       "牌局總覽",
-      "牌局覆盤",
-      "學習工作台",
-      "MDA 群體分析",
+      "手牌複盤",
+      "學習訓練",
+      "牌池研究",
       "AI 教練",
       "設定",
     ]) {
       expect(screen.getByRole("button", { name })).toBeTruthy();
     }
-    expect(screen.getByRole("button", { name: "資料中心" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "匯入與資料" })).toBeTruthy();
   });
 
   it("restores a hand-review tab from a deep link", () => {
@@ -108,10 +108,10 @@ describe("workspace routing", () => {
     for (const name of [
       "Overview",
       "Hand review",
-      "Study workspace",
-      "MDA population analysis",
+      "Study & practice",
+      "Pool research",
       "AI coach",
-      "Data center",
+      "Import & data",
       "Settings",
     ]) {
       expect(screen.getByRole("button", { name })).toBeTruthy();

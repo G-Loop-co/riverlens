@@ -93,7 +93,6 @@ export function TabPanel({
 }
 
 export function WorkspaceHeading({
-  eyebrow,
   title,
   description,
   action,
@@ -107,7 +106,6 @@ export function WorkspaceHeading({
   return (
     <div className="page-heading">
       <div>
-        <div className="eyebrow">{eyebrow}</div>
         <h1>{t(title)}</h1>
         <p>{t(description)}</p>
       </div>

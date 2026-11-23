@@ -6,7 +6,29 @@ import i18n from "./i18n";
 import { diagnosticMessage } from "./diagnostics";
 export const desktop = isTauri();
 
+let pendingWrites = 0;
+export const updateWritePending = () => pendingWrites > 0;
+
 export async function api<T>(request: Request): Promise<T> {
+  const name = request.op === "mda" ? request.request.op : request.op;
+  const tracked = [
+    "restore",
+    "rebuild",
+    "backup",
+    "save_annotation",
+    "start_import",
+    "resume_import",
+    "import",
+    "resume",
+  ].includes(name);
+  if (tracked) pendingWrites++;
+  try {
+    return await requestRpc<T>(request);
+  } finally {
+    if (tracked) pendingWrites--;
+  }
+}
+async function requestRpc<T>(request: Request): Promise<T> {
   if (desktop) return invoke<T>("api", { request });
   const response = await fetch("/api", {
     method: "POST",

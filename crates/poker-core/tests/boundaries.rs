@@ -396,6 +396,78 @@ fn quarantine_cannot_enter_reports_even_with_explicit_status_filter() {
 }
 
 #[test]
+fn benchmark_denominators_match_drill_and_replay() {
+    let d = tempfile::tempdir().unwrap();
+    let path = d.path().join("benchmarks.db");
+    let service = Service::new(path.clone()).unwrap();
+    let mut c = store::open(&path).unwrap();
+    let raised = fixtures::hu_hand(
+        "Hero: raises $0.04 to $0.06\nVillain: raises $0.12 to $0.18\nHero: folds\nUncalled bet ($0.12) returned to Villain\nVillain collected $0.12 from pot",
+        "Total pot $0.12 | Rake $0 | Jackpot $0",
+    );
+    let facing_allin = fixtures::hu_hand(
+        "Hero: raises $1.98 to $2 and is all-in\nVillain: folds\nUncalled bet ($1.98) returned to Hero\nHero collected $0.04 from pot",
+        "Total pot $0.04 | Rake $0 | Jackpot $0",
+    ).replace("#TEST1", "#ALLIN");
+    let walk = fixtures::hu_hand(
+        "Hero: folds\nUncalled bet ($0.01) returned to Villain\nVillain collected $0.02 from pot",
+        "Total pot $0.02 | Rake $0 | Jackpot $0",
+    )
+    .replace("#TEST1", "#WALK");
+    let bb = Profile {
+        hero: "Villain".into(),
+        ..Profile::default()
+    };
+    let from_bb = |raw: &str| {
+        parser::parse(
+            &raw.replace("Dealt to Villain\n", "Dealt to Villain [Ks Kd]\n"),
+            &bb,
+        )
+        .unwrap()
+    };
+    let hands = [parse(&raised), from_bb(&facing_allin), from_bb(&walk)];
+    for hand in &hands {
+        assert_eq!(hand.status, "valid", "{}: {:?}", hand.id, hand.issues);
+    }
+    store::insert_batch(&mut c, "bench", "test.txt", &hands).unwrap();
+    for filter in [
+        Filter::default(),
+        Filter {
+            player_count: Some(2),
+            ..Filter::default()
+        },
+    ] {
+        let report = store::report(&c, &filter, "date").unwrap();
+        let stats = report["stats"].as_array().unwrap();
+        let pfr = stats.iter().find(|s| s["id"] == "pfr").unwrap();
+        assert_eq!(report["hands"], 3);
+        assert_eq!(pfr["numerator"], 1);
+        assert_eq!(pfr["opportunities"], 1);
+        assert_eq!(pfr["benchmark_opportunities"], 2);
+        assert_eq!(pfr["value"], 100.);
+        assert_eq!(pfr["benchmark_value"], 50.);
+        assert!((pfr["all_hand_value"].as_f64().unwrap() - 100. / 3.).abs() < 1e-10);
+    }
+    let missed = Filter {
+        stat: Some("pfr".into()),
+        stat_mode: Some("benchmark_missed".into()),
+        ..Filter::default()
+    };
+    let list = store::list_hands(&c, &missed, "recent", None, 60).unwrap();
+    let rows = list["rows"].as_array().unwrap();
+    assert_eq!(rows.len(), 1);
+    assert_eq!(rows[0]["hand_id"], "ALLIN");
+    let detail = service.handle(Request::Hand { id: 1 }).unwrap();
+    let step = detail["stat_steps"]["fold_three_bet"]["numerator"]
+        .as_u64()
+        .unwrap() as usize;
+    assert_eq!(detail["hand"]["actions"][step]["kind"], "fold");
+    assert!(step > detail["stat_steps"]["pfr"]["numerator"].as_u64().unwrap() as usize);
+    let walk = service.handle(Request::Hand { id: 3 }).unwrap();
+    assert!(walk["stat_steps"]["vpip"].is_null());
+}
+
+#[test]
 fn session_rollups_migrate_and_match_filtered_ledger() {
     let d = tempfile::tempdir().unwrap();
     let path = d.path().join("db");

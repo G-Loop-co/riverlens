@@ -13,10 +13,10 @@ on your machine, with nothing sent anywhere unless you switch it on.
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%28Apple%20Silicon%20%26%20Intel%29-blue)
 ![Runtime](https://img.shields.io/badge/runtime-offline%20first-2f6f4f)
 
-**[⬇️ Download RiverLens v0.6.3](https://github.com/G-Loop-co/riverlens/releases/latest)** ·
+**[⬇️ Download RiverLens v0.7.0](https://github.com/G-Loop-co/riverlens/releases/latest)** ·
 Windows installer · macOS Apple Silicon · macOS Intel
 
-<sub>macOS builds are ad-hoc signed, not notarized. [Release notes](docs/release-v0.6.3.md).</sub>
+<sub>macOS builds are ad-hoc signed, not notarized. [Release notes](docs/release-v0.7.0.md).</sub>
 
 ![RiverLens overview — synthetic data](docs/screenshots/overview-en.jpg)
 
@@ -59,6 +59,10 @@ Import  →  Explore spots  →  Find leaks  →  Compare with GTO  →  Drill &
 Screenshots capture full pages at 1920px desktop width with the Paper (warm white) theme, using **240 generated hands** — not private player data. A [1920 × 1080 overview](docs/screenshots/overview-desktop-en.jpg) is also available.
 
 </details>
+
+## What's new in v0.7.0
+
+Compare six cash-game metrics with offline reference ranges, open a decision in replay and install future signed releases inside RiverLens.
 
 ## What's new in v0.6.3
 

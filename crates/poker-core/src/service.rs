@@ -72,6 +72,13 @@ pub enum Request {
         tree_id: String,
     },
 
+    ReviewDashboard {
+        filter: Filter,
+    },
+    ReviewBlindSpot {
+        filter: Filter,
+        open_bb: String,
+    },
     Overview {
         filter: Filter,
         group: Option<String>,
@@ -379,6 +386,18 @@ impl Service {
                 }
             }
 
+            Request::ReviewDashboard { filter } => {
+                let tx = c.transaction()?;
+                let data = crate::review::dashboard(&tx, &filter)?;
+                tx.commit()?;
+                Ok(data)
+            }
+            Request::ReviewBlindSpot { filter, open_bb } => {
+                let tx = c.transaction()?;
+                let data = crate::review::blind_spot(&tx, &filter, &open_bb)?;
+                tx.commit()?;
+                Ok(data)
+            }
             Request::Overview { filter, group } => {
                 let tx = c.transaction()?;
                 let report = store::report(&tx, &filter, group.as_deref().unwrap_or("date"))?;
@@ -397,9 +416,13 @@ impl Service {
                 cursor.as_ref(),
                 limit.unwrap_or(60),
             ),
-            Request::Hand { id } => Ok(
-                json!({"id":id,"hand":store::get_hand(&c,id)?,"annotation":store::annotation(&c,id)?,"bluff_marks":crate::bluffs::marks(&c,id)?}),
-            ),
+            Request::Hand { id } => {
+                let hand = store::get_hand(&c, id)?;
+                Ok(
+                    json!({"id":id,"stat_steps":crate::stats::replay_steps(&hand),"hand":hand,
+                    "annotation":store::annotation(&c,id)?,"bluff_marks":crate::bluffs::marks(&c,id)?}),
+                )
+            }
             Request::Matrix { filter, stat } => store::matrix(&c, &filter, &stat),
             Request::SaveAnnotation { id, annotation } => {
                 let _l = self.writer.lock().unwrap();
@@ -561,7 +584,7 @@ impl Service {
                 Ok(json!({"complete":true}))
             }
             Request::Health => Ok(
-                json!({"version":"0.2.0","parser":PARSER_VERSION,"stats":STATS_VERSION,"database":self.path.to_string_lossy(),"import_active":self.active.load(Ordering::Relaxed),"equity_running":self.equity_running.load(Ordering::Relaxed),"equity_paused":self.equity_pause.load(Ordering::Relaxed),"equity_error":self.equity_error.lock().unwrap().clone(),"schema":3,"offline":true,"study":study::coverage(&c)?,"study_running":self.study_running.load(Ordering::Relaxed),"study_paused":self.study_pause.load(Ordering::Relaxed),"study_error":self.study_error.lock().unwrap().clone()}),
+                json!({"version":"0.2.0","parser":PARSER_VERSION,"stats":STATS_VERSION,"database":self.path.to_string_lossy(),"import_active":self.active.load(Ordering::Relaxed),"mda_import_active":self.mda.importing(),"equity_running":self.equity_running.load(Ordering::Relaxed),"equity_paused":self.equity_pause.load(Ordering::Relaxed),"equity_error":self.equity_error.lock().unwrap().clone(),"schema":3,"offline":true,"study":study::coverage(&c)?,"study_running":self.study_running.load(Ordering::Relaxed),"study_paused":self.study_pause.load(Ordering::Relaxed),"study_error":self.study_error.lock().unwrap().clone()}),
             ),
         }
     }

@@ -121,7 +121,7 @@ export function AppShell({
           <div className="local-status">
             <HardDrives size={20} />
             <div>
-              <strong>{t("完全本機")}</strong>
+              <strong>{t("review.localHands")}</strong>
               <small>{t("你的牌譜，只屬於你。")}</small>
             </div>
           </div>
@@ -134,9 +134,12 @@ export function AppShell({
       <div className="workspace-main">
         <header className="topbar">
           <div className="breadcrumb">
-            {t("WORKSPACE ")}
-            <span aria-hidden="true">/</span>
-            <strong>{t("RIVERLENS")}</strong>
+            <strong>
+              {t(
+                nav.find((item) => item.workspace === activeWorkspace)?.label ??
+                  "RiverLens",
+              )}
+            </strong>
           </div>
           <div className="topbar-actions">
             {actions}
@@ -151,9 +154,6 @@ export function AppShell({
             >
               <ArrowsClockwise size={18} />
             </button>
-            <span className="avatar small" aria-hidden="true">
-              {t("H")}
-            </span>
           </div>
         </header>
         <main

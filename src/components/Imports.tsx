@@ -1,6 +1,6 @@
 import { HandFormats } from "./HandFormats";
 import { useTranslation } from "react-i18next";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   ArrowRight,
   CheckCircle,
@@ -18,26 +18,36 @@ import { number, time } from "../format";
 import { Empty, ErrorBanner, Field } from "./UI";
 import { diagnosticMessage } from "../diagnostics";
 import { Dialog } from "./Dialog";
+import { ProfileEditor } from "./Settings";
 
 export function ImportDialog({
   profiles,
   close,
   imported,
+  onProfileCreated,
 }: {
   profiles: Profile[];
   close: () => void;
   imported: () => void;
+  onProfileCreated?: () => void;
 }) {
   const { t } = useTranslation();
   const [paths, setPaths] = useState<string[]>([]),
     [typed, setTyped] = useState(""),
     [profileId, setProfileId] = useState(profiles[0]?.id || "");
+  const [created, setCreated] = useState<Profile[]>([]);
+  const [addingProfile, setAddingProfile] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
-  const profile = profiles.find((p) => p.id === profileId);
-  useEffect(() => {
-    if (!profileId && profiles[0]) setProfileId(profiles[0].id);
-  }, [profileId, profiles]);
+  const options = [
+    ...profiles,
+    ...created.filter(
+      (item) => !profiles.some((existing) => existing.id === item.id),
+    ),
+  ];
+  const profile = options.find((item) => item.id === profileId) ?? options[0];
+  const locked = busy || savingProfile;
   async function select(directory = false) {
     try {
       const p = await chooseInput(directory);
@@ -47,7 +57,7 @@ export function ImportDialog({
     }
   }
   async function start() {
-    if (!profile || busy) return;
+    if (!profile || locked || addingProfile) return;
     const selected = desktop
       ? paths
       : typed
@@ -69,7 +79,7 @@ export function ImportDialog({
     <Dialog
       label={t("匯入牌譜")}
       close={() => {
-        if (!busy) close();
+        if (!locked) close();
       }}
     >
       <section
@@ -84,7 +94,7 @@ export function ImportDialog({
           <button
             className="icon-button"
             onClick={close}
-            disabled={busy}
+            disabled={locked}
             aria-label={t("關閉匯入")}
           >
             <X size={21} />
@@ -93,25 +103,42 @@ export function ImportDialog({
         <p className="muted">
           {t("選取牌室匯出的 TXT、XML 或 ZIP。原始檔案保持不變。")}
         </p>
-        <Field label={t("來源設定")}>
-          <select
-            value={profileId}
-            disabled={busy}
-            onChange={(e) => setProfileId(e.target.value)}
-          >
-            {profiles.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name} · {p.brand}
-              </option>
-            ))}
-          </select>
-        </Field>
-        {!profiles.length && (
-          <ErrorBanner>
-            {t("尚無來源設定，請先至「資料來源」新增來源。")}
-          </ErrorBanner>
+        {options.length > 0 && (
+          <Field label={t("來源設定")}>
+            <select
+              value={profile?.id || ""}
+              disabled={locked || addingProfile}
+              onChange={(e) => setProfileId(e.target.value)}
+            >
+              {options.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} · {p.brand}
+                </option>
+              ))}
+            </select>
+          </Field>
         )}
-        {profile && (
+        <button
+          className="text-button"
+          disabled={locked}
+          aria-expanded={addingProfile}
+          onClick={() => setAddingProfile(!addingProfile)}
+        >
+          {addingProfile ? t("取消") : t("新增來源")}
+        </button>
+        {addingProfile && (
+          <ProfileEditor
+            disabled={locked}
+            onBusyChange={setSavingProfile}
+            onCreated={(source) => {
+              setCreated((items) => [...items, source]);
+              setProfileId(source.id);
+              setAddingProfile(false);
+              onProfileCreated?.();
+            }}
+          />
+        )}
+        {profile && !addingProfile && (
           <div className="import-profile">
             <span>
               {t("Hero ")}
@@ -131,7 +158,7 @@ export function ImportDialog({
             <div>
               <button
                 className="button primary"
-                disabled={busy}
+                disabled={locked}
                 onClick={() => void select()}
               >
                 <FileText size={16} />
@@ -139,7 +166,7 @@ export function ImportDialog({
               </button>
               <button
                 className="button subtle"
-                disabled={busy}
+                disabled={locked}
                 onClick={() => void select(true)}
               >
                 <FolderOpen size={16} />
@@ -161,7 +188,7 @@ export function ImportDialog({
           >
             <textarea
               autoFocus
-              disabled={busy}
+              disabled={locked}
               rows={4}
               value={typed}
               onChange={(e) => setTyped(e.target.value)}
@@ -187,7 +214,10 @@ export function ImportDialog({
         <button
           className="button primary full-width"
           disabled={
-            busy || !profile || (desktop ? !paths.length : !typed.trim())
+            locked ||
+            addingProfile ||
+            !profile ||
+            (desktop ? !paths.length : !typed.trim())
           }
           onClick={() => void start()}
         >
@@ -208,6 +238,7 @@ export function Imports({
   openHand,
   notify,
   onImport,
+  onViewHands,
 }: {
   jobs: Job[];
   revision: number;
@@ -215,6 +246,7 @@ export function Imports({
   openHand: (id: number) => void;
   notify: (s: string) => void;
   onImport: () => void;
+  onViewHands?: (profileId: string) => void;
 }) {
   const { t } = useTranslation();
   const [issuePages, setIssuePages] = useState<(number | null)[]>([null]);
@@ -361,6 +393,15 @@ export function Imports({
                     >
                       <Play size={14} />
                       {t("續匯")}
+                    </button>
+                  )}
+                  {j.state === "complete" && onViewHands && (
+                    <button
+                      className="text-button"
+                      onClick={() => onViewHands(j.profile.id)}
+                    >
+                      {t("imports.viewSourceHands")}
+                      <ArrowRight size={14} />
                     </button>
                   )}
                   {j.state === "complete" && (

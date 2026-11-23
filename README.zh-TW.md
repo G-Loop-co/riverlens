@@ -12,10 +12,10 @@
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%28Apple%20Silicon%20%26%20Intel%29-blue)
 ![Runtime](https://img.shields.io/badge/runtime-offline%20first-2f6f4f)
 
-**[⬇️ 下載 RiverLens v0.6.3](https://github.com/G-Loop-co/riverlens/releases/latest)** ·
+**[⬇️ 下載 RiverLens v0.7.0](https://github.com/G-Loop-co/riverlens/releases/latest)** ·
 Windows 安裝檔 · macOS Apple Silicon · macOS Intel
 
-<sub>macOS 版本為 ad-hoc 簽章，未經 Apple notarization。[發布說明](docs/release-v0.6.3.md)。</sub>
+<sub>macOS 版本為 ad-hoc 簽章，未經 Apple notarization。[發布說明](docs/release-v0.7.0.md)。</sub>
 
 ![RiverLens 總覽 — 合成資料](docs/screenshots/overview-zh-TW.jpg)
 
@@ -58,6 +58,10 @@ Windows 安裝檔 · macOS Apple Silicon · macOS Intel
 截圖以 1920px 桌面寬度、Paper（暖白）主題拍攝完整頁面，使用 **240 手生成牌**——非私人資料。另有 [1920 × 1080 總覽](docs/screenshots/overview-desktop-en.jpg)。
 
 </details>
+
+## v0.7.0 新功能
+
+六項現金桌指標提供離線參考區間。可從位置統計開啟手牌回放，之後的正式版可在 App 內更新。
 
 ## v0.6.3 新功能
 

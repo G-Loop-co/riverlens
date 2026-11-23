@@ -16,6 +16,101 @@ import { ErrorBanner, Field } from "./UI";
 import { LanguageSelect } from "./LanguageSelect";
 import { ThemeSelect } from "./ThemeSelect";
 
+export function ProfileEditor({
+  disabled,
+  onBusyChange,
+  onCreated,
+}: {
+  disabled: boolean;
+  onBusyChange: (saving: boolean) => void;
+  onCreated: (profile: Profile) => void;
+}) {
+  const { t } = useTranslation();
+  const [error, setError] = useState("");
+  const [draft, setDraft] = useState({
+    name: "",
+    hero: "Hero",
+    timezone: "Asia/Hong_Kong",
+    brand: "Natural8",
+  });
+
+  async function create() {
+    if (disabled) return;
+    const profile: Profile = {
+      id: `profile-${crypto.randomUUID()}`,
+      name: draft.name.trim(),
+      hero: draft.hero.trim(),
+      timezone: draft.timezone.trim(),
+      brand: draft.brand,
+    };
+    if (!profile.name || !profile.hero || !profile.timezone) return;
+    setError("");
+    onBusyChange(true);
+    try {
+      await api({ op: "save_profile", profile });
+      onCreated(profile);
+    } catch (e) {
+      setError(errorText(e));
+    } finally {
+      onBusyChange(false);
+    }
+  }
+
+  return (
+    <fieldset
+      className="profile-form"
+      aria-label={t("新增來源")}
+      disabled={disabled}
+    >
+      <Field label={t("顯示名稱")}>
+        <input
+          value={draft.name}
+          onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+          placeholder={t("例如：GGPoker Hero")}
+        />
+      </Field>
+      <Field label={t("品牌")}>
+        <select
+          value={draft.brand}
+          onChange={(e) => setDraft({ ...draft, brand: e.target.value })}
+        >
+          {importRooms.map(({ room, converted }) => (
+            <option key={room} value={room}>
+              {room}
+              {converted ? ` · ${t("僅 PokerStars 轉換檔")}` : ""}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field label={t("牌譜內 Hero 名稱")}>
+        <input
+          value={draft.hero}
+          onChange={(e) => setDraft({ ...draft, hero: e.target.value })}
+        />
+      </Field>
+      <Field label={t("牌譜內原始時區")}>
+        <input
+          value={draft.timezone}
+          onChange={(e) => setDraft({ ...draft, timezone: e.target.value })}
+        />
+      </Field>
+      {error && <ErrorBanner>{error}</ErrorBanner>}
+      <button
+        className="button primary"
+        disabled={
+          disabled ||
+          !draft.name.trim() ||
+          !draft.hero.trim() ||
+          !draft.timezone.trim()
+        }
+        onClick={() => void create()}
+      >
+        {t("建立來源")}
+      </button>
+    </fieldset>
+  );
+}
+
 export function Settings({
   profiles,
   health,
@@ -33,12 +128,6 @@ export function Settings({
   const [error, setError] = useState(""),
     [busy, setBusy] = useState("");
   const [creating, setCreating] = useState(false);
-  const [draft, setDraft] = useState({
-    name: "",
-    hero: "Hero",
-    timezone: "Asia/Hong_Kong",
-    brand: "Natural8",
-  });
   async function backup() {
     if (busy) return;
     setError("");
@@ -109,36 +198,6 @@ export function Settings({
       await api({ op: "rebuild" });
       notify(t("原文重算完成"));
       refresh();
-    } catch (e) {
-      setError(errorText(e));
-    } finally {
-      setBusy("");
-    }
-  }
-  async function create() {
-    if (busy) return;
-    setError("");
-    setBusy("profile");
-    try {
-      await api({
-        op: "save_profile",
-        profile: {
-          ...draft,
-          name: draft.name.trim(),
-          hero: draft.hero.trim(),
-          timezone: draft.timezone.trim(),
-          id: `profile-${crypto.randomUUID()}`,
-        },
-      });
-      setCreating(false);
-      setDraft({
-        name: "",
-        hero: "Hero",
-        timezone: "Asia/Hong_Kong",
-        brand: "Natural8",
-      });
-      refresh();
-      notify(t("來源設定已新增"));
     } catch (e) {
       setError(errorText(e));
     } finally {
@@ -224,60 +283,15 @@ export function Settings({
               ))}
             </div>
             {creating && (
-              <fieldset className="profile-form" disabled={!!busy}>
-                <Field label={t("顯示名稱")}>
-                  <input
-                    value={draft.name}
-                    onChange={(e) =>
-                      setDraft({ ...draft, name: e.target.value })
-                    }
-                    placeholder={t("例如：GGPoker Hero")}
-                  />
-                </Field>
-                <Field label={t("品牌")}>
-                  <select
-                    value={draft.brand}
-                    onChange={(e) =>
-                      setDraft({ ...draft, brand: e.target.value })
-                    }
-                  >
-                    {importRooms.map(({ room, converted }) => (
-                      <option key={room} value={room}>
-                        {room}
-                        {converted ? ` · ${t("僅 PokerStars 轉換檔")}` : ""}
-                      </option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label={t("牌譜內 Hero 名稱")}>
-                  <input
-                    value={draft.hero}
-                    onChange={(e) =>
-                      setDraft({ ...draft, hero: e.target.value })
-                    }
-                  />
-                </Field>
-                <Field label={t("牌譜內原始時區")}>
-                  <input
-                    value={draft.timezone}
-                    onChange={(e) =>
-                      setDraft({ ...draft, timezone: e.target.value })
-                    }
-                  />
-                </Field>
-                <button
-                  className="button primary"
-                  disabled={
-                    !!busy ||
-                    !draft.name.trim() ||
-                    !draft.hero.trim() ||
-                    !draft.timezone.trim()
-                  }
-                  onClick={() => void create()}
-                >
-                  {t("建立來源")}
-                </button>
-              </fieldset>
+              <ProfileEditor
+                disabled={!!busy}
+                onBusyChange={(saving) => setBusy(saving ? "profile" : "")}
+                onCreated={() => {
+                  setCreating(false);
+                  refresh();
+                  notify(t("來源設定已新增"));
+                }}
+              />
             )}
             <p className="panel-footnote">
               {t(

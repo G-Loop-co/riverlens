@@ -186,6 +186,10 @@ export interface HandDetail {
   hand: Hand;
   annotation: Annotation;
   bluff_marks?: number[];
+  stat_steps?: Record<
+    string,
+    { opportunity: number; numerator: number | null }
+  >;
 }
 export interface MatrixCell {
   hand: string;
@@ -238,6 +242,7 @@ export interface Health {
   stats: string;
   database: string;
   import_active: boolean;
+  mda_import_active?: boolean;
   equity_running: boolean;
   equity_paused: boolean;
   schema: number;
@@ -270,6 +275,8 @@ export type Request =
   | { op: "agent_practice"; id: string; item: number; answer: string | null }
   | { op: "agent_evidence"; id: string }
   | { op: "agent_import_strategy"; path: string }
+  | { op: "review_dashboard"; filter: Filter }
+  | { op: "review_blind_spot"; filter: Filter; open_bb: string }
   | { op: "overview"; filter: Filter; group?: string }
   | {
       op: "hands";
