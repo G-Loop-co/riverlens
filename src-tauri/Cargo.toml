@@ -3,6 +3,9 @@ name = "riverlens"
 version = "0.7.0"
 edition = "2021"
 
+[features]
+updater-smoke = []
+
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 

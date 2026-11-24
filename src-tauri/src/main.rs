@@ -5,6 +5,9 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use tauri::{Emitter, Manager};
 
+#[cfg(feature = "updater-smoke")]
+mod updater_smoke;
+
 #[tauri::command]
 async fn api(
     request: Request,
@@ -118,6 +121,9 @@ fn main() {
                 bridge,
                 job: Mutex::new(None),
             });
+            #[cfg(feature = "updater-smoke")]
+            updater_smoke::start(app.handle().clone(), service.clone())
+                .map_err(std::io::Error::other)?;
             app.manage(service);
             Ok(())
         })

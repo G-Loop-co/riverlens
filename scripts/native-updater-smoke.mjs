@@ -62,6 +62,7 @@ async function browserSmoke({ invoke, getVersion, check, relaunch, exit }, spec)
 }
 
 const mac = process.platform === 'darwin';
+const nativeDriver = !mac || process.env.RIVERLENS_SMOKE_NATIVE_DRIVER === '1';
 const target = process.argv[2];
 const nativeTarget = mac ? `${process.arch === 'arm64' ? 'aarch64' : 'x86_64'}-apple-darwin` : 'x86_64-pc-windows-msvc';
 assert.ok((mac || (process.platform === 'win32' && process.arch === 'x64')) && target === nativeTarget, 'Run on the target OS and CPU');
@@ -155,6 +156,10 @@ try {
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
   const origin = `http://127.0.0.1:${server.address().port}`;
   const spec = { before: version, after: next, token, handPath: resolve('tests/fixtures/study-nl10.txt') };
+  if (nativeDriver) {
+    mkdirSync(data, { recursive: true });
+    writeFileSync(join(data, 'updater-smoke.json'), JSON.stringify(spec));
+  }
   const source = `import { invoke } from '@tauri-apps/api/core'; import { getVersion } from '@tauri-apps/api/app';
 import { check } from '@tauri-apps/plugin-updater'; import { exit, relaunch } from '@tauri-apps/plugin-process';
 (${browserSmoke.toString()})({invoke,getVersion,check,exit,relaunch},${JSON.stringify(spec)});`;
@@ -176,7 +181,7 @@ import { check } from '@tauri-apps/plugin-updater'; import { exit, relaunch } fr
       productName: name, identifier, version: releaseVersion,
       build: { beforeBuildCommand: '', frontendDist: front },
       app: {
-        windows: [{ label: 'main', title: 'RiverLens updater test', width: 440, height: 160, focus: false }],
+        windows: nativeDriver ? [] : [{ label: 'main', title: 'RiverLens updater test', width: 440, height: 160, focus: false }],
         security: {
           capabilities: ['default', { identifier: 'qa-exit', windows: ['main'], permissions: ['process:allow-exit'] }],
         },
@@ -184,7 +189,8 @@ import { check } from '@tauri-apps/plugin-updater'; import { exit, relaunch } fr
       bundle: { createUpdaterArtifacts: false, macOS: { signingIdentity: '-' } },
       plugins: { updater: { endpoints: [origin + '/latest.json'], pubkey: readFileSync(key + '.pub', 'utf8').trim(), dangerousInsecureTransportProtocol: true } },
     }));
-    run(process.execPath, ['scripts/desktop.mjs', 'build', ...targetArgs, '--bundles', mac ? 'app' : 'nsis', '--config', config]);
+    const features = nativeDriver ? ['--features', 'updater-smoke'] : [];
+    run(process.execPath, ['scripts/desktop.mjs', 'build', ...targetArgs, ...features, '--bundles', mac ? 'app' : 'nsis', '--config', config]);
     return mac ? join(stage, 'macos', name + '.app') : join(stage, 'nsis', `${name}_${releaseVersion}_x64-setup.exe`);
   }
   const before = makeInstaller(version);
