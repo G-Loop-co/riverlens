@@ -13,8 +13,6 @@ import { build } from 'vite';
 
 async function browserSmoke({ invoke, getVersion, check, relaunch, exit }, spec) {
   const rpc = request => invoke('api', { request });
-  const mark = stage => { document.documentElement.dataset.updateSmoke = stage; };
-  mark('script started');
   // Record through the same native IPC and SQLite store used by RiverLens.
   const report = (step, detail) => rpc({
     op: 'save_filter', name: spec.token, filter: { search: JSON.stringify({ step, detail }) },
@@ -23,9 +21,7 @@ async function browserSmoke({ invoke, getVersion, check, relaunch, exit }, spec)
   const profile = { id: 'qa', name: 'Updater test', hero: 'Hero', brand: 'Natural8', timezone: 'Asia/Hong_Kong' };
   const hands = () => rpc({ op: 'hands', filter: { profile: profile.id }, limit: 5 });
   try {
-    mark('reading app version');
     const version = await getVersion();
-    mark('recording launch ' + version);
     await report('launched', version);
     if (version === spec.before) {
       await rpc({ op: 'save_profile', profile });
@@ -60,7 +56,6 @@ async function browserSmoke({ invoke, getVersion, check, relaunch, exit }, spec)
       await exit(0);
     }
   } catch (error) {
-    mark(String(error));
     await report('failed', String(error));
     await exit(1);
   }
@@ -109,38 +104,6 @@ const server = createServer((request, response) => {
   }
 });
 
-async function webViewSnapshot(port) {
-  const origin = `http://127.0.0.1:${port}`;
-  try {
-    const reply = await fetch(origin + '/json/list', { signal: AbortSignal.timeout(3000) });
-    const targets = await reply.json();
-    const page = targets.find(target => target.type === 'page' && target.webSocketDebuggerUrl);
-    if (!page) return { targets: targets.map(({ type, url }) => ({ type, url })) };
-    return await new Promise((resolve, reject) => {
-      const socket = new WebSocket(page.webSocketDebuggerUrl);
-      const timeout = setTimeout(() => { socket.close(); reject(new Error('CDP response timed out')); }, 3000);
-      socket.addEventListener('open', () => socket.send(JSON.stringify({
-        id: 1, method: 'Runtime.evaluate', params: { returnByValue: true, expression: `({
-          url: location.href, ready: document.readyState, title: document.title,
-          body: document.body?.innerText.slice(0, 500), stage: document.documentElement?.dataset.updateSmoke,
-          scripts: Array.from(document.scripts, script => script.src),
-          ipc: typeof window.__TAURI_INTERNALS__?.invoke
-        })` },
-      })));
-      socket.addEventListener('message', ({ data }) => {
-        const response = JSON.parse(data);
-        if (response.id !== 1) return;
-        clearTimeout(timeout);
-        socket.close();
-        resolve(response.result?.result?.value ?? response.error);
-      });
-      socket.addEventListener('error', () => { clearTimeout(timeout); reject(new Error('CDP connection failed')); });
-    });
-  } catch (error) {
-    return { error: String(error.cause ?? error) };
-  }
-}
-
 function readEvents(database, afterId) {
   const db = new DatabaseSync(database, { readOnly: true });
   try {
@@ -154,12 +117,11 @@ function readEvents(database, afterId) {
   }
 }
 
-async function observeUpgrade(app, database, debugPort) {
+async function observeUpgrade(app, database) {
   const events = [];
   let lastId = 0;
   let launchError;
   let sawDatabase = false;
-  let nextSnapshot = Date.now() + 25_000;
   app.once('error', error => { launchError = error; });
   app.once('spawn', () => console.log('[native updater] launched process', app.pid, app.spawnfile));
   app.once('exit', (code, signal) => {
@@ -183,28 +145,15 @@ async function observeUpgrade(app, database, debugPort) {
     if (app.signalCode || (app.exitCode !== null && (app.exitCode !== 0 || !events.some(e => e.step === 'downloaded')))) {
       throw new Error(`Original app exited before upgrade completed (code=${app.exitCode}, signal=${app.signalCode}, database=${sawDatabase}, last step=${events.at(-1)?.step || 'none'})`);
     }
-    if (debugPort && !events.length && Date.now() >= nextSnapshot) {
-      console.log('[native updater] WebView2', await webViewSnapshot(debugPort));
-      nextSnapshot = Date.now() + 25_000;
-    }
     await delay(250);
   }
   throw new Error(`Timed out observing native upgrade (pid=${app.pid}, exit=${app.exitCode}, database=${sawDatabase}, last step=${events.at(-1)?.step || 'none'}, requests=${JSON.stringify(requests)})`);
 }
 
 let appProcess;
-let debugPort;
 try {
   await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
   const origin = `http://127.0.0.1:${server.address().port}`;
-  if (!mac) {
-    const portProbe = createServer();
-    await new Promise((resolve, reject) => { portProbe.once('error', reject); portProbe.listen(0, '127.0.0.1', resolve); });
-    debugPort = portProbe.address().port;
-    await new Promise(resolve => portProbe.close(resolve));
-    // Enable runtime diagnostics only for the isolated QA process.
-    runtimeEnv.WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = `--remote-debugging-port=${debugPort}`;
-  }
   const spec = { before: version, after: next, token, handPath: resolve('tests/fixtures/study-nl10.txt') };
   const source = `import { invoke } from '@tauri-apps/api/core'; import { getVersion } from '@tauri-apps/api/app';
 import { check } from '@tauri-apps/plugin-updater'; import { exit, relaunch } from '@tauri-apps/plugin-process';
@@ -219,7 +168,7 @@ import { check } from '@tauri-apps/plugin-updater'; import { exit, relaunch } fr
     }],
     build: { outDir: front, emptyOutDir: false, target: 'es2020', rollupOptions: { input: entry, output: { entryFileNames: 'fixture.js' } } },
   });
-  writeFileSync(join(front, 'index.html'), '<!doctype html><meta charset="utf-8"><title>RiverLens updater test</title><p>Checking this isolated test installation…</p><script type="module" src="/fixture.js"></script>');
+  writeFileSync(join(front, 'index.html'), '<!doctype html><meta charset="utf-8"><title>RiverLens updater test</title><p>Checking this isolated test installation…</p><script src="fixture.js" defer></script>');
   run(process.execPath, [tauri, 'signer', 'generate', '--ci', '-p', 'fixture', '-w', key], { stdio: 'ignore' });
   const config = join(tmp, 'smoke.json');
   function makeInstaller(releaseVersion) {
@@ -260,7 +209,7 @@ import { check } from '@tauri-apps/plugin-updater'; import { exit, relaunch } fr
   run(process.execPath, [tauri, 'signer', 'sign', '-f', key, '-p', 'fixture', artifact], { stdio: 'ignore' });
   feed = { version: next, platforms: { [platform]: { url: origin + '/artifact', signature: readFileSync(artifact + '.sig', 'utf8').trim() } } };
   appProcess = spawn(executable, [], { env: runtimeEnv, stdio: 'inherit' });
-  const events = await observeUpgrade(appProcess, join(data, 'riverlens.db'), debugPort);
+  const events = await observeUpgrade(appProcess, join(data, 'riverlens.db'));
   assert.ok(requests.manifest >= 2 && requests.artifact >= 1, 'Both app versions must check the feed and the original must download');
   assert.deepEqual(events.map(e => e.step), ['launched', 'downloaded', 'launched', 'passed']);
   assert.deepEqual(events.map(e => e.detail), [version, next, next, next]);
