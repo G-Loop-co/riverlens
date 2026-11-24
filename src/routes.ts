@@ -131,15 +131,17 @@ export function parseRoute(pathname: string): AppRoute | null {
 
 export function isSafeReturnPath(pathname: string): boolean {
   if (!pathname.startsWith("/") || pathname.startsWith("//")) return false;
-  const route = parseRoute(pathname);
-  return Boolean(route) && route!.workspace !== "hands";
+  const path = pathname.split("?")[0];
+  if (path.includes("\\") || path.includes("#")) return false;
+  const route = parseRoute(path);
+  return Boolean(route && !route.handId);
 }
 
 export function filterToSearchParams(filter: Filter): URLSearchParams {
   const params = new URLSearchParams();
   const entries = Object.entries(filter);
   if (!entries.some(([key, value]) => key === "currency" && value)) {
-    params.set("currency", "USD");
+    params.set("currency", Object.hasOwn(filter, "currency") ? "" : "USD");
   }
   for (const [key, value] of entries) {
     if (value === undefined || value === null || value === "") continue;

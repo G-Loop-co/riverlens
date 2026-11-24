@@ -510,12 +510,19 @@ pub fn predicate(f: &Filter, include_status: bool) -> Result<(String, Vec<Sql>)>
             STAT_DEFINITIONS.iter().any(|(k, _, _)| k == stat),
             "unknown stat"
         );
-        let suffix = if f.stat_mode.as_deref() == Some("numerator") {
-            "n"
-        } else {
-            "d"
+        let denominator = match f.stat_mode.as_deref() {
+            Some("benchmark_opportunities" | "benchmark_missed") => {
+                benchmark_denominator_stat(stat)
+            }
+            _ => stat,
         };
-        clauses.push(format!("h.{stat}_{suffix}>0"));
+        clauses.push(match f.stat_mode.as_deref() {
+            Some("numerator") => format!("h.{stat}_n>0"),
+            Some("missed" | "benchmark_missed") => {
+                format!("h.{denominator}_d>0 AND h.{stat}_n=0")
+            }
+            _ => format!("h.{denominator}_d>0"),
+        });
     }
     if let Some(cue) = &f.cue {
         clauses.push("EXISTS(SELECT 1 FROM cues c WHERE c.hand=h.id AND c.kind=?)".into());
@@ -566,6 +573,51 @@ pub fn predicate(f: &Filter, include_status: bool) -> Result<(String, Vec<Sql>)>
     Ok((clauses.join(" AND "), vals))
 }
 
+/// The bundled PFR range counts hands where Hero could act preflop,
+/// including calls/folds when raising wasn't legal. The raw PFR stays intact.
+pub(crate) fn benchmark_denominator_stat(stat: &str) -> &str {
+    match stat {
+        "pfr" => "vpip",
+        _ => stat,
+    }
+}
+
+fn stat_sums() -> String {
+    stat_names()
+        .iter()
+        .map(|column| format!("COALESCE(SUM({column}),0) AS {column}"))
+        .collect::<Vec<_>>()
+        .join(",")
+}
+
+fn percentage(hits: i64, opportunities: i64) -> Option<f64> {
+    (opportunities > 0).then(|| hits as f64 / opportunities as f64 * 100.)
+}
+
+fn report_stats(row: &rusqlite::Row<'_>) -> rusqlite::Result<Vec<Value>> {
+    let hands = row.get::<_, i64>(0)?;
+    STAT_DEFINITIONS
+        .iter()
+        .map(|&(id, label, definition)| {
+            let numerator = row.get::<_, i64>(format!("{id}_n").as_str())?;
+            let opportunities = row.get::<_, i64>(format!("{id}_d").as_str())?;
+            let benchmark_opportunities =
+                row.get::<_, i64>(format!("{}_d", benchmark_denominator_stat(id)).as_str())?;
+            let mut stat = json!({
+                "id": id, "label": label, "definition": definition,
+                "numerator": numerator, "opportunities": opportunities,
+                "value": percentage(numerator, opportunities),
+                "benchmark_opportunities": benchmark_opportunities,
+                "benchmark_value": percentage(numerator, benchmark_opportunities),
+            });
+            if matches!(id, "vpip" | "pfr") {
+                stat["all_hand_value"] = json!(percentage(numerator, hands));
+            }
+            Ok(stat)
+        })
+        .collect()
+}
+
 pub fn report(c: &Connection, f: &Filter, group: &str) -> Result<Value> {
     // Broad reports read exact incremental rollups, never decompress or scan HH payloads.
     let basic = serde_json::to_value(f)?
@@ -606,21 +658,24 @@ pub fn report(c: &Connection, f: &Filter, group: &str) -> Result<Value> {
     pred.push_str(" AND h.status='valid'");
     let (coverage_pred, coverage_vals) = predicate(f, false)?;
     let from = "hands h";
-    let stat_sql = STAT_DEFINITIONS
-        .iter()
-        .flat_map(|(k, _, _)| {
-            [
-                format!("COALESCE(SUM({k}_n),0)"),
-                format!("COALESCE(SUM({k}_d),0)"),
-            ]
-        })
-        .collect::<Vec<_>>()
-        .join(",");
+    let stat_sql = stat_sums();
     let sql=format!("SELECT COUNT(*),COALESCE(SUM(net),0),COALESCE(SUM(net_bb),0),COALESCE(SUM(CASE WHEN showdown=1 THEN net ELSE 0 END),0),COALESCE(SUM(CASE WHEN showdown=0 THEN net ELSE 0 END),0),COALESCE(SUM(COALESCE(adjusted_net,net)),0),SUM(ev_status='complete'),SUM(ev_status='pending'),SUM(ev_status='excluded'),{stat_sql} FROM {from} WHERE {pred}");
-    let (count,net,net_bb,sd,nsd,adj,complete,pending,excluded,stats)=c.query_row(&sql,params_from_iter(vals.iter()),|r|{
-        let mut stats=vec![];for(i,(id,label,definition))in STAT_DEFINITIONS.iter().enumerate(){let n:i64=r.get(9+i*2)?;let d:i64=r.get(10+i*2)?;stats.push(json!({"id":id,"label":label,"definition":definition,"numerator":n,"opportunities":d,"value":if d>0{Some(n as f64/d as f64*100.)}else{None}}));}
-        Ok((r.get::<_,i64>(0)?,r.get::<_,i64>(1)?,r.get::<_,f64>(2)?,r.get::<_,i64>(3)?,r.get::<_,i64>(4)?,r.get::<_,i64>(5)?,r.get::<_,Option<i64>>(6)?.unwrap_or(0),r.get::<_,Option<i64>>(7)?.unwrap_or(0),r.get::<_,Option<i64>>(8)?.unwrap_or(0),stats))
-    })?;
+    let (count, net, net_bb, sd, nsd, adj, complete, pending, excluded, stats) =
+        c.query_row(&sql, params_from_iter(vals.iter()), |r| {
+            let stats = report_stats(r)?;
+            Ok((
+                r.get::<_, i64>(0)?,
+                r.get::<_, i64>(1)?,
+                r.get::<_, f64>(2)?,
+                r.get::<_, i64>(3)?,
+                r.get::<_, i64>(4)?,
+                r.get::<_, i64>(5)?,
+                r.get::<_, Option<i64>>(6)?.unwrap_or(0),
+                r.get::<_, Option<i64>>(7)?.unwrap_or(0),
+                r.get::<_, Option<i64>>(8)?.unwrap_or(0),
+                stats,
+            ))
+        })?;
     let mut coverage = BTreeMap::new();
     let mut st = c.prepare(&format!(
         "SELECT status,COUNT(*) FROM {from} WHERE {coverage_pred} GROUP BY status"
@@ -719,11 +774,7 @@ fn rollup_report(c: &Connection, f: &Filter, group: &str) -> Result<Value> {
         }
     }
     let dimension = if sliced { "slice" } else { "all" };
-    let sums = stat_names()
-        .iter()
-        .map(|k| format!("COALESCE(SUM({k}),0)"))
-        .collect::<Vec<_>>()
-        .join(",");
+    let sums = stat_sums();
     let mut currency_stmt = c.prepare(&format!("SELECT DISTINCT currency FROM rollups WHERE dimension='{dimension}' AND {pred} AND hands>0"))?;
     let currencies = currency_stmt
         .query_map(params_from_iter(vals.iter()), |r| r.get::<_, String>(0))?
@@ -737,10 +788,18 @@ fn rollup_report(c: &Connection, f: &Filter, group: &str) -> Result<Value> {
         .map(String::as_str)
         .unwrap_or(f.currency.as_deref().unwrap_or("USD"));
     let sql=format!("SELECT COALESCE(SUM(hands),0),COALESCE(SUM(net),0),COALESCE(SUM(net_bb),0),COALESCE(SUM(sd),0),COALESCE(SUM(nsd),0),{sums} FROM rollups WHERE dimension='{dimension}' AND {pred}");
-    let (count,net,bb,sd,nsd,stats)=c.query_row(&sql,params_from_iter(vals.iter()),|r| {
-        let mut stats=vec![];for (i,(id,label,definition)) in STAT_DEFINITIONS.iter().enumerate(){let n:i64=r.get(5+i*2)?;let d:i64=r.get(6+i*2)?;stats.push(json!({"id":id,"label":label,"definition":definition,"numerator":n,"opportunities":d,"value":if d>0{Some(n as f64/d as f64*100.)}else{None}}));}
-        Ok((r.get::<_,i64>(0)?,r.get::<_,i64>(1)?,r.get::<_,f64>(2)?,r.get::<_,i64>(3)?,r.get::<_,i64>(4)?,stats))
-    })?;
+    let (count, net, bb, sd, nsd, stats) =
+        c.query_row(&sql, params_from_iter(vals.iter()), |r| {
+            let stats = report_stats(r)?;
+            Ok((
+                r.get::<_, i64>(0)?,
+                r.get::<_, i64>(1)?,
+                r.get::<_, f64>(2)?,
+                r.get::<_, i64>(3)?,
+                r.get::<_, i64>(4)?,
+                stats,
+            ))
+        })?;
     let mut evcounts = BTreeMap::<String, i64>::new();
     let mut reasons = BTreeMap::new();
     let mut delta = 0i64;

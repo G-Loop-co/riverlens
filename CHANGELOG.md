@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.7.0
+
+- Offline six-handed cash review ranges, sample-aware priorities, positional drilldowns and decision replay.
+- First-import and recent-session flows, inline profile creation and source-specific hand lists.
+- Signed desktop updates for macOS and Windows. [Release notes](docs/release-v0.7.0.md).
+
+
 ## 0.6.3 — 2026-11-23 — Personal bluff analysis
 
 - Add a local Hero bluff report for no-limit Hold'em cash hands with flop and turn air, strong draws, river air, pair-plus-draw and manually marked lower-pair bluffs.

@@ -392,6 +392,13 @@ impl Manager {
         });
         Ok(result)
     }
+    pub fn importing(&self) -> bool {
+        self.datasets
+            .lock()
+            .unwrap()
+            .values()
+            .any(|d| d.working.load(Ordering::SeqCst))
+    }
     pub fn shutdown(&self) {
         for d in self.datasets.lock().unwrap().values() {
             d.stop.store(true, Ordering::SeqCst);

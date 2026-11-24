@@ -6,6 +6,7 @@ pub mod mda;
 pub mod model;
 pub mod money;
 pub mod parser;
+pub mod review;
 pub mod service;
 pub mod stats;
 pub mod store;

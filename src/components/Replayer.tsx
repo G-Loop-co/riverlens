@@ -59,6 +59,8 @@ export function Replayer({
   close,
   saved,
   initialStep = null,
+  metric,
+  onDirty,
   onStep,
   askAi,
   population,
@@ -67,6 +69,8 @@ export function Replayer({
   close: () => void;
   saved: () => void;
   initialStep?: number | null;
+  metric?: { id: string; mode?: string };
+  onDirty?: (dirty: boolean) => void;
   onStep?: (seq: number) => void;
   askAi?: (seq: number) => void;
   population?: { dataset_id: string; version: string; hand_key: string };
@@ -94,6 +98,10 @@ export function Replayer({
   const [saving, setSaving] = useState(false),
     [error, setError] = useState(""),
     [clean, setClean] = useState(true);
+  useEffect(() => {
+    onDirty?.(!clean || saving);
+    return () => onDirty?.(false);
+  }, [clean, saving, onDirty]);
   const initialStepKey = `${id}:${population?.hand_key ?? ""}`;
   const [initializedKey, setInitializedKey] = useState("");
   const [marks, setMarks] = useState<number[]>([]);
@@ -110,9 +118,16 @@ export function Replayer({
       setNote(a.note);
       setTags(a.tags.join(", "));
       setReviewed(a.reviewed);
+      const statId =
+        metric?.id === "pfr" && metric.mode?.startsWith("benchmark_")
+          ? "vpip"
+          : metric?.id;
+      const marker = statId ? result.data.stat_steps?.[statId] : null;
+      const statStep =
+        metric?.mode === "numerator" ? marker?.numerator : marker?.opportunity;
       setStep(
         Math.min(
-          Math.max(initialStep ?? openingStep, 0),
+          Math.max(initialStep ?? statStep ?? openingStep, 0),
           result.data.hand.actions.length,
         ),
       );
@@ -120,7 +135,7 @@ export function Replayer({
       setClean(true);
       appliedInitialStepRef.current = initialStepKey;
     }
-  }, [initialStepKey, result.data, initialStep, openingStep]);
+  }, [initialStepKey, result.data, initialStep, openingStep, metric]);
   useEffect(() => {
     if (initializedKey === initialStepKey) onStep?.(step);
   }, [onStep, step, initializedKey, initialStepKey]);

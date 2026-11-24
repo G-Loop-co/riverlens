@@ -24,7 +24,7 @@ import {
   Plus,
   X,
 } from "@phosphor-icons/react";
-import { api, desktop, errorText, useRpc } from "./api";
+import { api, desktop, errorText, useRpc, updateWritePending } from "./api";
 import type {
   Filter,
   Health,
@@ -36,6 +36,13 @@ import type {
 import { number, CUES, ACTIONS, STAT_LABELS } from "./format";
 import { ErrorBanner, Field, Skeleton } from "./components/UI";
 import type { MdaTab } from "./components/MdaWorkspace";
+import {
+  useAppUpdates,
+  UpdateNotice,
+  UpdateSettings,
+} from "./components/AppUpdates";
+import { BenchmarkReview, LastSession } from "./components/BenchmarkReview";
+import type { ReviewSummary } from "./benchmarks";
 import { Overview } from "./components/Overview";
 import { HandsView } from "./components/HandsView";
 import { RangeView } from "./components/RangeView";
@@ -88,20 +95,30 @@ export default function App() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const parsedRoute = parseRoute(location.pathname);
-  const route = parsedRoute ?? {
+  const fromReplay = searchParams.get("from");
+  const backgroundRoute =
+    parsedRoute?.handId && fromReplay && isSafeReturnPath(fromReplay)
+      ? parseRoute(fromReplay)
+      : null;
+  const route = (backgroundRoute
+    ? { ...backgroundRoute, handId: parsedRoute?.handId }
+    : parsedRoute) ?? {
     workspace: "today" as Workspace,
     section: DEFAULT_SECTIONS.today,
     pathname: workspaceHref("today"),
   };
-  const filter = useMemo(
-    () =>
-      normalizeFilter({
-        currency: "USD",
-        ...readFilter(),
-        ...filterFromSearchParams(searchParams),
-      }),
-    [searchParams],
-  );
+  const filter = useMemo(() => {
+    const fromUrl = filterFromSearchParams(searchParams);
+    const explicit = searchParams.has("currency");
+    const selected = normalizeFilter({
+      currency: "USD",
+      ...(explicit ? {} : readFilter()),
+      ...fromUrl,
+    });
+    if (explicit && !searchParams.get("currency"))
+      selected.currency = undefined;
+    return selected;
+  }, [searchParams]);
   const [revision, setRevision] = useState(0);
   const [appVersion, setAppVersion] = useState<string>();
   const [importOpen, setImportOpen] = useState(false);
@@ -134,6 +151,24 @@ export default function App() {
     { op: "overview", filter: { currency: filter.currency }, group: "game" },
     revision,
   );
+  const inReview =
+    route.workspace === "today" ||
+    (route.workspace === "hands" && route.section === "review");
+  const review = useRpc<ReviewSummary>(
+    inReview ? { op: "review_dashboard", filter } : null,
+    revision,
+  );
+  const noteDirty = useRef(false);
+  const onDirty = useCallback((dirty: boolean) => {
+    noteDirty.current = dirty;
+  }, []);
+  const updates = useAppUpdates(async () => {
+    const live = await api<Health>({ op: "health" });
+    if (noteDirty.current) return t("review.saveNotes");
+    return updateWritePending() || live.import_active || live.mda_import_active
+      ? t("review.waitForData")
+      : null;
+  });
   const refresh = () => setRevision((v) => v + 1);
   useEffect(() => {
     if (!parsedRoute) {
@@ -202,6 +237,11 @@ export default function App() {
 
   function drill(patch: Partial<Filter>, sort?: "win" | "loss") {
     const next = normalizeFilter({ ...filter, ...patch });
+    // A dashboard opened from the base URL may inherit saved filters.
+    const source = new URLSearchParams(searchParams);
+    if (!source.has("currency"))
+      for (const [key, value] of filterToSearchParams(filter))
+        source.set(key, value);
     if (sort) writePreference("riverlens-hand-sort", sort);
     writePreference("riverlens-filter", JSON.stringify(next));
     navigate(
@@ -209,34 +249,35 @@ export default function App() {
         pathname: workspaceHref("hands", "list"),
         search: routeSearch(next),
       },
-      { state: { from: location.pathname + location.search } },
+      { state: { from: location.pathname + "?" + source.toString() } },
     );
   }
 
   function openHand(id: number, seq?: number) {
     const from =
       parseRoute(location.pathname)?.pathname ?? workspaceHref("today");
-    const search =
-      from === "/hands/bluffs"
-        ? new URLSearchParams(searchParams)
-        : filterToSearchParams(filter);
+    const search = new URLSearchParams(searchParams);
+    if (!search.has("currency"))
+      for (const [key, value] of filterToSearchParams(filter))
+        search.set(key, value);
     search.set("from", from);
     if (seq !== undefined) search.set("step", String(seq));
-    navigate({ pathname: `/hands/replay/${id}`, search: search.toString() });
+    navigate(
+      { pathname: `/hands/replay/${id}`, search: search.toString() },
+      { state: location.state },
+    );
   }
-
   function closeReplay() {
     const from = searchParams.get("from");
     const pathname =
       from && isSafeReturnPath(from) ? from : workspaceHref("hands", "list");
-    if (from === "/hands/bluffs") {
-      const search = new URLSearchParams(searchParams);
-      search.delete("from");
-      search.delete("step");
-      navigate({ pathname: from, search: search.toString() });
-    } else {
-      navigate({ pathname, search: routeSearch(filter) });
-    }
+    const search = new URLSearchParams(searchParams);
+    search.delete("from");
+    search.delete("step");
+    navigate(
+      { pathname, search: search.toString() },
+      { replace: true, state: location.state },
+    );
   }
 
   const syncReplayStep = useCallback(
@@ -244,9 +285,9 @@ export default function App() {
       if (searchParams.get("step") === String(seq)) return;
       const next = new URLSearchParams(searchParams);
       next.set("step", String(seq));
-      setSearchParams(next, { replace: true });
+      setSearchParams(next, { replace: true, state: location.state });
     },
-    [searchParams, setSearchParams],
+    [searchParams, setSearchParams, location.state],
   );
 
   useLayoutEffect(() => {
@@ -280,6 +321,15 @@ export default function App() {
     main.addEventListener("keydown", stop);
     restore();
     return stop;
+  }, [routeKey]);
+  useEffect(() => {
+    const main = content.current;
+    if (!main) return;
+    const remember = () => {
+      scroll.current[routeKey] = main.scrollTop;
+    };
+    main.addEventListener("scroll", remember);
+    return () => main.removeEventListener("scroll", remember);
   }, [routeKey]);
   async function saveFilter() {
     if (!saveName?.trim() || savingFilter) return;
@@ -348,7 +398,7 @@ export default function App() {
     },
     {
       workspace: "hands",
-      label: "牌局覆盤",
+      label: "review.navHands",
       icon: (
         <Cards
           size={20}
@@ -359,7 +409,7 @@ export default function App() {
     },
     {
       workspace: "learn",
-      label: "學習工作台",
+      label: "review.navStudy",
       icon: (
         <GraduationCap
           size={20}
@@ -369,7 +419,7 @@ export default function App() {
     },
     {
       workspace: "research",
-      label: "MDA 群體分析",
+      label: "review.navResearch",
       icon: (
         <Database
           size={20}
@@ -389,7 +439,7 @@ export default function App() {
     },
     {
       workspace: "data",
-      label: "資料中心",
+      label: "review.navData",
       icon: <DownloadSimple size={20} />,
       busy: jobs.data?.some((j) => j.state === "running"),
     },
@@ -519,22 +569,32 @@ export default function App() {
   } as const;
   const heading =
     headings[routeKey as keyof typeof headings] ?? headings["today/dashboard"];
+  const firstUse =
+    route.workspace === "today" && review.data?.has_hands === false;
   const showFilter =
+    !firstUse &&
     ["today", "hands", "coach"].includes(route.workspace) &&
     route.section !== "bluffs";
   const showImport =
-    route.workspace === "today" ||
-    (route.workspace === "hands" && route.section === "list");
+    (route.workspace === "today" && review.data?.has_hands === true) ||
+    (route.workspace === "hands" && route.section === "list") ||
+    (route.workspace === "data" &&
+      route.section === "import" &&
+      !!jobs.data?.length);
 
   return (
-    <>
+    <div inert={updates.installing || undefined} className="app-root">
       <AppShell
         nav={navItems}
         activeWorkspace={route.workspace}
         onNavigate={goWorkspace}
         healthError={Boolean(health.error)}
         version={appVersion}
-        footerUnits={route.section === "bluffs" ? "HKT" : undefined}
+        footerUnits={
+          route.section === "bluffs" || !filter.currency
+            ? "HKT"
+            : `HKT · ${filter.currency} / bb`
+        }
         onRefresh={refresh}
         mainRef={content}
         actions={
@@ -548,6 +608,7 @@ export default function App() {
           </>
         }
       >
+        {route.workspace !== "settings" && <UpdateNotice updates={updates} />}
         <RouteErrorBoundary key={route.workspace}>
           <WorkspaceHeading
             eyebrow={heading[0]}
@@ -565,29 +626,8 @@ export default function App() {
               ) : undefined
             }
           />
-          {route.workspace === "today" && (
-            <div className="context-cards" aria-label={t("下一步行動")}>
-              <button onClick={() => goSection("hands", "review")}>
-                <strong>{t("下一步覆盤")}</strong>
-                <small>{t("檢查未完成複盤與關鍵情境")}</small>
-              </button>
-              <button onClick={() => goSection("data", "import")}>
-                <strong>{t("匯入進度")}</strong>
-                <small>
-                  {jobs.data?.some((j) => j.state === "running")
-                    ? t("匯入中")
-                    : t("查看匯入狀態與資料問題")}
-                </small>
-              </button>
-              <button onClick={() => goSection("learn", "trainer")}>
-                <strong>{t("學習練習")}</strong>
-                <small>
-                  {health.data?.study?.complete
-                    ? t("開啟 Trainer 與到期題目")
-                    : t("等待索引完成後開始練習")}
-                </small>
-              </button>
-            </div>
+          {inReview && review.data?.latest && (
+            <LastSession latest={review.data.latest} drill={drill} />
           )}
           {route.workspace === "data" && (
             <RouteTabs
@@ -879,12 +919,41 @@ export default function App() {
               />
             </Suspense>
           )}
+          {inReview && review.error && (
+            <ErrorBanner>{review.error}</ErrorBanner>
+          )}
+          {inReview && review.data && (
+            <BenchmarkReview
+              data={review.data}
+              filter={filter}
+              revision={revision}
+              drill={drill}
+              open={openHand}
+            />
+          )}
           {route.workspace === "today" && (
             <Overview
               filter={filter}
               revision={revision}
               drill={drill}
               onImport={() => setImportOpen(true)}
+              issueOnly={Boolean(
+                review.data &&
+                !review.data.default_currency &&
+                jobs.data?.some((j) => j.quarantined || j.conflicts),
+              )}
+              showIssues={() => goSection("data", "import")}
+              hasHands={review.data?.has_hands ?? Boolean(overall.data?.hands)}
+              clearFilters={() => {
+                const next = {
+                  currency: review.data?.default_currency ?? "USD",
+                };
+                writePreference("riverlens-filter", JSON.stringify(next));
+                navigate(
+                  { pathname: "/today", search: routeSearch(next) },
+                  { replace: true },
+                );
+              }}
               compare={compare}
               setCompare={setCompare}
             />
@@ -952,6 +1021,19 @@ export default function App() {
             <TabPanel id="data-workspace" activeTab={route.section}>
               {route.section === "import" && (
                 <Imports
+                  onViewHands={(profile) => {
+                    writePreference(
+                      "riverlens-filter",
+                      JSON.stringify({ profile }),
+                    );
+                    navigate({
+                      pathname: "/hands/list",
+                      search: new URLSearchParams({
+                        profile,
+                        currency: "",
+                      }).toString(),
+                    });
+                  }}
                   jobs={jobs.data || []}
                   revision={revision}
                   refresh={refresh}
@@ -972,18 +1054,22 @@ export default function App() {
             </TabPanel>
           )}
           {route.workspace === "settings" && (
-            <Settings
-              profiles={profiles.data || []}
-              health={health.data}
-              refresh={refresh}
-              notify={setToast}
-              section="preferences"
-            />
+            <>
+              <UpdateSettings updates={updates} version={appVersion} />
+              <Settings
+                profiles={profiles.data || []}
+                health={health.data}
+                refresh={refresh}
+                notify={setToast}
+                section="preferences"
+              />
+            </>
           )}
         </RouteErrorBoundary>
       </AppShell>
       {importOpen && (
         <ImportDialog
+          onProfileCreated={refresh}
           profiles={profiles.data || []}
           close={() => setImportOpen(false)}
           imported={() => {
@@ -997,6 +1083,12 @@ export default function App() {
       {Boolean(route.handId) && (
         <Replayer
           id={route.handId ?? 0}
+          onDirty={onDirty}
+          metric={
+            filter.stat
+              ? { id: filter.stat, mode: filter.stat_mode }
+              : undefined
+          }
           initialStep={
             searchParams.has("step")
               ? Math.max(0, Number(searchParams.get("step") ?? 0))
@@ -1068,6 +1160,6 @@ export default function App() {
           {toast}
         </div>
       )}
-    </>
+    </div>
   );
 }

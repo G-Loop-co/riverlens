@@ -32,6 +32,10 @@ export function Overview({
   revision,
   drill,
   onImport,
+  hasHands,
+  issueOnly,
+  showIssues,
+  clearFilters,
   compare,
   setCompare,
 }: {
@@ -39,6 +43,10 @@ export function Overview({
   revision: number;
   drill: (f: Partial<Filter>) => void;
   onImport: () => void;
+  hasHands: boolean;
+  issueOnly: boolean;
+  showIssues: () => void;
+  clearFilters: () => void;
   compare: Filter | null;
   setCompare: (f: Filter | null) => void;
 }) {
@@ -111,19 +119,35 @@ export function Overview({
   if (!report.hands)
     return (
       <>
-        <Empty
-          title={t("由第一手牌開始")}
-          description={t(
-            "匯入牌室匯出的 TXT、XML 或 ZIP，建立自己的牌局資料庫。亦可以清除篩選查看其他手牌。",
-          )}
-          action={
-            <button className="button primary" onClick={onImport}>
-              {t("匯入牌譜")}
-              <ArrowRight size={17} />
-            </button>
-          }
-        />
-        {!!report.coverage.quarantined && (
+        {issueOnly && (
+          <Empty
+            title={t("review.issuesTitle")}
+            description={t("review.issuesHint")}
+            action={
+              <button className="button primary" onClick={showIssues}>
+                {t("review.issues")}
+              </button>
+            }
+          />
+        )}
+        {!issueOnly && !report.coverage.quarantined && (
+          <Empty
+            title={t(hasHands ? "review.filteredEmpty" : "review.firstTitle")}
+            description={t(
+              hasHands ? "review.filteredHint" : "review.firstHint",
+            )}
+            action={
+              <button
+                className="button primary"
+                onClick={hasHands ? clearFilters : onImport}
+              >
+                {t(hasHands ? "review.clear" : "review.firstImport")}{" "}
+                <ArrowRight size={17} />
+              </button>
+            }
+          />
+        )}
+        {!issueOnly && !!report.coverage.quarantined && (
           <div className="empty-issues">
             <p>
               {t("目前條件下有 {{v0}} 手已隔離。可開啟手牌查看問題與原文。", {

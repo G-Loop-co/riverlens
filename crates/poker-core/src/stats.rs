@@ -25,11 +25,51 @@ fn mark(stats: &mut BTreeMap<String, StatValue>, key: &str, opportunity: bool, h
 
 /// Versioned per-hand opportunities. No denominators are inferred from report totals.
 pub fn derive(h: &mut Hand, hero_won: bool) {
-    let hero = h.hero_seat;
     let mut stats = BTreeMap::new();
     for (id, _, _) in STAT_DEFINITIONS {
         stats.insert(id.to_string(), StatValue::default());
     }
+    let (pot_type, cues) = visit_decisions(h, |key, opportunity, hit, _| {
+        mark(&mut stats, key, opportunity, hit);
+    });
+    mark(&mut stats, "wtsd", h.saw_flop, h.showdown);
+    mark(&mut stats, "wsd", h.showdown, h.showdown && hero_won);
+    mark(&mut stats, "wwsf", h.saw_flop, h.saw_flop && hero_won);
+    h.pot_type = pot_type.into();
+    h.stats = stats;
+    h.cues = cues.into_iter().collect();
+    h.cues.sort();
+}
+
+#[derive(serde::Serialize)]
+pub(crate) struct StatSteps {
+    opportunity: usize,
+    numerator: Option<usize>,
+}
+
+/// Recompute from actions when opening a replay. Existing imports have the same
+/// decision anchors as fresh imports without rewriting any hand payloads.
+pub(crate) fn replay_steps(h: &Hand) -> BTreeMap<&'static str, StatSteps> {
+    let mut steps = BTreeMap::new();
+    visit_decisions(h, |key, opportunity, hit, seq| {
+        if opportunity {
+            let entry = steps.entry(key).or_insert(StatSteps {
+                opportunity: seq,
+                numerator: None,
+            });
+            if hit {
+                entry.numerator.get_or_insert(seq);
+            }
+        }
+    });
+    steps
+}
+
+fn visit_decisions(
+    h: &Hand,
+    mut visit: impl FnMut(&'static str, bool, bool, usize),
+) -> (&'static str, HashSet<String>) {
+    let hero = h.hero_seat;
     let mut street = "preflop".to_string();
     let mut live = HashMap::<u8, i64>::new();
     let mut spent = HashMap::<u8, i64>::new();
@@ -48,7 +88,8 @@ pub fn derive(h: &mut Hand, hero_won: bool) {
     let mut folded = HashSet::<u8>::new();
     let mut saw_hero_flop_bet = false;
     let mut cues = HashSet::<String>::new();
-    for a in &h.actions {
+    for (seq, a) in h.actions.iter().enumerate() {
+        let mut mark = |key, opportunity, hit| visit(key, opportunity, hit, seq);
         if a.kind == "board" {
             street = a.street.clone();
             live.clear();
@@ -85,27 +126,15 @@ pub fn derive(h: &mut Hand, hero_won: bool) {
         let decision =
             matches!(a.kind.as_str(), "fold" | "check" | "call" | "bet" | "raise") && remaining > 0;
         if seat == hero && decision && street == "preflop" {
+            mark("vpip", true, matches!(a.kind.as_str(), "call" | "raise"));
+            mark("pfr", can_raise, a.kind == "raise");
             mark(
-                &mut stats,
-                "vpip",
-                true,
-                matches!(a.kind.as_str(), "call" | "raise"),
-            );
-            mark(&mut stats, "pfr", can_raise, a.kind == "raise");
-            mark(
-                &mut stats,
                 "rfi",
                 raises == 0 && limpers == 0 && can_raise,
                 a.kind == "raise",
             );
+            mark("three_bet", raises == 1 && can_raise, a.kind == "raise");
             mark(
-                &mut stats,
-                "three_bet",
-                raises == 1 && can_raise,
-                a.kind == "raise",
-            );
-            mark(
-                &mut stats,
                 "fold_three_bet",
                 raises == 2 && hero_raised,
                 a.kind == "fold",
@@ -115,9 +144,9 @@ pub fn derive(h: &mut Hand, hero_won: bool) {
                 && matches!(h.position.as_str(), "SB" | "BB" | "BTN/SB")
                 && !hero_raised
             {
-                mark(&mut stats, "blind_fold", true, a.kind == "fold");
-                mark(&mut stats, "blind_call", true, a.kind == "call");
-                mark(&mut stats, "blind_raise", true, a.kind == "raise");
+                mark("blind_fold", true, a.kind == "fold");
+                mark("blind_call", true, a.kind == "call");
+                mark("blind_raise", true, a.kind == "raise");
                 cues.insert("blind_defence".into());
             }
             if raises >= 2 && a.kind == "call" {
@@ -129,10 +158,10 @@ pub fn derive(h: &mut Hand, hero_won: bool) {
         }
         if street == "flop" && decision {
             if seat == hero && aggressor == Some(hero) && !flop_bet {
-                mark(&mut stats, "cbet", true, a.kind == "bet");
+                mark("cbet", true, a.kind == "bet");
             }
             if seat == hero && cbetter.is_some_and(|s| s != hero) && !cbet_raised && to_call > 0 {
-                mark(&mut stats, "fold_cbet", true, a.kind == "fold");
+                mark("fold_cbet", true, a.kind == "fold");
             }
             if a.kind == "bet" && !flop_bet && aggressor == Some(seat) {
                 cbetter = Some(seat);
@@ -207,7 +236,7 @@ pub fn derive(h: &mut Hand, hero_won: bool) {
             acted.insert(seat, max_bet);
         }
     }
-    h.pot_type = if special {
+    let pot_type = if special {
         "special"
     } else {
         match raises {
@@ -216,12 +245,6 @@ pub fn derive(h: &mut Hand, hero_won: bool) {
             2 => "3-bet",
             _ => "4-bet+",
         }
-    }
-    .into();
-    mark(&mut stats, "wtsd", h.saw_flop, h.showdown);
-    mark(&mut stats, "wsd", h.showdown, h.showdown && hero_won);
-    mark(&mut stats, "wwsf", h.saw_flop, h.saw_flop && hero_won);
-    h.stats = stats;
-    h.cues = cues.into_iter().collect();
-    h.cues.sort();
+    };
+    (pot_type, cues)
 }

@@ -5,6 +5,9 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use tauri::{Emitter, Manager};
 
+#[cfg(feature = "updater-smoke")]
+mod updater_smoke;
+
 #[tauri::command]
 async fn api(
     request: Request,
@@ -105,6 +108,8 @@ fn main() {
     }
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .setup(|app| {
             let dir = std::env::var_os("RIVERLENS_DATA_DIR")
                 .map(std::path::PathBuf::from)
@@ -116,6 +121,9 @@ fn main() {
                 bridge,
                 job: Mutex::new(None),
             });
+            #[cfg(feature = "updater-smoke")]
+            updater_smoke::start(app.handle().clone(), service.clone())
+                .map_err(std::io::Error::other)?;
             app.manage(service);
             Ok(())
         })
