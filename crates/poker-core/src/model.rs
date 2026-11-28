@@ -2,7 +2,7 @@ use crate::money;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-pub const PARSER_VERSION: &str = "multi-room/2.1.0";
+pub const PARSER_VERSION: &str = "multi-room/2.1.1";
 pub const STATS_VERSION: &str = "hero-opportunities/1.0.0";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

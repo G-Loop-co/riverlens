@@ -53,6 +53,35 @@ fn return_is_not_profit_and_summary_not_double_counted() {
     assert_eq!(h.returned, 40_000);
 }
 #[test]
+fn rush_cash_drop_funds_main_pot_without_charging_a_player() {
+    let raw = fixtures::hu_hand(
+        "Hero: raises $0.04 to $0.06\nVillain: folds\nUncalled bet ($0.04) returned to Hero\nHero collected $0.23 from pot",
+        "Total pot $0.24 | Rake $0.01 | Jackpot $0",
+    )
+    .replace("Table 'Synthetic'", "Table 'RushAndCash123'")
+    .replace(
+        "Hero: posts small blind",
+        "Cash Drop to Pot : total $0.2\nHero: posts small blind",
+    );
+    let h = parser::parse(&raw, &Profile::default()).unwrap();
+    assert_eq!(h.status, "valid", "{:?}", h.issues);
+    assert_eq!(h.actions[0].kind, "cash_drop");
+    assert_eq!(h.actions[0].actor, None);
+    assert_eq!(h.actions[0].pot_after, 200_000);
+    assert_eq!(h.pots[0].amount, h.total_pot);
+    assert_eq!(h.pots[0].eligible, [h.hero_seat]);
+    assert_eq!(h.invested, 60_000);
+    assert_eq!(h.net, 210_000);
+
+    let inconsistent = raw.replace(
+        "Cash Drop to Pot : total $0.2",
+        "Cash Drop to Pot : total $0.1",
+    );
+    let h = parser::parse(&inconsistent, &Profile::default()).unwrap();
+    assert_eq!(h.status, "quarantined");
+    assert!(h.issues.iter().any(|i| i.code == "pot_mismatch"));
+}
+#[test]
 fn double_straddle_is_total_to() {
     let h=hu("Hero: straddle $0.04\nHero: straddle $0.08\nVillain: folds\nUncalled bet ($0.06) returned to Hero\n*** SHOWDOWN ***\nHero collected $0.04 from pot","Total pot $0.04 | Rake $0 | Jackpot $0");
     assert_eq!(h.status, "valid", "{:?}", h.issues);

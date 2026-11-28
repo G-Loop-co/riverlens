@@ -21,6 +21,8 @@ static RETURN: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^Uncalled bet \(\$([\d.]+)\) returned to (.+)$").unwrap());
 static COLLECT: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^(.+?) collected \$([\d.]+) from (.+)$").unwrap());
+static CASH_DROP: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^Cash Drop to Pot\s*:\s*total \$(\d+(?:\.\d+)?)$").unwrap());
 static FEE: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"([A-Za-z ]+) \$([\d.]+)").unwrap());
 
 pub fn cards(s: &str) -> Vec<String> {
@@ -205,6 +207,7 @@ fn parse_ledger(raw: &str, profile: &Profile, population: bool) -> Result<Hand> 
     let mut street = "preflop".to_string();
     let mut runout = 0usize;
     let mut pot = 0i64;
+    let mut cash_drop = 0i64;
     let mut awards = 0i64;
     let mut summary = false;
     let mut total_found = false;
@@ -425,6 +428,36 @@ fn parse_ledger(raw: &str, profile: &Profile, population: bool) -> Result<Hand> 
                 runout,
                 actor: Some(seat),
                 kind: "collect".into(),
+                amount: v,
+                to: 0,
+                all_in: false,
+                cards: vec![],
+                pot_after: pot,
+            });
+            continue;
+        }
+        if let Some(c) = CASH_DROP
+            .captures(line)
+            .filter(|_| !population && h.game == "Rush")
+        {
+            let v = money::parse(&c[1])?;
+            if v <= 0 || cash_drop != 0 || street != "preflop" || !dealt.is_empty() {
+                issue(
+                    &mut h,
+                    "invalid_cash_drop",
+                    "Expected one positive Cash Drop before the deal",
+                    Some(line_no + 1),
+                );
+                continue;
+            }
+            cash_drop = v;
+            pot += v;
+            h.actions.push(Action {
+                seq: h.actions.len(),
+                street: street.clone(),
+                runout,
+                actor: None,
+                kind: "cash_drop".into(),
                 amount: v,
                 to: 0,
                 all_in: false,
@@ -733,6 +766,18 @@ fn parse_ledger(raw: &str, profile: &Profile, population: bool) -> Result<Hand> 
             h.pots.push(Pot { amount, eligible });
         }
         previous = level;
+    }
+    if cash_drop > 0 {
+        if let Some(main) = h.pots.first_mut() {
+            main.amount += cash_drop;
+        } else {
+            issue(
+                &mut h,
+                "invalid_cash_drop",
+                "Cash Drop has no main pot",
+                None,
+            );
+        }
     }
     validate_cards(&mut h);
     if let Some(board) = h.boards.first().filter(|b| b.len() >= 3) {

@@ -44,6 +44,7 @@ export const ACTIONS: Record<string, string> = {
   big_blind: "BB",
   dead_blind: "Missed blind",
   ante: "Ante",
+  cash_drop: "Cash Drop",
   straddle: "Straddle",
   fold: "Fold",
   check: "Check",

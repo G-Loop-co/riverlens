@@ -14,6 +14,7 @@ export function fromUnits(n: bigint): string {
   return `${negative ? "-" : ""}${a / 1_000_000n}.${(a % 1_000_000n).toString().padStart(6, "0")}`;
 }
 const OPENING_POST_KINDS = new Set([
+  "cash_drop",
   "small_blind",
   "big_blind",
   "dead_blind",
@@ -47,6 +48,10 @@ export function replay(hand: Hand, count: number) {
       runout = action.runout;
       boards[runout] = action.cards;
       contributions = {};
+      continue;
+    }
+    if (action.kind === "cash_drop") {
+      pot += units(action.amount);
       continue;
     }
     if (action.actor === null) continue;

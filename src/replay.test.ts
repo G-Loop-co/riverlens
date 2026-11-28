@@ -69,6 +69,20 @@ describe("exact chronological replayer", () => {
     expect(final.pot).toBe(0n);
     expect(replay(h, 1).pot).toBe(units(".06"));
   });
+  it("adds Cash Drop to the opening pot without debiting a seat", () => {
+    const h = hand([
+      action("cash_drop", null, ".20"),
+      action("small_blind", 1, ".01"),
+      action("big_blind", 2, ".02"),
+      action("fold", 1, "0"),
+    ]);
+    const opening = replayOpeningStep(h.actions);
+    expect(opening).toBe(3);
+    const frame = replay(h, opening);
+    expect(frame.pot).toBe(units(".23"));
+    expect(frame.contributions).toEqual({ 1: units(".01"), 2: units(".02") });
+    expect(frame.stacks).toEqual({ 1: units("1.99"), 2: units("1.98") });
+  });
   it("cashout settlement never changes the table pot", () => {
     const h = hand([
       action("bet", 1, "1"),
